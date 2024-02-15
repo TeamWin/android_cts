@@ -696,7 +696,13 @@ class Test:
 
     def run(self):
         execute_shell_command("Test", self.args, ["adb", "shell", "am", "start-user ", str(self.state.get_user())])
-        command = "adb shell am instrument --user " + str(self.state.get_user())
+
+        # This prepares the devices to begin running a test without a persistent adb connection.
+        # it will write the ongoing result log to /sdcard/ex.log and then we will repeatedly
+        # check that - allowing for usb disconnection without losing the results
+        execute_shell_command("Test", self.args, ["adb", "shell", "rm -f /sdcard/ex.log && rm -f /sdcard/ex_now.log && rm -f /sdcard/ex_read.log && rm -f /sdcard/test_pid.txt && touch /sdcard/ex_now.log"])
+
+        command = "adb shell nohup am instrument --user " + str(self.state.get_user())
 
         # Use the formatted output
         command += " -e listener com.android.bedstead.harrier.BedsteadRunListener"
@@ -737,34 +743,29 @@ class Test:
 
         command += " -w " + self.module_package + "/" + self.runner
 
+        # This means we will have /sdcard/ex.log with the test results and /sdcard/test_pid.txt
+        # with the pid of the process. We can check the pid to see if the tests are still running
+        command += " > /sdcard/ex.log 2>&1 & echo $! > /sdcard/test_pid.txt"
+
         if self.args.debug:
             print("[Test] Executing '" + command + "'")
 
-        def enqueue_output(out, queue):
-            for line in iter(out.readline, b''):
-                line = line.decode('utf-8')
+        def enqueue_output(queue):
+            output, stderr = execute_shell_command("Test", self.args, ["adb", "shell", "cp /sdcard/ex_now.log /sdcard/ex_read.log && cp /sdcard/ex.log /sdcard/ex_now.log && comm -23 /sdcard/ex_now.log /sdcard/ex_read.log"])
+            for line in output.split("\n"):
                 debug(self.args, "[DEBUG] " + line)
 
                 if "Time: " in line:
                     debug(self.args, "[DEBUG] Output finished")
                     self.tests_finished = True
                 queue.put(line)
-            out.close()
 
+        execute_shell_command("Test", self.args, command.split(" "))
         self.tests_finished = False
-        self.test_process = subprocess.Popen([command], shell=True, executable="/bin/bash", stdout=subprocess.PIPE, close_fds=True)
         self.test_process_queue = queue.Queue()
-        self.test_process_thread = Thread(target=enqueue_output, args=(self.test_process.stdout, self.test_process_queue))
+        self.test_process_thread = Thread(target=enqueue_output, args=(self.test_process_queue,))
         self.test_process_thread.daemon = True
         self.test_process_thread.start()
-
-        if self.args.debug:
-            print("[Test] About to sleep")
-        import time
-        # TODO: For some reason we need a sleep otherwise the test_process doesn't launch... look into this
-        time.sleep(2)
-        if self.args.debug:
-            print("[Test] Slept")
 
         start_timer = time.monotonic_ns()
 
@@ -810,7 +811,7 @@ class Test:
 
                     if self.args.stop_after_first_failure and str(result["result"]) == "1":
                         # Failure
-                        self.test_process.kill()
+                        self.kill()
                         raise KeyboardInterrupt
                         return
 
@@ -819,7 +820,7 @@ class Test:
             while self.tests_are_running():
                 if time.monotonic_ns() - wait_to_end_timer > 10000000000:
                     print("(Waited 10 seconds for test process to end. Killing)")
-                    self.test_process.kill()
+                    self.kill()
                     break
             debug(self.args, "Done")
 
@@ -842,7 +843,11 @@ class Test:
             print(output)
 
     def tests_are_running(self):
-        return self.test_process.poll() is None and not self.tests_finished
+        output, err = execute_shell_command("Test", self.args, ["adb", "shell", "ps | grep $(cat /sdcard/test_pid.txt)"])
+        return output.strip()
+
+    def kill(self):
+        execute_shell_command("Test", self.args, ["adb", "shell", "kill $(cat /sdcard/test_pid.txt)"])
 
     def get_num_tests(self):
         numTests = -1
@@ -942,11 +947,22 @@ def execute_shell_command(stage, args, command, **extra_args):
     debug(args, "[" + stage + "] Output: '" + output + "' Err: '" + r.stderr + "'")
 
     if r.stderr:
-        if "no devices/emulators found" in r.stderr:
-            print("Error: No devices/emulators found")
-            sys.exit(1)
+        if "no devices/emulators found" in r.stderr or "device offline" in r.stderr:
+            print("\nDevice not connected to ADB. Waiting for reconnection...")
+            wait_for_adb_reconnection()
+            return execute_shell_command(stage, args, command, **extra_args)
 
     return output, r.stderr
+
+def wait_for_adb_reconnection():
+    while True:
+        r = subprocess.run(["adb", "shell", "echo", "hello"], capture_output=True, text=True)
+        output = r.stdout
+
+        if not r.stderr or (not "no devices/emulators found" in r.stderr and not "device offline" in r.stderr):
+            print("\nFound connection")
+            return
+        time.sleep(0.5)
 
 def get_or_create_additional_user(device_state, args):
     users = get_users(args)
@@ -1223,11 +1239,11 @@ def run_tests(args):
     except KeyboardInterrupt:
         # Kill the test process then move on to print the results
         if test is not None:
-            test.test_process.kill()
+            test.kill()
         has_quit = True
     except Exception as e:
         if test is not None:
-            test.test_process.kill()
+            test.kill()
         raise e
 
     return btest_run, has_quit

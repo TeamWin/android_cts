@@ -23,7 +23,6 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.net.wifi.WifiKeystore;
-import android.net.wifi.cts.WifiFeature;
 import android.os.Build;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;

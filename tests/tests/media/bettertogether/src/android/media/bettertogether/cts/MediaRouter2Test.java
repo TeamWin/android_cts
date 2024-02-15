@@ -190,6 +190,13 @@ public class MediaRouter2Test {
     }
 
     @Test
+    public void testMediaRouter2ReturnsRoutingSessionInfoWithNonEmptyClientName() {
+        RoutingController routingController = mRouter2.getSystemController();
+        RoutingSessionInfo sessionInfo = routingController.getRoutingSessionInfo();
+        assertThat(sessionInfo.getClientPackageName()).isEqualTo(mContext.getPackageName());
+    }
+
+    @Test
     public void testGetRoutesAfterCreation() {
         RouteCallback routeCallback = new RouteCallback() {};
         mRouter2.registerRouteCallback(mExecutor, routeCallback, LIVE_AUDIO_DISCOVERY_PREFERENCE);

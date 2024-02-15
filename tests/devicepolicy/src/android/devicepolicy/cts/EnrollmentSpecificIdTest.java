@@ -24,21 +24,27 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.testng.Assert.assertThrows;
 
 import android.annotation.NonNull;
+import android.app.admin.flags.Flags;
 import android.content.Context;
 import android.net.wifi.WifiManager;
 import android.os.Build;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telephony.TelephonyManager;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDevicePolicyManagerRoleHolder;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.EnrollmentSpecificId;
 import com.android.bedstead.nene.TestApis;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
 import java.nio.ByteBuffer;
@@ -55,9 +61,12 @@ public final class EnrollmentSpecificIdTest {
     private static final String DIFFERENT_ORGANIZATION_ID = "xyz";
 
     @ClassRule
-    @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
+    @Rule
+    public final TestRule mCheckFlagsRule = RuleChain
+            .outerRule(DeviceFlagsValueProvider.createCheckFlagsRule())
+            .around(sDeviceState);
     private static final Context sContext = TestApis.context().instrumentedContext();
 
     @Postsubmit(reason = "New test")
@@ -98,6 +107,28 @@ public final class EnrollmentSpecificIdTest {
                     ORGANIZATION_ID);
 
             assertThat(esidFromDpm).isEqualTo(calculatedEsid);
+        } finally {
+            TestApis.devicePolicy().clearOrganizationId(sDeviceState.dpc().user());
+        }
+    }
+
+    /**
+     * New role holder test
+     */
+    @Postsubmit(reason = "New test")
+    @PolicyAppliesTest(policy = EnrollmentSpecificId.class)
+    @EnsureHasPermission({READ_PRIVILEGED_PHONE_STATE, NETWORK_SETTINGS, LOCAL_MAC_ADDRESS})
+    @EnsureHasDevicePolicyManagerRoleHolder
+    @RequiresFlagsEnabled(Flags.FLAG_PERMISSION_MIGRATION_FOR_ZERO_TRUST_IMPL_ENABLED)
+    public void enrollmentSpecificId_RoleHolderCanAccess() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setOrganizationId(ORGANIZATION_ID);
+            String esidFromDpm = sDeviceState.dpc().devicePolicyManager()
+                    .getEnrollmentSpecificId();
+            String esidFromRoleHolder = sDeviceState.dpmRoleHolder().devicePolicyManager()
+                    .getEnrollmentSpecificId();
+
+            assertThat(esidFromDpm).isEqualTo(esidFromRoleHolder);
         } finally {
             TestApis.devicePolicy().clearOrganizationId(sDeviceState.dpc().user());
         }

@@ -16,6 +16,8 @@
 
 package android.devicepolicy.cts;
 
+import static android.app.admin.flags.Flags.FLAG_DEVICE_POLICY_SIZE_TRACKING_ENABLED;
+
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -24,6 +26,8 @@ import static org.junit.Assert.assertThrows;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -40,6 +44,8 @@ import com.android.compatibility.common.util.ApiTest;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
 /**
@@ -49,8 +55,12 @@ import org.junit.runner.RunWith;
 @RunWith(BedsteadJUnit4.class)
 public final class DevicePolicyManagerTest {
     @ClassRule
-    @Rule
     public static final DeviceState sDeviceState = new DeviceState();
+
+    @Rule
+    public final TestRule mCheckFlagsRule = RuleChain
+            .outerRule(DeviceFlagsValueProvider.createCheckFlagsRule())
+            .around(sDeviceState);
 
     private static final Context sContext = TestApis.context().instrumentedContext();
     private static final DevicePolicyManager sDevicePolicyManager =
@@ -127,5 +137,43 @@ public final class DevicePolicyManagerTest {
     public void getPolicyManagedProfiles_noPermission_returnsEmptyList() {
         assertThrows(SecurityException.class, () -> sDevicePolicyManager.getPolicyManagedProfiles(
                 TestApis.context().instrumentationContext().getUser()));
+    }
+
+    @RequiresFlagsEnabled(FLAG_DEVICE_POLICY_SIZE_TRACKING_ENABLED)
+    @Postsubmit(reason = "new test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setMaxPolicyStorageLimit")
+    public void setMaxPolicyStorageLimit_setsLimit() {
+        int currentLimit = sDevicePolicyManager.getMaxPolicyStorageLimit();
+        try {
+
+            sDevicePolicyManager.setMaxPolicyStorageLimit(-1);
+
+            assertThat(sDevicePolicyManager.getMaxPolicyStorageLimit()).isEqualTo(-1);
+
+        } finally {
+            sDevicePolicyManager.setMaxPolicyStorageLimit(currentLimit);
+        }
+    }
+
+    @RequiresFlagsEnabled(FLAG_DEVICE_POLICY_SIZE_TRACKING_ENABLED)
+    @Postsubmit(reason = "new test")
+    @Test
+    @EnsureDoesNotHavePermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setMaxPolicyStorageLimit")
+    public void setMaxPolicyStorageLimit_noPermission_throwsException() {
+        assertThrows(
+                SecurityException.class, () -> sDevicePolicyManager.setMaxPolicyStorageLimit(-1));
+    }
+
+    @RequiresFlagsEnabled(FLAG_DEVICE_POLICY_SIZE_TRACKING_ENABLED)
+    @Postsubmit(reason = "new test")
+    @Test
+    @EnsureDoesNotHavePermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getMaxPolicyStorageLimit")
+    public void getMaxPolicyStorageLimit_noPermission_throwsException() {
+        assertThrows(
+                SecurityException.class, () -> sDevicePolicyManager.getMaxPolicyStorageLimit());
     }
 }

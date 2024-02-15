@@ -23,7 +23,6 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.net.wifi.ScanResult;
-import android.net.wifi.cts.WifiFeature;
 import android.net.wifi.flags.Flags;
 import android.net.wifi.nl80211.DeviceWiphyCapabilities;
 import android.os.Parcel;

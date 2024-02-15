@@ -107,7 +107,11 @@ public class LoadTest {
                 unexpected.add(t.getMessage());
             }
         };
-        assertThat("Some libraries failed to load", unexpected, is(Collections.emptyList()));
+        assertThat("Some libraries failed to load. Libraries shown below are listed in " +
+                "/vendor/public.libraries.txt or /system/etc/public.libraries-COMPANYNAME.txt " +
+                "as public libraries, but they may not exist or inaccessible. " +
+                "You may fix this by unlisting them from the txt files"
+                , unexpected, is(Collections.emptyList()));
     }
 
     /**

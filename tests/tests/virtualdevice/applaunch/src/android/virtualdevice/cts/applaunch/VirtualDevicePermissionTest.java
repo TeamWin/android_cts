@@ -87,7 +87,8 @@ public class VirtualDevicePermissionTest {
     public VirtualDeviceRule mRule = VirtualDeviceRule.withAdditionalPermissions(
             GRANT_RUNTIME_PERMISSIONS, REVOKE_RUNTIME_PERMISSIONS);
 
-    private final Context mContext = getInstrumentation().getContext();
+    private final Context mContext =
+            getInstrumentation().getContext().createDeviceContext(Context.DEVICE_ID_DEFAULT);
     private final PackageManager mPackageManager = mContext.getPackageManager();
 
     private VirtualDevice mVirtualDevice;

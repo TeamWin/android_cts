@@ -24,9 +24,14 @@ import static com.android.server.appsearch.contactsindexer.appsearchtypes.Contac
 import static com.android.server.appsearch.contactsindexer.appsearchtypes.ContactPoint.CONTACT_POINT_PROPERTY_LABEL;
 import static com.android.server.appsearch.contactsindexer.appsearchtypes.ContactPoint.CONTACT_POINT_PROPERTY_TELEPHONE;
 import static com.android.server.appsearch.contactsindexer.appsearchtypes.Person.PERSON_PROPERTY_ADDITIONAL_NAMES;
+import static com.android.server.appsearch.contactsindexer.appsearchtypes.Person.PERSON_PROPERTY_ADDITIONAL_NAME_TYPES;
 import static com.android.server.appsearch.contactsindexer.appsearchtypes.Person.PERSON_PROPERTY_AFFILIATIONS;
 import static com.android.server.appsearch.contactsindexer.appsearchtypes.Person.PERSON_PROPERTY_CONTACT_POINTS;
+import static com.android.server.appsearch.contactsindexer.appsearchtypes.Person.PERSON_PROPERTY_EXTERNAL_URI;
+import static com.android.server.appsearch.contactsindexer.appsearchtypes.Person.PERSON_PROPERTY_FAMILY_NAME;
+import static com.android.server.appsearch.contactsindexer.appsearchtypes.Person.PERSON_PROPERTY_GIVEN_NAME;
 import static com.android.server.appsearch.contactsindexer.appsearchtypes.Person.PERSON_PROPERTY_IMAGE_URI;
+import static com.android.server.appsearch.contactsindexer.appsearchtypes.Person.PERSON_PROPERTY_MIDDLE_NAME;
 import static com.android.server.appsearch.contactsindexer.appsearchtypes.Person.PERSON_PROPERTY_NAME;
 import static com.android.server.appsearch.contactsindexer.appsearchtypes.Person.PERSON_PROPERTY_NOTES;
 import static com.android.server.appsearch.contactsindexer.appsearchtypes.Person.TYPE_NICKNAME;
@@ -202,19 +207,31 @@ public class EnterpriseContactsDeviceTest {
                         DATABASE_NAME, getDocumentRequest).get();
         assertThat(getResult.isSuccess()).isTrue();
         GenericDocument document = getResult.getSuccesses().get("123");
-        assertThat(document.getPropertyNames()).containsExactly(PERSON_PROPERTY_NAME,
+        assertThat(document.getPropertyNames()).containsAtLeast(PERSON_PROPERTY_NAME,
+                PERSON_PROPERTY_GIVEN_NAME, PERSON_PROPERTY_MIDDLE_NAME,
+                PERSON_PROPERTY_FAMILY_NAME, PERSON_PROPERTY_EXTERNAL_URI,
+                PERSON_PROPERTY_ADDITIONAL_NAME_TYPES, PERSON_PROPERTY_ADDITIONAL_NAMES,
                 PERSON_PROPERTY_IMAGE_URI, PERSON_PROPERTY_CONTACT_POINTS);
-        assertThat(document.getPropertyString(Person.PERSON_PROPERTY_NAME)).isEqualTo(
-                "Sam1 Curran");
+        assertThat(document.getPropertyNames()).doesNotContain(PERSON_PROPERTY_NOTES);
+        assertThat(document.getPropertyString(PERSON_PROPERTY_NAME)).isEqualTo("Sam1 Curran");
+        assertThat(document.getPropertyString(PERSON_PROPERTY_GIVEN_NAME)).isEqualTo("givenName");
+        assertThat(document.getPropertyString(PERSON_PROPERTY_MIDDLE_NAME)).isEqualTo("middleName");
+        assertThat(document.getPropertyString(PERSON_PROPERTY_FAMILY_NAME)).isEqualTo("familyName");
+        assertThat(document.getPropertyString(PERSON_PROPERTY_EXTERNAL_URI)).isEqualTo(
+                "externalUri");
+        assertThat(document.getPropertyLongArray(
+                PERSON_PROPERTY_ADDITIONAL_NAME_TYPES)).asList().containsExactly(
+                (long) TYPE_NICKNAME);
+        assertThat(document.getPropertyStringArray(
+                PERSON_PROPERTY_ADDITIONAL_NAMES)).asList().containsExactly("nickname");
         // The imageUri property will not be rewritten by EnterpriseSearchResultPageTransformer
         // since this document does not come from the actual AppSearch contacts corpus
-        assertThat(document.getPropertyString(Person.PERSON_PROPERTY_IMAGE_URI)).isEqualTo(
-                "imageUri");
+        assertThat(document.getPropertyString(PERSON_PROPERTY_IMAGE_URI)).isEqualTo("imageUri");
         GenericDocument contactPoint = document.getPropertyDocumentArray(
-                Person.PERSON_PROPERTY_CONTACT_POINTS)[0];
-        assertThat(contactPoint.getPropertyNames()).containsExactly(
-                CONTACT_POINT_PROPERTY_LABEL, CONTACT_POINT_PROPERTY_EMAIL,
-                CONTACT_POINT_PROPERTY_TELEPHONE);
+                PERSON_PROPERTY_CONTACT_POINTS)[0];
+        assertThat(contactPoint.getPropertyNames()).containsAtLeast(CONTACT_POINT_PROPERTY_LABEL,
+                CONTACT_POINT_PROPERTY_EMAIL, CONTACT_POINT_PROPERTY_TELEPHONE);
+        assertThat(contactPoint.getPropertyNames()).doesNotContain(CONTACT_POINT_PROPERTY_ADDRESS);
         assertThat(contactPoint.getPropertyString(CONTACT_POINT_PROPERTY_LABEL)).isEqualTo(
                 "contact1");
         assertThat(contactPoint.getPropertyString(CONTACT_POINT_PROPERTY_EMAIL)).isEqualTo(
@@ -230,9 +247,10 @@ public class EnterpriseContactsDeviceTest {
     public void testGetEnterpriseContact_withProjection() throws Exception {
         GetByDocumentIdRequest getDocumentRequest = new GetByDocumentIdRequest.Builder(
                 "namespace").addIds("123").addProjection(Person.SCHEMA_TYPE,
-                Arrays.asList(PERSON_PROPERTY_NAME, PERSON_PROPERTY_CONTACT_POINTS + "."
-                        + CONTACT_POINT_PROPERTY_ADDRESS, PERSON_PROPERTY_CONTACT_POINTS + "."
-                        + CONTACT_POINT_PROPERTY_EMAIL)).build();
+                Arrays.asList(PERSON_PROPERTY_NAME, PERSON_PROPERTY_ADDITIONAL_NAMES,
+                        PERSON_PROPERTY_CONTACT_POINTS + "." + CONTACT_POINT_PROPERTY_ADDRESS,
+                        PERSON_PROPERTY_CONTACT_POINTS + "."
+                                + CONTACT_POINT_PROPERTY_EMAIL)).build();
         Map<String, List<String>> projectionsCopy = getDocumentRequest.getProjections();
 
         AppSearchBatchResult<String, GenericDocument> getResult =
@@ -242,15 +260,17 @@ public class EnterpriseContactsDeviceTest {
         assertThat(getResult.isSuccess()).isTrue();
         GenericDocument document = getResult.getSuccesses().get("123");
         assertThat(document.getPropertyNames()).containsExactly(PERSON_PROPERTY_NAME,
-                PERSON_PROPERTY_CONTACT_POINTS);
-        assertThat(document.getPropertyString(Person.PERSON_PROPERTY_NAME)).isEqualTo(
-                "Sam1 Curran");
+                PERSON_PROPERTY_CONTACT_POINTS, PERSON_PROPERTY_ADDITIONAL_NAMES);
+        assertThat(document.getPropertyString(PERSON_PROPERTY_NAME)).isEqualTo("Sam1 Curran");
+        assertThat(document.getPropertyStringArray(
+                PERSON_PROPERTY_ADDITIONAL_NAMES)).asList().containsExactly("nickname");
         GenericDocument contactPoint = document.getPropertyDocumentArray(
-                Person.PERSON_PROPERTY_CONTACT_POINTS)[0];
-        assertThat(contactPoint.getPropertyNames()).containsExactly(
-                CONTACT_POINT_PROPERTY_EMAIL);
+                PERSON_PROPERTY_CONTACT_POINTS)[0];
+        assertThat(contactPoint.getPropertyNames()).containsExactly(CONTACT_POINT_PROPERTY_EMAIL);
         assertThat(contactPoint.getPropertyString(CONTACT_POINT_PROPERTY_EMAIL)).isEqualTo(
                 "person1@email.com");
+        // CONTACT_POINT_PROPERTY_ADDRESS is not an accessible property
+        assertThat(contactPoint.getPropertyString(CONTACT_POINT_PROPERTY_ADDRESS)).isNull();
 
         // Check projections were not overwritten across Binder
         assertThat(getDocumentRequest.getProjections()).isEqualTo(projectionsCopy);
@@ -267,18 +287,23 @@ public class EnterpriseContactsDeviceTest {
         List<GenericDocument> documents = convertSearchResultsToDocuments(searchResults);
         assertThat(documents).hasSize(3);
         for (GenericDocument document : documents) {
-            assertThat(document.getPropertyNames()).containsExactly(PERSON_PROPERTY_NAME,
+            assertThat(document.getPropertyNames()).containsAtLeast(PERSON_PROPERTY_NAME,
+                    PERSON_PROPERTY_GIVEN_NAME, PERSON_PROPERTY_MIDDLE_NAME,
+                    PERSON_PROPERTY_FAMILY_NAME, PERSON_PROPERTY_EXTERNAL_URI,
+                    PERSON_PROPERTY_ADDITIONAL_NAME_TYPES, PERSON_PROPERTY_ADDITIONAL_NAMES,
                     PERSON_PROPERTY_IMAGE_URI, PERSON_PROPERTY_CONTACT_POINTS);
+            assertThat(document.getPropertyNames()).doesNotContain(PERSON_PROPERTY_NOTES);
             GenericDocument contactPoint = document.getPropertyDocumentArray(
-                    Person.PERSON_PROPERTY_CONTACT_POINTS)[0];
-            assertThat(contactPoint.getPropertyNames()).containsExactly(
+                    PERSON_PROPERTY_CONTACT_POINTS)[0];
+            assertThat(contactPoint.getPropertyNames()).containsAtLeast(
                     CONTACT_POINT_PROPERTY_LABEL, CONTACT_POINT_PROPERTY_EMAIL,
                     CONTACT_POINT_PROPERTY_TELEPHONE);
+            assertThat(contactPoint.getPropertyNames()).doesNotContain(
+                    CONTACT_POINT_PROPERTY_ADDRESS);
         }
 
         // Searching by indexed but inaccessible properties returns nothing
-        searchResults = mEnterpriseSession.search(
-                "nickname OR affiliation OR note OR address", spec);
+        searchResults = mEnterpriseSession.search("affiliation OR note OR address", spec);
         documents = convertSearchResultsToDocuments(searchResults);
         assertThat(documents).isEmpty();
     }
@@ -289,7 +314,8 @@ public class EnterpriseContactsDeviceTest {
                 .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
                 .addFilterNamespaces("namespace")
                 .addProjection(Person.SCHEMA_TYPE,
-                        Arrays.asList(PERSON_PROPERTY_NAME, PERSON_PROPERTY_CONTACT_POINTS + "."
+                        Arrays.asList(PERSON_PROPERTY_NAME, PERSON_PROPERTY_ADDITIONAL_NAMES,
+                                PERSON_PROPERTY_CONTACT_POINTS + "."
                                         + CONTACT_POINT_PROPERTY_ADDRESS,
                                 PERSON_PROPERTY_CONTACT_POINTS + "."
                                         + CONTACT_POINT_PROPERTY_EMAIL))
@@ -300,16 +326,19 @@ public class EnterpriseContactsDeviceTest {
         assertThat(documents).hasSize(3);
         for (GenericDocument document : documents) {
             assertThat(document.getPropertyNames()).containsExactly(PERSON_PROPERTY_NAME,
-                    PERSON_PROPERTY_CONTACT_POINTS);
+                    PERSON_PROPERTY_CONTACT_POINTS, PERSON_PROPERTY_ADDITIONAL_NAMES);
+            assertThat(document.getPropertyStringArray(
+                    PERSON_PROPERTY_ADDITIONAL_NAMES)).asList().containsExactly("nickname");
             GenericDocument contactPoint = document.getPropertyDocumentArray(
-                    Person.PERSON_PROPERTY_CONTACT_POINTS)[0];
+                    PERSON_PROPERTY_CONTACT_POINTS)[0];
             assertThat(contactPoint.getPropertyNames()).containsExactly(
                     CONTACT_POINT_PROPERTY_EMAIL);
+            // CONTACT_POINT_PROPERTY_ADDRESS is not an accessible property
+            assertThat(contactPoint.getPropertyString(CONTACT_POINT_PROPERTY_ADDRESS)).isNull();
         }
 
         // Searching by indexed but inaccessible properties returns nothing
-        searchResults = mEnterpriseSession.search(
-                "nickname OR affiliation OR note OR address", spec);
+        searchResults = mEnterpriseSession.search("affiliation OR note OR address", spec);
         documents = convertSearchResultsToDocuments(searchResults);
         assertThat(documents).isEmpty();
     }
@@ -324,24 +353,29 @@ public class EnterpriseContactsDeviceTest {
                                 PERSON_PROPERTY_AFFILIATIONS, PERSON_PROPERTY_NOTES))
                 .build();
 
-        // Searching by name returns results
-        SearchResultsShim searchResults = mEnterpriseSession.search("Sam", spec);
+        // Searching by name and nickname returns results
+        SearchResultsShim searchResults = mEnterpriseSession.search("Sam AND nickname", spec);
         List<GenericDocument> documents = convertSearchResultsToDocuments(searchResults);
         assertThat(documents).hasSize(3);
         for (GenericDocument document : documents) {
-            assertThat(document.getPropertyNames()).containsExactly(PERSON_PROPERTY_NAME,
+            assertThat(document.getPropertyNames()).containsAtLeast(PERSON_PROPERTY_NAME,
+                    PERSON_PROPERTY_GIVEN_NAME, PERSON_PROPERTY_MIDDLE_NAME,
+                    PERSON_PROPERTY_FAMILY_NAME, PERSON_PROPERTY_EXTERNAL_URI,
+                    PERSON_PROPERTY_ADDITIONAL_NAME_TYPES, PERSON_PROPERTY_ADDITIONAL_NAMES,
                     PERSON_PROPERTY_IMAGE_URI, PERSON_PROPERTY_CONTACT_POINTS);
+            assertThat(document.getPropertyNames()).doesNotContain(PERSON_PROPERTY_NOTES);
             GenericDocument contactPoint = document.getPropertyDocumentArray(
-                    Person.PERSON_PROPERTY_CONTACT_POINTS)[0];
-            assertThat(contactPoint.getPropertyNames()).containsExactly(
+                    PERSON_PROPERTY_CONTACT_POINTS)[0];
+            assertThat(contactPoint.getPropertyNames()).containsAtLeast(
                     CONTACT_POINT_PROPERTY_LABEL, CONTACT_POINT_PROPERTY_EMAIL,
                     CONTACT_POINT_PROPERTY_TELEPHONE);
+            assertThat(contactPoint.getPropertyNames()).doesNotContain(
+                    CONTACT_POINT_PROPERTY_ADDRESS);
         }
 
         // Searching by the filtered properties that are still inaccessible even when explicitly
         // set returns nothing
-        searchResults = mEnterpriseSession.search(
-                "nickname OR affiliation OR note OR address", spec);
+        searchResults = mEnterpriseSession.search("affiliation OR note OR address", spec);
         documents = convertSearchResultsToDocuments(searchResults);
         assertThat(documents).isEmpty();
     }

@@ -27,9 +27,6 @@ import static android.net.wifi.WifiConfiguration.INVALID_NETWORK_ID;
 import static android.net.wifi.WifiManager.COEX_RESTRICTION_SOFTAP;
 import static android.net.wifi.WifiManager.COEX_RESTRICTION_WIFI_AWARE;
 import static android.net.wifi.WifiManager.COEX_RESTRICTION_WIFI_DIRECT;
-import static android.net.wifi.WifiManager.SEND_DHCP_HOSTNAME_RESTRICTION_ALL;
-import static android.net.wifi.WifiManager.SEND_DHCP_HOSTNAME_RESTRICTION_NONE;
-import static android.net.wifi.WifiManager.SEND_DHCP_HOSTNAME_RESTRICTION_OPEN;
 import static android.net.wifi.WifiScanner.WIFI_BAND_24_GHZ;
 import static android.os.Process.myUid;
 
@@ -182,6 +179,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 
 @RunWith(AndroidJUnit4.class)
@@ -6914,8 +6912,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     }
 
     private int querySendDhcpHostnameRestrictionSynchronous() throws Exception {
-        Mutable<Integer> queriedRestriction =
-                new Mutable<>(SEND_DHCP_HOSTNAME_RESTRICTION_NONE);
+        Mutable<Integer> queriedRestriction = new Mutable<>(0);
         Mutable<Boolean> isQuerySucceeded = new Mutable<>(false);
         sWifiManager.querySendDhcpHostnameRestriction(mExecutor, (value) -> {
             synchronized (mLock) {
@@ -6938,7 +6935,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
 
     /**
      * Tests {@link WifiManager#setSendDhcpHostnameRestriction(int)} and
-     * {@link WifiManager#querySendDhcpHostnameRestriction(Executor, Consumer)}.
+     * {@link WifiManager#querySendDhcpHostnameRestriction(Executor, IntConsumer)}.
      */
     @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
@@ -6946,20 +6943,24 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     @Test
     public void testSetAndQuerySendDhcpHostnameRestriction() throws Exception {
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        int previousRestriction = SEND_DHCP_HOSTNAME_RESTRICTION_NONE;
+        int previousRestriction = 0;
         boolean isRestoreRequired = false;
         try {
             uiAutomation.adoptShellPermissionIdentity();
             previousRestriction = querySendDhcpHostnameRestrictionSynchronous();
 
-            sWifiManager.setSendDhcpHostnameRestriction(SEND_DHCP_HOSTNAME_RESTRICTION_OPEN);
+            sWifiManager.setSendDhcpHostnameRestriction(
+                    WifiManager.FLAG_SEND_DHCP_HOSTNAME_RESTRICTION_OPEN);
             isRestoreRequired = true;
             assertEquals(querySendDhcpHostnameRestrictionSynchronous(),
-                    SEND_DHCP_HOSTNAME_RESTRICTION_OPEN);
+                    WifiManager.FLAG_SEND_DHCP_HOSTNAME_RESTRICTION_OPEN);
 
-            sWifiManager.setSendDhcpHostnameRestriction(SEND_DHCP_HOSTNAME_RESTRICTION_ALL);
+            sWifiManager.setSendDhcpHostnameRestriction(
+                    WifiManager.FLAG_SEND_DHCP_HOSTNAME_RESTRICTION_OPEN
+                            | WifiManager.FLAG_SEND_DHCP_HOSTNAME_RESTRICTION_SECURE);
             assertEquals(querySendDhcpHostnameRestrictionSynchronous(),
-                    SEND_DHCP_HOSTNAME_RESTRICTION_ALL);
+                    WifiManager.FLAG_SEND_DHCP_HOSTNAME_RESTRICTION_OPEN
+                            | WifiManager.FLAG_SEND_DHCP_HOSTNAME_RESTRICTION_SECURE);
         } finally {
             if (isRestoreRequired) {
                 sWifiManager.setSendDhcpHostnameRestriction(previousRestriction);
@@ -7193,6 +7194,81 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
             assertTrue(testTwtCallback.mTwtTeardownReasonCode.get()
                     == TwtCallback.TWT_REASON_CODE_LOCALLY_REQUESTED);
         } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Tests {@link WifiManager#isD2dSupportedWhenInfraStaDisabled()},
+     * {@link WifiManager#setD2dAllowedWhenInfraStaDisabled()} and
+     * {@link WifiManager#queryD2dAllowedWhenInfraStaDisabled()}.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @Test
+    public void testD2dAllowedWhenInfraStaDisabled() throws Exception {
+        if (!sWifiManager.isD2dSupportedWhenInfraStaDisabled()) {
+            // skip the test if feature is not supported.
+            return;
+        }
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        Mutable<Boolean> isQuerySucceeded = new Mutable<Boolean>(false);
+        boolean currentD2dAllowed = false;
+        boolean isRestoreRequired = false;
+        long now, deadline;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            Mutable<Boolean> isD2dAllowed = new Mutable<Boolean>(false);
+            sWifiManager.queryD2dAllowedWhenInfraStaDisabled(mExecutor,
+                    new Consumer<Boolean>() {
+                    @Override
+                    public void accept(Boolean value) {
+                        synchronized (mLock) {
+                            isD2dAllowed.value = value;
+                            isQuerySucceeded.value = true;
+                            mLock.notify();
+                        }
+                    }
+                });
+            synchronized (mLock) {
+                now = System.currentTimeMillis();
+                deadline = now + TEST_WAIT_DURATION_MS;
+                while (!isQuerySucceeded.value && now < deadline) {
+                    mLock.wait(deadline - now);
+                    now = System.currentTimeMillis();
+                }
+            }
+            assertTrue("d2d allowed query fail", isQuerySucceeded.value);
+            // Reset for next query
+            isQuerySucceeded.value = false;
+            currentD2dAllowed = isD2dAllowed.value;
+            isRestoreRequired = true;
+            sWifiManager.setD2dAllowedWhenInfraStaDisabled(!currentD2dAllowed);
+            sWifiManager.queryD2dAllowedWhenInfraStaDisabled(mExecutor,
+                    new Consumer<Boolean>() {
+                    @Override
+                    public void accept(Boolean value) {
+                        synchronized (mLock) {
+                            isD2dAllowed.value = value;
+                            isQuerySucceeded.value = true;
+                            mLock.notify();
+                        }
+                    }
+                });
+            synchronized (mLock) {
+                now = System.currentTimeMillis();
+                deadline = now + TEST_WAIT_DURATION_MS;
+                while (!isQuerySucceeded.value && now < deadline) {
+                    mLock.wait(deadline - now);
+                    now = System.currentTimeMillis();
+                }
+            }
+            assertEquals("set/query d2d allowed should match",
+                    isD2dAllowed.value, !currentD2dAllowed);
+        } finally {
+            if (isRestoreRequired) {
+                sWifiManager.setD2dAllowedWhenInfraStaDisabled(currentD2dAllowed);
+            }
             uiAutomation.dropShellPermissionIdentity();
         }
     }

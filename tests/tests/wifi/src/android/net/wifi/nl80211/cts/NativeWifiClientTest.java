@@ -22,7 +22,6 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.net.MacAddress;
-import android.net.wifi.cts.WifiFeature;
 import android.net.wifi.nl80211.NativeWifiClient;
 import android.os.Parcel;
 

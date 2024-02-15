@@ -84,6 +84,7 @@
     <uses-permission android:name="android.permission.MANAGE_DEVICE_POLICY_MICROPHONE" />
     <uses-permission android:name="android.permission.MANAGE_DEVICE_POLICY_USB_FILE_TRANSFER" />
     <uses-permission android:name="android.permission.MANAGE_DEVICE_POLICY_CONTENT_PROTECTION" />
+    <uses-permission android:name="android.permission.MANAGE_DEVICE_POLICY_QUERY_SYSTEM_UPDATES" />
 
     <application
         android:label="DevicePolicyManagerRoleHolder" android:testOnly="true">
@@ -132,6 +133,7 @@
                 android:resource="@xml/device_admin"/>
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED"/>
+                <action android:name="android.app.action.NOTIFY_PENDING_SYSTEM_UPDATE"/>
             </intent-filter>
         </receiver>
 

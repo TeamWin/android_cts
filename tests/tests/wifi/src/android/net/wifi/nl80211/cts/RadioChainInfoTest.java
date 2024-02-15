@@ -21,7 +21,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
-import android.net.wifi.cts.WifiFeature;
 import android.net.wifi.nl80211.RadioChainInfo;
 import android.os.Parcel;
 

@@ -16,6 +16,10 @@
 
 package android.media.cujcommon.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.MotionEvent;
@@ -24,7 +28,6 @@ import android.view.WindowManager;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.media3.common.MediaItem;
-import androidx.media3.common.Player;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.ui.PlayerView;
 
@@ -37,8 +40,10 @@ public class MainActivity extends AppCompatActivity {
   protected PlayerView mExoplayerView;
   protected ExoPlayer mPlayer;
   protected static List<String> sVideoUrls = new ArrayList<>();
-  protected Player.Listener mPlayerListener;
+  protected PlayerListener mPlayerListener;
   protected ScaleGestureDetector mScaleGestureDetector = null;
+  protected boolean mConfiguredPipMode;
+  protected boolean mIsInPipMode;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -124,13 +129,36 @@ public class MainActivity extends AppCompatActivity {
   }
 
   /**
+   * Called by the system when the activity changes to and from picture-in-picture mode. This
+   * method provides the same configuration that will be sent in the following
+   * {@link #onConfigurationChanged(Configuration)} call after the activity enters this mode.
+   *
+   * @param isInPictureInPictureMode True if the activity is in picture-in-picture mode.
+   * @param newConfig The new configuration of the activity with the state
+   *                  {@code isInPictureInPictureMode}.
+   */
+  @Override
+  public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode,
+      Configuration newConfig) {
+    super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
+    if (mPlayerListener.isPipTest()) {
+      mIsInPipMode = isInPictureInPictureMode;
+      assertEquals(mConfiguredPipMode, isInPictureInPictureMode);
+      // Verify that the player is playing in PIP mode
+      if (isInPictureInPictureMode) {
+        assertTrue(mPlayer.isPlaying());
+      }
+    }
+  }
+
+  /**
    * Register a listener to receive events from the player.
    *
    * <p>This method can be called from any thread.
    *
    * @param listener The listener to register.
    */
-  public void addPlayerListener(Player.Listener listener) {
+  public void addPlayerListener(PlayerListener listener) {
     mPlayer.addListener(listener);
     this.mPlayerListener = listener;
   }

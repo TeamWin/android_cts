@@ -392,7 +392,7 @@ public class CtsWindowInfoUtils {
      * @return True if window geometry becomes stable before the timeout is reached. False
      * otherwise.
      */
-    public static boolean waitForStableWindowGeometry(int timeout, @NonNull TimeUnit unit)
+    public static boolean waitForStableWindowGeometry(long timeout, @NonNull TimeUnit unit)
             throws InterruptedException {
         var latch = new CountDownLatch(1);
         var satisfied = new AtomicBoolean();

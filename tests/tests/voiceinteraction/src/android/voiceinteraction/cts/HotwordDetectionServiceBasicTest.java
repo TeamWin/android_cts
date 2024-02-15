@@ -19,6 +19,7 @@ package android.voiceinteraction.cts;
 import static android.Manifest.permission.CAPTURE_AUDIO_HOTWORD;
 import static android.Manifest.permission.MANAGE_APP_OPS_MODES;
 import static android.Manifest.permission.MANAGE_HOTWORD_DETECTION;
+import static android.Manifest.permission.MANAGE_WEARABLE_SENSING_SERVICE;
 import static android.Manifest.permission.RECEIVE_SANDBOX_TRIGGER_AUDIO;
 import static android.Manifest.permission.RECORD_AUDIO;
 import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
@@ -42,9 +43,13 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 import android.app.AppOpsManager;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
+import android.app.wearable.WearableSensingManager;
+import android.content.ComponentName;
 import android.content.pm.PackageManager;
 import android.hardware.soundtrigger.SoundTrigger;
 import android.media.AudioAttributes;
@@ -75,6 +80,7 @@ import android.voiceinteraction.cts.services.BaseVoiceInteractionService;
 import android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService;
 import android.voiceinteraction.cts.testcore.Helper;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedRule;
+import android.voiceinteraction.service.MainWearableSensingService;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.RequiresDevice;
@@ -100,8 +106,10 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Tests for {@link HotwordDetectionService}.
@@ -114,6 +122,13 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     // The VoiceInteractionService used by this test
     private static final String SERVICE_COMPONENT =
             "android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService";
+    private static final int USER_ID = UserHandle.myUserId();
+    private static final String MAIN_WEARABLE_SENSING_SERVICE_NAME =
+            "android.voiceinteraction.cts/android.voiceinteraction.service."
+                    + "MainWearableSensingService";
+    private static final ComponentName VIS_COMPONENT_NAME =
+            new ComponentName("android.voiceinteraction.cts", SERVICE_COMPONENT);
+    private static final int TEMPORARY_SERVICE_DURATION_MS = 10000;
 
     private final CountDownLatch mLatch = new CountDownLatch(1);
 
@@ -150,6 +165,8 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     private static final Instrumentation sInstrumentation =
             InstrumentationRegistry.getInstrumentation();
     private static final PackageManager sPkgMgr = sInstrumentation.getContext().getPackageManager();
+    private static final WearableSensingManager sWearableSensingManager =
+            sInstrumentation.getContext().getSystemService(WearableSensingManager.class);
 
     @Rule
     public VoiceInteractionServiceConnectedRule mConnectedRule =
@@ -168,6 +185,7 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     private SoundTrigger.Keyphrase[] mKeyphraseArray;
     private final SoundTriggerInstrumentationObserver mInstrumentationObserver =
             new SoundTriggerInstrumentationObserver();
+    private final Executor mExecutor = Executors.newSingleThreadExecutor();
 
     @BeforeClass
     public static void enableIndicators() {
@@ -244,6 +262,7 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
 
         mService.resetState();
         mService = null;
+        clearTestableWearableSensingService();
     }
 
     public String getTestVoiceInteractionService() {
@@ -1234,6 +1253,196 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled(android.app.wearable.Flags.FLAG_ENABLE_HOTWORD_WEARABLE_SENSING_API)
+    public void testHotwordDetectionService_onDetectFromWearableWithAudioEgress() throws Throwable {
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetectorWithSoundTriggerInjection();
+        try {
+            setupForWearableTests(alwaysOnHotwordDetector);
+            CountDownLatch statusLatch = new CountDownLatch(1);
+            sWearableSensingManager.startHotwordRecognition(
+                    VIS_COMPONENT_NAME,
+                    mExecutor,
+                    (status) -> {
+                        statusLatch.countDown();
+                    });
+            assertThat(statusLatch.await(3, SECONDS)).isTrue();
+            mService.initDetectRejectLatch();
+
+            sendAudioStreamFromWearable();
+
+            // wait for onDetected() to be called and verify the result
+            mService.waitOnDetectOrRejectCalled();
+            AlwaysOnHotwordDetector.EventPayload detectResult =
+                    mService.getHotwordServiceOnDetectedResult();
+
+            Helper.verifyDetectedResult(detectResult, AUDIO_EGRESS_DETECTED_RESULT);
+            // Wait for the async call into WearableSensingService.
+            SystemClock.sleep(2000);
+            verifyWearableSensingServiceHotwordValidatedCalled();
+        } finally {
+            cleanupForWearableTests(alwaysOnHotwordDetector);
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(android.app.wearable.Flags.FLAG_ENABLE_HOTWORD_WEARABLE_SENSING_API)
+    public void testHotwordDetectionService_onRejectWearableHotword_notifiesWearable()
+            throws Throwable {
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetectorWithSoundTriggerInjection();
+        try {
+            setupForWearableTests(alwaysOnHotwordDetector);
+            CountDownLatch statusLatch = new CountDownLatch(1);
+            sWearableSensingManager.startHotwordRecognition(
+                    VIS_COMPONENT_NAME,
+                    mExecutor,
+                    (status) -> {
+                        statusLatch.countDown();
+                    });
+            assertThat(statusLatch.await(3, SECONDS)).isTrue();
+
+            sendNonHotwordAudioStreamFromWearable();
+
+            // Wait for the async call into WearableSensingService.
+            SystemClock.sleep(2000);
+            verifyWearableSensingServiceAudioStopCalled();
+        } finally {
+            cleanupForWearableTests(alwaysOnHotwordDetector);
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(android.app.wearable.Flags.FLAG_ENABLE_HOTWORD_WEARABLE_SENSING_API)
+    public void testHotwordDetectionService_receivesOptionsFromWearable() throws Throwable {
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetectorWithSoundTriggerInjection();
+        try {
+            setupForWearableTests(alwaysOnHotwordDetector);
+            CountDownLatch statusLatch = new CountDownLatch(1);
+            sWearableSensingManager.startHotwordRecognition(
+                    VIS_COMPONENT_NAME,
+                    mExecutor,
+                    (status) -> {
+                        statusLatch.countDown();
+                    });
+            assertThat(statusLatch.await(3, SECONDS)).isTrue();
+            mService.initDetectRejectLatch();
+
+            // The HotwordDetectionService should reject the non-hotword audio stream, but if it
+            // receives the expected options, it will call onDetect instead. This is an indirect
+            // way to verify that options are received because it is difficult to send a message
+            // from HotwordDetectionService back to this test.
+            sendNonHotwordAudioStreamWithAcceptDetectionOptionsFromWearable();
+
+            // verify that onDetect is called
+            mService.waitOnDetectOrRejectCalled();
+            AlwaysOnHotwordDetector.EventPayload detectResult =
+                    mService.getHotwordServiceOnDetectedResult();
+            assertThat(detectResult).isNotNull();
+        } finally {
+            cleanupForWearableTests(alwaysOnHotwordDetector);
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(android.app.wearable.Flags.FLAG_ENABLE_HOTWORD_WEARABLE_SENSING_API)
+    public void testHotwordDetectionService_wearableHotwordWithWrongVisComponent_notifiesWearable()
+            throws Throwable {
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetectorWithSoundTriggerInjection();
+        try {
+            setupForWearableTests(alwaysOnHotwordDetector);
+            CountDownLatch statusLatch = new CountDownLatch(1);
+            sWearableSensingManager.startHotwordRecognition(
+                    new ComponentName("my.package", "my.package.MyClass"),
+                    mExecutor,
+                    (status) -> {
+                        statusLatch.countDown();
+                    });
+            assertThat(statusLatch.await(3, SECONDS)).isTrue();
+            mService.initDetectRejectLatch();
+
+            sendAudioStreamFromWearable();
+
+            // Wait for the async call into WearableSensingService.
+            SystemClock.sleep(2000);
+            verifyWearableSensingServiceAudioStopCalled();
+            // The audio stream is not sent to HDS, so neither onDetect nor onReject should be
+            // called
+            assertThrows(AssertionError.class, () -> mService.waitOnDetectOrRejectCalled());
+        } finally {
+            cleanupForWearableTests(alwaysOnHotwordDetector);
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(android.app.wearable.Flags.FLAG_ENABLE_HOTWORD_WEARABLE_SENSING_API)
+    public void testHotwordDetectionService_closePipeInWearableHotwordResult_notifiesWearable()
+            throws Throwable {
+        // Create AlwaysOnHotwordDetector
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetectorWithSoundTriggerInjection();
+        try {
+            // Do not close the audio stream in HotwordDetectionService immediately after
+            // read. Wait until this test requests it.
+            setupForWearableTests(alwaysOnHotwordDetector, /* closeStreamAfterRead= */ false);
+            CountDownLatch statusLatch = new CountDownLatch(1);
+            sWearableSensingManager.startHotwordRecognition(
+                    VIS_COMPONENT_NAME,
+                    mExecutor,
+                    (status) -> {
+                        statusLatch.countDown();
+                    });
+            assertThat(statusLatch.await(3, SECONDS)).isTrue();
+            mService.initDetectRejectLatch();
+
+            sendAudioStreamFromWearable();
+            // wait for onDetected() called and close the PFD in the result
+            mService.waitOnDetectOrRejectCalled();
+            AlwaysOnHotwordDetector.EventPayload detectResult =
+                    mService.getHotwordServiceOnDetectedResult();
+            detectResult
+                    .getHotwordDetectedResult()
+                    .getAudioStreams()
+                    .get(0)
+                    .getAudioStreamParcelFileDescriptor()
+                    .close();
+            /*
+             * Check if the output PFD sent by HotwordDetectionService is broken (it should).
+             * If yes, HotwordDetectionService will close the audio stream it received.
+             * This is indirect because there is no simple way for HotwordDetectionService to
+             * propagate a test failure signal back to the test driver.
+             */
+            runWithShellPermissionIdentity(
+                    () -> {
+                        PersistableBundle persistableBundle = new PersistableBundle();
+                        persistableBundle.putBoolean(
+                                Utils.KEY_CLOSE_INPUT_AUDIO_STREAM_IF_OUTPUT_PIPE_BROKEN, true);
+                        alwaysOnHotwordDetector.updateState(
+                                persistableBundle, Helper.createFakeSharedMemoryData());
+                    },
+                    MANAGE_HOTWORD_DETECTION);
+            adoptShellPermissionIdentityForHotwordAndWearableSensing();
+            // Wait for all the PFDs involved with the call above to be cleaned up
+            SystemClock.sleep(4000);
+
+            /*
+             * Write more data from wearable onto the same stream. This should trigger a pipe
+             * broken exception in the system_server thread that copies from the output of
+             * WearableSensingService to the input of HotwordDetectionService, which triggers
+             * the callback to stop the wearable stream.
+             */
+            sendMoreAudioDataFromWearable();
+            // Wait for the async call into WearableSensingService.
+            SystemClock.sleep(2000);
+            verifyWearableSensingServiceAudioStopCalled();
+        } finally {
+            cleanupForWearableTests(alwaysOnHotwordDetector);
+        }
+    }
+
+    @Test
     public void testHotwordDetectionServiceDspWithAudioEgressWrongCopyBufferSize()
             throws Throwable {
         // Create AlwaysOnHotwordDetector
@@ -2191,6 +2400,15 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
         uiAutomation.adoptShellPermissionIdentity(RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD);
     }
 
+    private void adoptShellPermissionIdentityForHotwordAndWearableSensing() {
+        // Drop any identity adopted earlier.
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.dropShellPermissionIdentity();
+        // need to retain the identity until the callback is triggered
+        uiAutomation.adoptShellPermissionIdentity(
+                RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD, MANAGE_WEARABLE_SENSING_SERVICE);
+    }
+
     private void adoptShellPermissionIdentityForHotwordWithVoiceActivation() {
         // Drop any identity adopted earlier.
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
@@ -2259,5 +2477,116 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
         mAppOpsManager.setUidMode(RECEIVE_SANDBOX_TRIGGER_AUDIO_OP_STR,
                 UserHandle.getUid(UserHandle.getUserId(Process.myUid()), Process.SHELL_UID),
                 allow ? AppOpsManager.MODE_ALLOWED : AppOpsManager.MODE_ERRORED);
+    }
+
+    private void setupForWearableTests(AlwaysOnHotwordDetector alwaysOnHotwordDetector)
+            throws Exception {
+        setupForWearableTests(alwaysOnHotwordDetector, true);
+    }
+
+    private void setupForWearableTests(
+            AlwaysOnHotwordDetector alwaysOnHotwordDetector, boolean closeStreamAfterRead)
+            throws Exception {
+        // Update HotwordDetectionService options to enable Audio egress
+        runWithShellPermissionIdentity(
+                () -> {
+                    PersistableBundle persistableBundle = new PersistableBundle();
+                    persistableBundle.putInt(
+                            Helper.KEY_TEST_SCENARIO,
+                            Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ENABLE_AUDIO_EGRESS);
+                    persistableBundle.putBoolean(
+                            Utils.KEY_AUDIO_EGRESS_CLOSE_AUDIO_STREAM_AFTER_READ,
+                            closeStreamAfterRead);
+                    alwaysOnHotwordDetector.updateState(
+                            persistableBundle, Helper.createFakeSharedMemoryData());
+                },
+                MANAGE_HOTWORD_DETECTION);
+        adoptShellPermissionIdentityForHotwordAndWearableSensing();
+        setTestableWearableSensingService();
+        resetWearableSensingServiceStates();
+        alwaysOnHotwordDetector.startRecognition(0, new byte[] {1, 2, 3, 4, 5});
+        RecognitionSession recognitionSession =
+                waitForFutureDoneAndAssertSuccessful(
+                        mInstrumentationObserver.getOnRecognitionStartedFuture());
+        assertThat(recognitionSession).isNotNull();
+    }
+
+    private void cleanupForWearableTests(AlwaysOnHotwordDetector alwaysOnHotwordDetector)
+            throws Exception {
+        // destroy detector
+        alwaysOnHotwordDetector.destroy();
+        // Drop identity adopted.
+        InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation()
+                .dropShellPermissionIdentity();
+        clearTestableWearableSensingService();
+    }
+
+    /** Temporarily sets the WearableSensingService to the test implementation. */
+    private void setTestableWearableSensingService() {
+        runShellCommand(
+                "cmd wearable_sensing set-temporary-service %d %s %d",
+                USER_ID, MAIN_WEARABLE_SENSING_SERVICE_NAME, TEMPORARY_SERVICE_DURATION_MS);
+    }
+
+    /** Resets the WearableSensingService implementation. */
+    private void clearTestableWearableSensingService() {
+        runShellCommand("cmd wearable_sensing set-temporary-service %d", USER_ID);
+    }
+
+    private void resetWearableSensingServiceStates() throws Exception {
+        provideDataToWearableSensingServiceAndWait(MainWearableSensingService.ACTION_RESET);
+    }
+
+    private void sendAudioStreamFromWearable() throws Exception {
+        provideDataToWearableSensingServiceAndWait(MainWearableSensingService.ACTION_SEND_AUDIO);
+    }
+
+    private void sendNonHotwordAudioStreamFromWearable() throws Exception {
+        provideDataToWearableSensingServiceAndWait(
+                MainWearableSensingService.ACTION_SEND_NON_HOTWORD_AUDIO);
+    }
+
+    private void sendNonHotwordAudioStreamWithAcceptDetectionOptionsFromWearable()
+            throws Exception {
+        provideDataToWearableSensingServiceAndWait(
+                MainWearableSensingService
+                        .ACTION_SEND_NON_HOTWORD_AUDIO_WITH_ACCEPT_DETECTION_OPTIONS);
+    }
+
+    private void sendMoreAudioDataFromWearable() throws Exception {
+        provideDataToWearableSensingServiceAndWait(
+                MainWearableSensingService.ACTION_SEND_MORE_AUDIO_DATA);
+    }
+
+    private void verifyWearableSensingServiceHotwordValidatedCalled() throws Exception {
+        assertThat(
+                        provideDataToWearableSensingServiceAndWait(
+                                MainWearableSensingService.ACTION_VERIFY_HOTWORD_VALIDATED_CALLED))
+                .isEqualTo(WearableSensingManager.STATUS_SUCCESS);
+    }
+
+    private void verifyWearableSensingServiceAudioStopCalled() throws Exception {
+        assertThat(
+                        provideDataToWearableSensingServiceAndWait(
+                                MainWearableSensingService.ACTION_VERIFY_AUDIO_STOP_CALLED))
+                .isEqualTo(WearableSensingManager.STATUS_SUCCESS);
+    }
+
+    private int provideDataToWearableSensingServiceAndWait(String value) throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicInteger statusRef = new AtomicInteger();
+        PersistableBundle data = new PersistableBundle();
+        data.putString(MainWearableSensingService.BUNDLE_ACTION_KEY, value);
+        sWearableSensingManager.provideData(
+                data,
+                null,
+                mExecutor,
+                (status) -> {
+                    statusRef.set(status);
+                    latch.countDown();
+                });
+        assertThat(latch.await(3, SECONDS)).isTrue();
+        return statusRef.get();
     }
 }

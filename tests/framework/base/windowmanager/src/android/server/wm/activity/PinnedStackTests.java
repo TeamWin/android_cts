@@ -17,6 +17,7 @@
 package android.server.wm.activity;
 
 import static android.app.ActivityManager.LOCK_TASK_MODE_NONE;
+import static android.app.Flags.FLAG_ENABLE_PIP_UI_STATE_CALLBACK_ON_ENTERING;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
@@ -85,6 +86,7 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_SUBTITLE;
 import static android.server.wm.app.Components.PipActivity.EXTRA_TAP_TO_FINISH;
 import static android.server.wm.app.Components.PipActivity.EXTRA_TITLE;
 import static android.server.wm.app.Components.PipActivity.IS_IN_PIP_MODE_RESULT;
+import static android.server.wm.app.Components.PipActivity.UI_STATE_ENTERING_PIP_RESULT;
 import static android.server.wm.app.Components.PipActivity.UI_STATE_STASHED_RESULT;
 import static android.server.wm.app.Components.RESUME_WHILE_PAUSING_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
@@ -129,6 +131,9 @@ import android.os.Looper;
 import android.os.RemoteCallback;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.Settings;
 import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.CommandSession.ActivityCallback;
@@ -149,6 +154,7 @@ import com.google.common.truth.Truth;
 
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -185,6 +191,9 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     private static final int ABOVE_MAX_ASPECT_RATIO_NUMERATOR = MAX_ASPECT_RATIO_NUMERATOR + 1;
     // Corresponds to com.android.internal.R.dimen.overridable_minimal_size_pip_resizable_task
     private static final int OVERRIDABLE_MINIMAL_SIZE_PIP_RESIZABLE_TASK = 48;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     @Override
@@ -1734,7 +1743,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testPictureInPictureUiStateChangedCallback() throws Exception {
+    public void testStashUnstashUiStateChangeCallback() throws Exception {
         launchActivity(PIP_ACTIVITY);
         enterPipAndAssertPinnedTaskExists(PIP_ACTIVITY);
         waitForEnterPip(PIP_ACTIVITY);
@@ -1751,6 +1760,19 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         mBroadcastActionTrigger.sendPipStateUpdate(cbStashed, false);
         Truth.assertThat(callbackReturnNotStashed.get(5000, TimeUnit.MILLISECONDS))
                 .isEqualTo(false);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_ENABLE_PIP_UI_STATE_CALLBACK_ON_ENTERING)
+    public void testEnteringPipUiStateChangeCallback() throws Exception {
+        launchActivity(PIP_ACTIVITY);
+        final CompletableFuture<Boolean> callbackReturn = new CompletableFuture<>();
+        RemoteCallback cb = new RemoteCallback((Bundle result) ->
+                callbackReturn.complete(result.getBoolean(UI_STATE_ENTERING_PIP_RESULT)));
+        mBroadcastActionTrigger.enterPipAndWaitForPipUiStateChange(cb);
+        waitForEnterPip(PIP_ACTIVITY);
+
+        Truth.assertThat(callbackReturn.get(5000, TimeUnit.MILLISECONDS)).isEqualTo(true);
     }
 
     private void assertIsSeamlessResizeEnabled(ComponentName componentName, boolean expected) {

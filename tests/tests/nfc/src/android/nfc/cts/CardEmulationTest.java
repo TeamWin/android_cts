@@ -772,7 +772,7 @@ public class CardEmulationTest {
                     HexFormat.of().parseHex(annotationStringHex)));
             Assert.assertTrue(adapter.setTransactionAllowed(false));
             Assert.assertTrue(adapter.isObserveModeEnabled());
-            notifyPollingLoopAndWait(frames, CustomHostApduService.class.getName());
+            notifyPollingLoopAndWait(frames, CtsMyHostApduService.class.getName());
             Assert.assertFalse(adapter.isObserveModeEnabled());
             adapter.notifyHceDeactivated();
             Assert.assertTrue(adapter.isObserveModeEnabled());

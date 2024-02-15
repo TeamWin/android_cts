@@ -17,6 +17,89 @@ package {
 }
 
 android_test {
+    name: "CtsFgsBootCompletedTestCases",
+    defaults: ["cts_defaults"],
+    libs: [
+        "android.test.runner",
+        "org.apache.http.legacy",
+        "android.test.base",
+    ],
+    static_libs: [
+        "ctstestrunner-axt",
+        "cts-wm-util",
+        "mockito-target-minus-junit4",
+        "androidx.test.ext.junit",
+        "androidx.test.rules",
+        "platform-test-annotations",
+        "flag-junit",
+        "am_flags_lib",
+        "androidx.test.core",
+        "CtsAppTestStubsShared",
+    ],
+    srcs: [
+        "src/android/app/cts/fgs/bootcompleted/BootCompletedFgsStartTest.java",
+        "src/android/app/cts/LocationBootCompletedFgs.java",
+        "app/src/android/app/stubs/BootCompletedFgs.java",
+    ],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    data: [
+        ":CtsSimpleApp",
+        ":CtsAppTestDelayedStart",
+        ":CtsAppTestStubs",
+    ],
+    min_sdk_version: "21",
+    per_testcase_directory: true,
+    manifest: "src/android/app/cts/fgs/bootcompleted/AndroidManifest.xml",
+    test_config: "src/android/app/cts/fgs/bootcompleted/AndroidTest.xml",
+}
+
+android_test {
+    name: "CtsFgsBootCompletedTestCasesApi35",
+    defaults: ["cts_defaults"],
+    libs: [
+        "android.test.runner",
+        "org.apache.http.legacy",
+        "android.test.base",
+    ],
+    static_libs: [
+        "ctstestrunner-axt",
+        "cts-wm-util",
+        "mockito-target-minus-junit4",
+        "androidx.test.ext.junit",
+        "androidx.test.rules",
+        "platform-test-annotations",
+        "flag-junit",
+        "am_flags_lib",
+        "androidx.test.core",
+        "CtsAppTestStubsShared",
+    ],
+    srcs: [
+        "src/android/app/cts/fgs/bootcompleted/BootCompletedFgsStartTest.java",
+        "src/android/app/cts/LocationBootCompletedFgs.java",
+        "app/src/android/app/stubs/BootCompletedFgs.java",
+    ],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    data: [
+        ":CtsSimpleApp",
+        ":CtsAppTestDelayedStart",
+        ":CtsAppTestStubs",
+        ":CtsFgsBootCompletedTestCases",
+    ],
+    target_sdk_version: "35",
+    per_testcase_directory: true,
+    manifest: "src/android/app/cts/fgs/bootcompleted/AndroidManifest.xml",
+    test_config: "src/android/app/cts/fgs/bootcompleted/AndroidTest.xml",
+}
+
+android_test {
     name: "CtsAppTestCases",
     defaults: ["cts_defaults"],
     libs: [

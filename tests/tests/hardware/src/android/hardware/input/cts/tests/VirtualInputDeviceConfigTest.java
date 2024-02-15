@@ -29,10 +29,13 @@ import android.hardware.input.VirtualStylusConfig;
 import android.hardware.input.VirtualTouchscreenConfig;
 import android.os.Parcel;
 import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -58,6 +61,9 @@ public class VirtualInputDeviceConfigTest {
     private static final int DISPLAY_ID = 2;
     private static final int WIDTH = 600;
     private static final int HEIGHT = 800;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private VirtualDpadConfig createVirtualDpadConfig() {
         return new VirtualDpadConfig.Builder()

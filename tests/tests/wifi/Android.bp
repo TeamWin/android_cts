@@ -37,7 +37,14 @@ android_test {
         "android.test.base",
     ],
 
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/android/net/wifi/aware/cts/*.java",
+        "src/android/net/wifi/cts/*.java",
+        "src/android/net/wifi/mockwifi/cts/*.java",
+        "src/android/net/wifi/p2p/cts/*.java",
+        "src/android/net/wifi/passpoint/cts/*.java",
+        "src/android/net/wifi/rtt/cts/*.java",
+    ],
     jarjar_rules: "jarjar-rules.txt",
     static_libs: [
         "androidx.test.rules",
@@ -49,7 +56,6 @@ android_test {
         "truth",
         "android.wifi.mockwifi",
         "wifi_aconfig_flags_lib",
-        "android.net.wifi.flags-aconfig-java",
         "flag-junit",
     ],
 
@@ -67,5 +73,44 @@ android_test {
         ":CtsWifiLocationTestApp",
     ],
 
+    platform_apis: true,
+}
+
+android_test {
+    name: "CtsWifiNonUpdatableTestCases",
+    defaults: [
+        "cts_defaults",
+    ],
+
+    // Include both the 32 and 64 bit versions
+    compile_multilib: "both",
+
+    libs: [
+        "android.test.base",
+    ],
+
+    srcs: [
+        "src/android/net/wifi/nl80211/cts/*.java",
+        "src/android/net/wifi/shareconnectivity/*.java",
+    ],
+    static_libs: [
+        "androidx.test.rules",
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+        "junit",
+        "junit-params",
+        "net-utils-framework-common",
+        "truth",
+        "wifi_aconfig_flags_lib",
+        "android.net.wifi.flags-aconfig-java",
+        "flag-junit",
+    ],
+    test_config: "NonUpdatable.xml",
+    manifest: "NonUpdatableAndroidManifest.xml",
+
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
     platform_apis: true,
 }

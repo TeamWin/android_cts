@@ -41,6 +41,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.window.InputTransferToken;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -160,7 +161,8 @@ public class EmbeddedSCVHService extends Service {
 
         @Override
         public String attachEmbeddedSurfaceControl(SurfaceControl parentSc, int displayId,
-                IBinder hostToken, int width, int height, IMotionEventReceiver receiver) {
+                InputTransferToken hostToken, int width, int height,
+                IMotionEventReceiver receiver) {
             CountDownLatch registeredLatch = new CountDownLatch(1);
             String name = "Child SurfaceControl";
             mHandler.post(() -> {

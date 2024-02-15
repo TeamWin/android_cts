@@ -60,7 +60,6 @@ import androidx.test.uiautomator.UiSelector;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -325,24 +324,6 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
-    @Ignore("Re-enable once we find work around for b/226318844")
-    public void testMultiSelect_previewVideoPlayPause() throws Exception {
-        launchPreviewMultipleWithVideos(/* videoCount */ 3);
-
-        // Check Play/Pause in first video
-        testVideoPreviewPlayPause();
-
-        // Move to third video
-        swipeLeftAndWait();
-        swipeLeftAndWait();
-        // Check Play/Pause in third video
-        testVideoPreviewPlayPause();
-
-        // We don't test the result of the picker here because the intention of the test is only to
-        // test the video controls
-    }
-
-    @Test
     public void testMultiSelect_previewVideoMuteButtonInitial() throws Exception {
         launchPreviewMultipleWithVideos(/* videoCount */ 1);
 
@@ -508,44 +489,33 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         assertThat(focusStateForTest[0]).isEqualTo(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT);
     }
 
+    // Note: This test works independent of the device accessibility state and does not test the
+    // controls' auto-hide feature which requires the accessibility state to be disabled.
     @Test
-    @Ignore("Re-enable once we find work around for b/226318844")
     public void testMultiSelect_previewVideoControlsVisibility() throws Exception {
-        launchPreviewMultipleWithVideos(/* videoCount */ 3);
+        launchPreviewMultipleWithVideos(/* videoCount */ 2);
 
         final UiObject playPauseButton = findPlayPauseButton();
         final UiObject muteButton = findMuteButton();
-        // Check that buttons auto hide.
-        assertPlayerControlsAutoHide(playPauseButton, muteButton);
 
         final UiObject playerView = findPlayerView();
         // Click on StyledPlayerView to make the video controls visible
-        clickAndWait(sDevice, playerView);
+        // Don't click in the center else it may pause the video and hide the controls.
+        playerView.clickBottomRight();
+        sDevice.waitForIdle();
         assertPlayerControlsVisible(playPauseButton, muteButton);
 
         // Wait for 1s and check that controls are still visible
         assertPlayerControlsDontAutoHide(playPauseButton, muteButton);
 
-        // Click on StyledPlayerView and check that controls are no longer visible. Don't click in
-        // the center, clicking in the center may pause the video.
-        playerView.clickBottomRight();
-        sDevice.waitForIdle();
-        assertPlayerControlsHidden(playPauseButton, muteButton);
-
-        // Swipe left and check that controls are not visible
+        // Swipe left to the next video
         swipeLeftAndWait();
-        assertPlayerControlsHidden(playPauseButton, muteButton);
 
         // Click on the StyledPlayerView and check that controls appear
-        clickAndWait(sDevice, playerView);
+        // Don't click in the center else it may pause the video and hide the controls.
+        playerView.clickBottomRight();
+        sDevice.waitForIdle();
         assertPlayerControlsVisible(playPauseButton, muteButton);
-
-        // Swipe left to check that controls are now visible on swipe
-        swipeLeftAndWait();
-        assertPlayerControlsVisible(playPauseButton, muteButton);
-
-        // Check that the player controls are auto hidden in 1s
-        assertPlayerControlsAutoHide(playPauseButton, muteButton);
 
         // We don't test the result of the picker here because the intention of the test is only to
         // test the video controls
@@ -728,28 +698,6 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
                 .isEqualTo(expectedContentDescription);
     }
 
-    private void testVideoPreviewPlayPause() throws Exception {
-        final UiObject playPauseButton = findPlayPauseButton();
-        final UiObject muteButton = findMuteButton();
-
-        // Wait for buttons to auto hide.
-        assertPlayerControlsAutoHide(playPauseButton, muteButton);
-
-        // Click on StyledPlayerView to make the video controls visible
-        clickAndWait(sDevice, findPlayerView());
-
-        // PlayPause button is now pause button, click the button to pause the video.
-        clickAndWait(sDevice, playPauseButton);
-
-        // Wait for 1s and check that play button is not auto hidden
-        assertPlayerControlsDontAutoHide(playPauseButton, muteButton);
-
-        // PlayPause button is now play button, click the button to play the video.
-        clickAndWait(sDevice, playPauseButton);
-        // Check that pause button auto-hides in 1s.
-        assertPlayerControlsAutoHide(playPauseButton, muteButton);
-    }
-
     private void launchPreviewMultipleWithVideos(int videoCount) throws  Exception {
         mUriList.addAll(createVideosAndGetUris(videoCount, mContext.getUserId()));
 
@@ -799,19 +747,6 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         assertVisible(muteButton, "Expected mute button to be visible");
     }
 
-    private void assertPlayerControlsHidden(UiObject playPauseButton, UiObject muteButton) {
-        assertHidden(playPauseButton, "Expected play/pause button to be hidden");
-        assertHidden(muteButton, "Expected mute button to be hidden");
-    }
-
-    private void assertPlayerControlsAutoHide(UiObject playPauseButton, UiObject muteButton) {
-        // These buttons should auto hide in 1 second after the video playback start. Since we can't
-        // identify the video playback start time, we wait for 2 seconds instead.
-        assertWithMessage("Expected play/pause button to auto hide in 2s")
-                .that(playPauseButton.waitUntilGone(2000)).isTrue();
-        assertHidden(muteButton, "Expected mute button to hide after 2s");
-    }
-
     private void assertPlayerControlsDontAutoHide(UiObject playPauseButton, UiObject muteButton) {
         assertWithMessage("Expected play/pause button to not auto hide in 1s")
                 .that(playPauseButton.waitUntilGone(1100)).isFalse();
@@ -820,10 +755,6 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
 
     private void assertVisible(UiObject button, String message) {
         assertWithMessage(message).that(button.exists()).isTrue();
-    }
-
-    private void assertHidden(UiObject button, String message) {
-        assertWithMessage(message).that(button.exists()).isFalse();
     }
 
     private static UiObject findViewSelectedButton() {

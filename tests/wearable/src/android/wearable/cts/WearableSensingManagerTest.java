@@ -31,6 +31,7 @@ import android.Manifest;
 import android.app.PendingIntent;
 import android.app.wearable.Flags;
 import android.app.wearable.WearableSensingManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -194,6 +195,37 @@ public class WearableSensingManagerTest {
                                 (result) -> {}));
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_HOTWORD_WEARABLE_SENSING_API)
+    public void noAccessWhenAttemptingStartHotwordRecognition() {
+        assertEquals(
+                PackageManager.PERMISSION_DENIED,
+                mContext.checkCallingOrSelfPermission(
+                        Manifest.permission.MANAGE_WEARABLE_SENSING_SERVICE));
+
+        // Test non system app throws SecurityException
+        assertThrows(
+                "no access to startHotwordRecognition from non system component",
+                SecurityException.class,
+                () -> mWearableSensingManager.startHotwordRecognition(
+                        new ComponentName("my.package", "my.Class"), EXECUTOR, (result) -> {}));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_HOTWORD_WEARABLE_SENSING_API)
+    public void noAccessWhenAttemptingStopHotwordRecognition() {
+        assertEquals(
+                PackageManager.PERMISSION_DENIED,
+                mContext.checkCallingOrSelfPermission(
+                        Manifest.permission.MANAGE_WEARABLE_SENSING_SERVICE));
+
+        // Test non system app throws SecurityException
+        assertThrows(
+                "no access to stopHotwordRecognition from non system component",
+                SecurityException.class,
+                () -> mWearableSensingManager.stopHotwordRecognition(EXECUTOR, (result) -> {}));
+    }
+
     // The tests for sending data requests from WearableSensingService are in
     // CtsWearableSensingServiceDeviceTest
 
@@ -345,6 +377,24 @@ public class WearableSensingManagerTest {
 
         // CtsWearableSensingService#awaitResult throws an AssertionError on time out.
         assertThrows(AssertionError.class, () -> CtsWearableSensingService.awaitResult());
+    }
+
+    // Tests for the other hotword APIs are put in
+    // android.voiceinteraction.cts.HotwordDetectionServiceBasicTest so that we can test their
+    // interactions with voice interaction components
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_HOTWORD_WEARABLE_SENSING_API)
+    public void stopHotwordRecognition_callsOnStopHotwordRecognitionInWearableSensingService() {
+        getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.MANAGE_WEARABLE_SENSING_SERVICE);
+        CtsWearableSensingService.whenCallbackTriggeredRespondWithStatus(
+                WearableSensingManager.STATUS_SUCCESS);
+
+        mWearableSensingManager.stopHotwordRecognition(EXECUTOR, (status) -> {});
+
+        CtsWearableSensingService.awaitResult();
+        assertThat(CtsWearableSensingService.getOnStopHotwordRecognitionCalled()).isTrue();
     }
 
     private void clearTestableWearableSensingService() {

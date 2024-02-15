@@ -4,6 +4,11 @@
       "name": "CtsWifiTestCases"
     }
   ],
+  "postsubmit": [
+    {
+      "name": "CtsWifiNonUpdatableTestCases"
+    }
+  ],
   "mainline-presubmit": [
     {
       "name": "CtsWifiTestCases[com.google.android.wifi.apex]",

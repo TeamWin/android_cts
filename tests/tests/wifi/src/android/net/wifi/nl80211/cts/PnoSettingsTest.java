@@ -21,7 +21,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
-import android.net.wifi.cts.WifiFeature;
 import android.net.wifi.nl80211.PnoNetwork;
 import android.net.wifi.nl80211.PnoSettings;
 import android.os.Parcel;

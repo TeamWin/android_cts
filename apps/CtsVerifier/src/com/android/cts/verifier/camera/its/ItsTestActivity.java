@@ -176,6 +176,7 @@ public class ItsTestActivity extends DialogTestListActivity {
             "scene6",
             "scene_extensions/scene_hdr",
             "scene_extensions/scene_night",
+            "scene_video",
             "sensor_fusion",
             "scene_flash");
 
@@ -187,6 +188,7 @@ public class ItsTestActivity extends DialogTestListActivity {
             "scene2_a",
             "scene2_b",
             "scene4",
+            "scene_video",
             "sensor_fusion");
 
     // TODO: cache the following in saved bundle

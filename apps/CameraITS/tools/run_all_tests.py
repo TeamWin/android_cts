@@ -76,6 +76,7 @@ _TABLET_SCENES = (
     'scene2_d', 'scene2_e', 'scene2_f', 'scene3', 'scene4', 'scene6',
     os.path.join('scene_extensions', 'scene_hdr'),
     os.path.join('scene_extensions', 'scene_night'),
+    'scene_video',
 )
 
 # Scenes that use the 'sensor_fusion' test rig
@@ -141,6 +142,9 @@ _SCENE_REQ = types.MappingProxyType({
                      'instructions.\nNote that this test will be skipped '
                      'on devices not supporting REALTIME camera timestamp.',
     'scene_flash': 'A checkerboard pattern chart with lights off.',
+    'scene_video': 'A tablet displayed scene with a series of circles moving '
+                   'at different simulated frame rates. '
+                   'See tests/scene_video/scene_video.mp4',
 })
 
 SUB_CAMERA_TESTS = types.MappingProxyType({
@@ -173,6 +177,9 @@ SUB_CAMERA_TESTS = types.MappingProxyType({
     ),
     'scene4': (
         'test_aspect_ratio_and_crop',
+    ),
+    'scene_video': (
+        'test_preview_frame_drop',
     ),
     'sensor_fusion': (
         'test_sensor_fusion',
@@ -322,7 +329,7 @@ def load_scenes_on_tablet(scene, tablet_id):
   scene_dir = os.listdir(
       os.path.join(os.environ['CAMERA_ITS_TOP'], 'tests', scene))
   for file_name in scene_dir:
-    if file_name.endswith('.png'):
+    if file_name.endswith('.png') or file_name.endswith('.mp4'):
       src_scene_file = os.path.join(os.environ['CAMERA_ITS_TOP'], 'tests',
                                     scene, file_name)
       cmd = f'adb -s {tablet_id} push {src_scene_file} {_DST_SCENE_DIR}'
