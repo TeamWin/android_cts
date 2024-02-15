@@ -19,6 +19,10 @@
           package="android.sensitivecontentprotection.cts">
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.CAPTURE_VIDEO_OUTPUT"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+
     <application android:label="Sensitive Content Protection TestCase">
         <uses-library android:name="android.test.runner"/>
 
@@ -30,6 +34,12 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <activity android:name="android.sensitivecontentprotection.cts.SensitiveContentMediaProjectionHelper$MediaProjectionActivity" />
+        <service
+            android:name="android.sensitivecontentprotection.cts.SensitiveContentMediaProjectionHelper$MediaProjectionService"
+            android:enabled="true"
+            android:foregroundServiceType="mediaProjection" />
 
     </application>
 
