@@ -36,8 +36,6 @@ import android.hardware.biometrics.PromptVerticalListContentView;
 import android.hardware.biometrics.SensorProperties;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresFlagsEnabled;
-import android.platform.test.flag.junit.CheckFlagsRule;
-import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
 
 import androidx.test.uiautomator.By;
@@ -49,7 +47,6 @@ import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 
 import org.junit.Ignore;
-import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -63,9 +60,6 @@ import java.util.Random;
 @Presubmit
 public class BiometricPromptContentViewTest extends BiometricTestBase {
     private static final String TAG = "BiometricTests/PromptVerticalListContentView";
-    @Rule
-    public final CheckFlagsRule mCheckFlagsRule =
-            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     /**
      * Test the max item number shown on {@link PromptVerticalListContentView}.
