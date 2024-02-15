@@ -767,6 +767,7 @@ public class CardEmulationTest {
     @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
     public void testAutoTransact() {
         NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        assumeTrue(adapter.isObserveModeSupported());
         adapter.notifyHceDeactivated();
         createAndResumeActivity();
         String testName = new Object() {
@@ -793,6 +794,7 @@ public class CardEmulationTest {
         restoreOriginalService();
         runWithRole(mContext, CTS_PACKAGE_NAME, () -> {
             NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+            assumeTrue(adapter.isObserveModeSupported());
             adapter.notifyHceDeactivated();
             createAndResumeActivity();
             String testName = new Object() {
