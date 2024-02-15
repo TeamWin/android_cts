@@ -180,6 +180,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -220,6 +221,7 @@ public class TelephonyManagerTest {
     private static final int TIMEOUT_FOR_NETWORK_OPS = TOLERANCE * 180;
 
     private static final int TIMEOUT_FOR_CARRIER_STATUS_FILE_CHECK = TOLERANCE * 180;
+    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private PhoneStateListener mListener;
     private static ConnectivityManager mCm;
     private static final String TAG = "TelephonyManagerTest";
@@ -474,6 +476,88 @@ public class TelephonyManagerTest {
         void waitForIntent() throws Exception {
             // Extend to wait up to 10 seconds to receive CountryChanged Intent.
             mLatch.await(10000, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    private static class DataEnabledListenerTest extends TelephonyCallback implements
+            TelephonyCallback.DataEnabledListener {
+
+        private final Semaphore mThermalDataOnSemaphore = new Semaphore(0);
+        private final Semaphore mThermalDataOffSemaphore = new Semaphore(0);
+        private boolean mEnabled = false;
+        @TelephonyManager.DataEnabledChangedReason
+        private int mReason = TelephonyManager.DATA_ENABLED_REASON_UNKNOWN;
+
+        @Override
+        public void onDataEnabledChanged(boolean enabled,
+                @TelephonyManager.DataEnabledChangedReason int reason) {
+            Log.d(TAG, "onDataEnabledChanged: enabled=" + enabled + " reason=" + reason);
+            mEnabled = enabled;
+            mReason = reason;
+
+            if (mReason == TelephonyManager.DATA_ENABLED_REASON_THERMAL) {
+                releaseThermalDataSemaphores();
+            }
+        }
+
+        public void releaseThermalDataSemaphores() {
+            if (mEnabled) {
+                try {
+                    mThermalDataOnSemaphore.release();
+                } catch (Exception e) {
+                    Log.e(TAG, "releaseThermalDataSemaphores: Got Exception, ex=" + e);
+                }
+            } else {
+                try {
+                    mThermalDataOffSemaphore.release();
+                } catch (Exception e) {
+                    Log.e(TAG, "releaseThermalDataSemaphores: Got Exception, ex=" + e);
+                }
+            }
+        }
+
+        public boolean waitForThermalDataOn() {
+            Log.d(TAG, "waitForThermalDataOn()");
+            if (mReason == TelephonyManager.DATA_ENABLED_REASON_THERMAL && mEnabled) {
+                return true;
+            }
+
+            try {
+                if (!mThermalDataOnSemaphore.tryAcquire(TIMEOUT, TimeUnit.MILLISECONDS)) {
+                    Log.e(TAG, "Timeout to receive onDataEnabledChanged() callback");
+                    return false;
+                }
+            } catch (Exception ex) {
+                Log.e(TAG, "DataEnabledListenerTest waitForThermalDataOn: "
+                        + "Got exception=" + ex);
+                return false;
+            }
+            return true;
+        }
+
+        public boolean waitForThermalDataOff() {
+            Log.d(TAG, "waitForThermalDataOff()");
+            if (mReason == TelephonyManager.DATA_ENABLED_REASON_THERMAL && !mEnabled) {
+                return true;
+            }
+
+            try {
+                if (!mThermalDataOffSemaphore.tryAcquire(TIMEOUT, TimeUnit.MILLISECONDS)) {
+                    Log.e(TAG, "Timeout to receive onDataEnabledChanged() callback");
+                    return false;
+                }
+            } catch (Exception ex) {
+                Log.e(TAG, "DataEnabledListenerTest waitForThermalDataOff: "
+                        + "Got exception=" + ex);
+                return false;
+            }
+            return true;
+        }
+
+        public void clearDataEnableChanges() {
+            Log.d(TAG, "clearDataEnableChanges()");
+            mThermalDataOnSemaphore.drainPermits();
+            mThermalDataOffSemaphore.drainPermits();
         }
     }
 
@@ -4351,12 +4435,18 @@ public class TelephonyManagerTest {
         // Perform this test on default data subscription.
         mTelephonyManager = getContext().getSystemService(TelephonyManager.class)
                 .createForSubscriptionId(SubscriptionManager.getDefaultDataSubscriptionId());
+        // Register data enabled listener
+        DataEnabledListenerTest dataEnabledListener = new DataEnabledListenerTest();
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                tm -> tm.registerTelephonyCallback(Runnable::run, dataEnabledListener));
+
+        dataEnabledListener.clearDataEnableChanges();
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                 mTelephonyManager,
                 (tm) -> tm.setDataEnabledForReason(TelephonyManager.DATA_ENABLED_REASON_THERMAL,
                         false));
 
-        waitForMs(1000);
+        assertTrue(dataEnabledListener.waitForThermalDataOff());
         boolean isDataEnabledForReason = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> tm.isDataEnabledForReason(
                         TelephonyManager.DATA_ENABLED_REASON_THERMAL));
@@ -4366,12 +4456,13 @@ public class TelephonyManagerTest {
                 mTelephonyManager, TelephonyManager::isDataConnectionAllowed);
         assertFalse(isDataConnectionAvailable);
 
+        dataEnabledListener.clearDataEnableChanges();
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                 mTelephonyManager,
                 (tm) -> tm.setDataEnabledForReason(TelephonyManager.DATA_ENABLED_REASON_THERMAL,
                         true));
 
-        waitForMs(1000);
+        assertTrue(dataEnabledListener.waitForThermalDataOn());
         isDataEnabledForReason = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> tm.isDataEnabledForReason(
                         TelephonyManager.DATA_ENABLED_REASON_THERMAL));
@@ -4380,6 +4471,10 @@ public class TelephonyManagerTest {
         isDataConnectionAvailable = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, TelephonyManager::isDataConnectionAllowed);
         assertTrue(isDataConnectionAvailable);
+
+        // Unregister data enabled listener
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                tm -> tm.unregisterTelephonyCallback(dataEnabledListener));
     }
 
     @Test
