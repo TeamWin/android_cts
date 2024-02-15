@@ -43,10 +43,10 @@ import android.database.ContentObserver;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteException;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
-import android.os.SystemProperties;
 import android.provider.Telephony.Sms;
 import android.provider.Telephony.Sms.Intents;
 import android.telecom.PhoneAccount;
@@ -109,7 +109,7 @@ public class VisualVoicemailServiceTest {
         mContext = getInstrumentation().getContext();
         assumeTrue(hasFeatureSupported(mContext));
         // The tests run on real modem with visual voicemail SMS.
-        assumeFalse(isEmulator());
+        assumeFalse(Build.IS_EMULATOR);
         mPreviousDefaultDialer = getDefaultDialer(getInstrumentation());
         setDefaultDialer(getInstrumentation(), PACKAGE);
 
@@ -717,10 +717,5 @@ public class VisualVoicemailServiceTest {
             } catch (Exception ignored) {
             }
         }
-    }
-
-    private static boolean isEmulator() {
-        return SystemProperties.getBoolean("ro.boot.qemu", false)
-                || SystemProperties.getBoolean("ro.kernel.qemu", false);
     }
 }
