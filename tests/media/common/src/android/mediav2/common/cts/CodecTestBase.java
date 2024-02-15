@@ -1078,16 +1078,27 @@ public abstract class CodecTestBase {
 
     protected void configureCodec(MediaFormat format, boolean isAsync,
             boolean signalEOSWithLastFrame, boolean isEncoder) {
+        configureCodec(format, isAsync, signalEOSWithLastFrame, isEncoder, 0);
+    }
+
+    protected void configureCodec(MediaFormat format, boolean isAsync,
+            boolean signalEOSWithLastFrame, boolean isEncoder, int flag) {
+        if (IS_AT_LEAST_R && ((flag & MediaCodec.CONFIGURE_FLAG_USE_BLOCK_MODEL) != 0)) {
+            if (!isAsync || !signalEOSWithLastFrame) {
+                throw new RuntimeException("Block model feature testing requires mode of operation"
+                        + " to be asynchronous and eos to be signalled along with last frame");
+            }
+        }
         resetContext(isAsync, signalEOSWithLastFrame);
         mAsyncHandle.setCallBack(mCodec, isAsync);
         // signalEOS flag has nothing to do with configure. We are using this flag to try all
         // available configure apis
         if (signalEOSWithLastFrame) {
             mCodec.configure(format, mSurface, null,
-                    isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0);
+                    (isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0) | flag);
         } else {
-            mCodec.configure(format, mSurface, isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0,
-                    null);
+            mCodec.configure(format, mSurface,
+                    (isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0) | flag, null);
         }
         mTestEnv.setLength(0);
         mTestEnv.append("###################      Test Environment       #####################\n");
