@@ -62,6 +62,10 @@ public final class BedsteadFrameworkMethod extends FrameworkMethod {
         calculateAnnotations();
     }
 
+    public Annotation getParameterizedAnnotation() {
+        return mParameterizedAnnotation;
+    }
+
     private void calculateAnnotations() {
         List<Annotation> annotations =
                 new ArrayList<>(Arrays.asList(getDeclaringClass().getAnnotations()));
