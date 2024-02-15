@@ -319,8 +319,8 @@ public class WearableSensingManagerIsolatedServiceTest {
                 mSocketPair[1],
                 EXECUTOR,
                 (statusCode) -> {
-                    statusCodeLatch1.countDown();
                     statusCodeRef1.set(statusCode);
+                    statusCodeLatch1.countDown();
                 });
         assertThat(statusCodeLatch1.await(3, SECONDS)).isTrue();
         assertThat(statusCodeRef1.get()).isEqualTo(WearableSensingManager.STATUS_SUCCESS);
@@ -334,8 +334,8 @@ public class WearableSensingManagerIsolatedServiceTest {
                 mSocketPair[1],
                 EXECUTOR,
                 (statusCode) -> {
-                    statusCodeLatch2.countDown();
                     statusCodeRef2.set(statusCode);
+                    statusCodeLatch2.countDown();
                 });
         assertThat(statusCodeLatch2.await(3, SECONDS)).isTrue();
         assertThat(statusCodeRef2.get()).isEqualTo(WearableSensingManager.STATUS_SUCCESS);
