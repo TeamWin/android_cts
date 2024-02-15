@@ -41,13 +41,13 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class CodecAsyncHandler extends MediaCodec.Callback {
     private static final String LOG_TAG = CodecAsyncHandler.class.getSimpleName();
-    private final Lock mLock = new ReentrantLock();
-    private final Condition mCondition = mLock.newCondition();
-    private final LinkedList<Pair<Integer, MediaCodec.BufferInfo>> mCbInputQueue;
+    protected final Lock mLock = new ReentrantLock();
+    protected final Condition mCondition = mLock.newCondition();
+    protected final LinkedList<Pair<Integer, MediaCodec.BufferInfo>> mCbInputQueue;
     private final LinkedList<Pair<Integer, MediaCodec.BufferInfo>> mCbOutputQueue;
     private MediaFormat mOutFormat;
     private boolean mSignalledOutFormatChanged;
-    private volatile boolean mSignalledError;
+    protected volatile boolean mSignalledError;
     private String mErrorMsg;
 
     public CodecAsyncHandler() {

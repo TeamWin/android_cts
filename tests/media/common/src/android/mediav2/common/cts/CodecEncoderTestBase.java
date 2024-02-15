@@ -525,6 +525,7 @@ public class CodecEncoderTestBase extends CodecTestBase {
                         info.flags);
                 mInfoList.add(copy);
 
+                mOutputBuff.checksum(buf, info);
                 mOutputBuff.saveToMemory(buf, info);
             }
             if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
@@ -610,7 +611,7 @@ public class CodecEncoderTestBase extends CodecTestBase {
         return mMuxedOutputFile;
     }
 
-    void validateTestState() {
+    protected void validateTestState() {
         super.validateTestState();
         if ((mIsAudio || (mIsVideo && mActiveEncCfg.mMaxBFrames == 0))
                 && !mOutputBuff.isPtsStrictlyIncreasing(mPrevOutputPts)) {
