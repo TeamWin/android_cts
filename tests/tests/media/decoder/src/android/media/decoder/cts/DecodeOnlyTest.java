@@ -39,6 +39,7 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
+import android.view.Surface;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SdkSuppress;
@@ -84,6 +85,10 @@ public class DecodeOnlyTest extends MediaTestBase {
     private static final String MIME_VIDEO_PREFIX = "video/";
     private static final String MIME_AUDIO_PREFIX = "audio/";
     private static final long EOS_TIMESTAMP_TUNNEL_MODE = Long.MAX_VALUE;
+
+    static {
+        System.loadLibrary("ctsmediadecodertest_jni");
+    }
 
     @Before
     @Override
@@ -183,6 +188,19 @@ public class DecodeOnlyTest extends MediaTestBase {
         Assume.assumeTrue("First API level is not Android 14 or later.",
                 WAS_LAUNCHED_ON_U_OR_LATER);
         testTunneledTrickPlay(VP9_VIDEO);
+    }
+
+    private static native boolean nativeTestNonTunneledTrickPlay(String fileName, Surface surface,
+                      boolean isAsync);
+
+    @Test
+    @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
+    public void nativeTestNonTunneledTrickPlayHevc() {
+        boolean[] boolStates = {true, false};
+        for (boolean isAsync : boolStates) {
+            assertTrue(nativeTestNonTunneledTrickPlay(MEDIA_DIR_STRING + HEVC_VIDEO,
+                    getActivity().getSurfaceHolder().getSurface(), isAsync));
+        }
     }
 
     @Test
