@@ -1317,6 +1317,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
      * and the recognised text is committed.
      */
     @Test
+    @RequiresFlagsEnabled(FLAG_CONNECTIONLESS_HANDWRITING)
     @ApiTest(apis = {
             "android.view.inputmethod.InputMethodManager"
                     + "#startConnectionlessStylusHandwritingForDelegation",
@@ -1700,6 +1701,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     }
 
     @Test
+    @RequiresFlagsEnabled(FLAG_CONNECTIONLESS_HANDWRITING)
     @ApiTest(apis = {
             "android.view.inputmethod.InputMethodManager#startConnectionlessStylusHandwriting",
             "android.view.inputmethod.InputMethodService#onStartConnectionlessStylusHandwriting",
@@ -1745,6 +1747,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     }
 
     @Test
+    @RequiresFlagsEnabled(FLAG_CONNECTIONLESS_HANDWRITING)
     @ApiTest(apis = {
             "android.view.inputmethod.InputMethodManager#startConnectionlessStylusHandwriting",
             "android.view.inputmethod.InputMethodService#onStartConnectionlessStylusHandwriting",
@@ -1792,6 +1795,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     }
 
     @Test
+    @RequiresFlagsEnabled(FLAG_CONNECTIONLESS_HANDWRITING)
     @ApiTest(apis = {
             "android.view.inputmethod.InputMethodManager#startConnectionlessStylusHandwriting",
             "android.view.inputmethod.InputMethodService#onStartConnectionlessStylusHandwriting"})
