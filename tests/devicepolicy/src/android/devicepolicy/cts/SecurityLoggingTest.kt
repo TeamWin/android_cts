@@ -15,12 +15,19 @@
  */
 package android.devicepolicy.cts
 
+import android.app.admin.DevicePolicyManager
 import android.app.admin.SecurityLog
+import android.app.admin.flags.Flags
+import android.content.Context
+import android.platform.test.annotations.RequiresFlagsEnabled
+import android.platform.test.flag.junit.DeviceFlagsValueProvider
 import com.android.bedstead.harrier.BedsteadJUnit4
 import com.android.bedstead.harrier.DeviceState
 import com.android.bedstead.harrier.UserType
+import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission
 import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser
 import com.android.bedstead.harrier.annotations.EnsureHasNoAdditionalUser
+import com.android.bedstead.harrier.annotations.EnsureHasPermission
 import com.android.bedstead.harrier.annotations.Postsubmit
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest
@@ -29,12 +36,19 @@ import com.android.bedstead.harrier.policies.GlobalSecurityLogging
 import com.android.bedstead.harrier.policies.SecurityLogging
 import com.android.bedstead.nene.TestApis
 import com.android.bedstead.nene.exceptions.NeneException
+import com.android.bedstead.nene.permissions.CommonPermissions
 import com.android.bedstead.nene.users.UserReference
 import com.android.compatibility.common.util.ApiTest
 import com.android.eventlib.truth.EventLogsSubject
 import com.google.common.truth.Truth
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import org.junit.ClassRule
 import org.junit.Rule
+import org.junit.rules.RuleChain
+import org.junit.rules.TestRule
 import org.junit.runner.RunWith
 import org.testng.Assert.assertThrows
 
@@ -365,6 +379,70 @@ class SecurityLoggingTest {
         }
     }
 
+    @CanSetPolicyTest(policy = [GlobalSecurityLogging::class, SecurityLogging::class])
+    @Postsubmit(reason = "new test")
+    @ApiTest(
+            apis = ["android.app.admin.DevicePolicyManager#setAuditLogEnabled"]
+    )
+    @EnsureHasPermission(CommonPermissions.MANAGE_DEVICE_POLICY_AUDIT_LOGGING)
+    @RequiresFlagsEnabled(Flags.FLAG_SECURITY_LOG_V2_ENABLED)
+    fun setAuditLogEnabled_withPermission_works() {
+        ensureNoAdditionalFullUsers()
+
+        sLocalDpm.setAuditLogEnabled(true)
+        try {
+            Truth.assertThat(sLocalDpm.isAuditLogEnabled()).isTrue()
+        } finally {
+            sLocalDpm.setAuditLogEnabled(false)
+        }
+    }
+
+    @CanSetPolicyTest(policy = [GlobalSecurityLogging::class, SecurityLogging::class])
+    @Postsubmit(reason = "new test")
+    @ApiTest(
+            apis = ["android.app.admin.DevicePolicyManager#setAuditLogEnabled"]
+    )
+    @EnsureDoesNotHavePermission(CommonPermissions.MANAGE_DEVICE_POLICY_AUDIT_LOGGING)
+    @RequiresFlagsEnabled(Flags.FLAG_SECURITY_LOG_V2_ENABLED)
+    fun setAuditLogEnabled_withoutPermission_throws() {
+        ensureNoAdditionalFullUsers()
+
+        try {
+            assertThrows(SecurityException::class.java) {
+                sLocalDpm.setAuditLogEnabled(true)
+            }
+        } catch (e: Exception) {
+            sLocalDpm.setAuditLogEnabled(false)
+        }
+    }
+
+    @CanSetPolicyTest(policy = [GlobalSecurityLogging::class, SecurityLogging::class])
+    @Postsubmit(reason = "new test")
+    @ApiTest(
+            apis = ["android.app.admin.DevicePolicyManager#setAuditLogEnabled"]
+    )
+    @EnsureHasPermission(CommonPermissions.MANAGE_DEVICE_POLICY_AUDIT_LOGGING)
+    @RequiresFlagsEnabled(Flags.FLAG_SECURITY_LOG_V2_ENABLED)
+    fun setAuditLogEventCallback_callbackInvoked() {
+        ensureNoAdditionalFullUsers()
+
+        sLocalDpm.setAuditLogEnabled(true)
+        try {
+            val latch = CountDownLatch(1)
+            val events = ArrayList<SecurityLog.SecurityEvent>()
+            sLocalDpm.setAuditLogEventCallback(sExecutor) { e ->
+                events.addAll(e)
+                latch.countDown()
+            }
+            Truth.assertThat(latch.await(2, TimeUnit.MINUTES)).isTrue()
+            Truth.assertThat(events.stream().filter { e ->
+                e.tag == SecurityLog.TAG_LOGGING_STARTED
+            }).isNotNull()
+        } finally {
+            sLocalDpm.setAuditLogEnabled(false)
+        }
+    }
+
     private fun ensureNoAdditionalFullUsers() {
         // TODO(273474964): Move into infra
         try {
@@ -394,7 +472,17 @@ class SecurityLoggingTest {
     companion object {
         @JvmField
         @ClassRule
-        @Rule
         val sDeviceState = DeviceState()
+
+        val sContext: Context = TestApis.context().instrumentedContext()
+        val sExecutor: Executor = Executors.newSingleThreadExecutor()
+        var sLocalDpm: DevicePolicyManager =
+                sContext.getSystemService(DevicePolicyManager::class.java)!!
     }
+
+    @JvmField
+    @Rule
+    val mCheckFlagsRule: TestRule = RuleChain
+            .outerRule(DeviceFlagsValueProvider.createCheckFlagsRule())
+            .around(sDeviceState)
 }
