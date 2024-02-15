@@ -17,8 +17,10 @@
 package android.widget.cts;
 
 import static android.appwidget.flags.Flags.drawDataParcel;
+import static android.graphics.Bitmap.Config.ARGB_8888;
 import static android.util.TypedValue.COMPLEX_UNIT_DIP;
 import static android.util.TypedValue.COMPLEX_UNIT_PX;
+import static android.view.View.MeasureSpec.makeMeasureSpec;
 import static android.view.inputmethod.Flags.FLAG_HOME_SCREEN_HANDWRITING_DELEGATOR;
 import static android.widget.RemoteViews.MARGIN_BOTTOM;
 import static android.widget.RemoteViews.MARGIN_END;
@@ -52,6 +54,7 @@ import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BlendMode;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Icon;
@@ -490,18 +493,50 @@ public class RemoteViewsTest {
         Activity newActivity = am.waitForActivityWithTimeout(TEST_TIMEOUT);
         assertNull(newActivity);
         final int viewId = 1;
+        final int width = 100;
+        final int height = 100;
+        final Bitmap bitmap1 = Bitmap.createBitmap(width, height, ARGB_8888);
+        final Bitmap bitmap2 = Bitmap.createBitmap(width, height, ARGB_8888);
+        mRemoteViews = new RemoteViews(drawInstructions);
+        mRemoteViews.setPendingIntentTemplate(viewId, pi);
+        mRemoteViews.setOnClickFillInIntent(viewId, i);
+        applyNightModeThenApplyAndTest(false /* nightMode */, () -> {});
         mActivityRule.runOnUiThread(() -> {
-            mRemoteViews = new RemoteViews(drawInstructions);
-            mRemoteViews.setPendingIntentTemplate(viewId, pi);
-            mRemoteViews.setOnClickFillInIntent(viewId, i);
-            mResult = mRemoteViews.apply(mContext, null);
+            mResult.measure(makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                    makeMeasureSpec(height, View.MeasureSpec.EXACTLY));
+            mResult.layout(0, 0, width, height);
+            mResult.draw(new Canvas(bitmap1));
         });
-        assertEquals(drawInstructions, mResult.getTag());
+        verifyColorsOnFourCorners(Color.WHITE, bitmap1);
+        bitmap1.recycle();
+
+        // Switch to night mode
+        applyNightModeThenReapplyAndTest(true /* nightMode */, () -> {});
+        mActivityRule.runOnUiThread(() -> {
+            mResult.draw(new Canvas(bitmap2));
+        });
+        verifyColorsOnFourCorners(Color.BLACK, bitmap2);
+        bitmap2.recycle();
     }
 
-    private RemoteViews.DrawInstructions getDrawInstructions() {
-        final byte[] bytes = new byte[] {'h', 'e', 'l', 'l', 'o'};
-        return new RemoteViews.DrawInstructions.Builder(Collections.singletonList(bytes)).build();
+    private RemoteViews.DrawInstructions getDrawInstructions() throws IOException {
+        try (InputStream is = mContext.getResources().openRawResource(R.raw.widget)
+        ) {
+            final byte[] bytes = new byte[(int) is.available()];
+            final int result = is.read(bytes);
+            return new RemoteViews.DrawInstructions.Builder(
+                    Collections.singletonList(bytes)).build();
+        }
+    }
+
+    private static void verifyColorsOnFourCorners(int expectedColor, Bitmap bitmap) {
+        final int w = bitmap.getWidth();
+        final int h = bitmap.getHeight();
+        final int offset = 2;
+        assertEquals(expectedColor, bitmap.getPixel(offset, offset));
+        assertEquals(expectedColor, bitmap.getPixel(w - offset, offset));
+        assertEquals(expectedColor, bitmap.getPixel(offset, h - offset));
+        assertEquals(expectedColor, bitmap.getPixel(w - offset, h - offset));
     }
 
     @Test
