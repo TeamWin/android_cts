@@ -191,19 +191,19 @@ public class ResourceManagerTest {
     @Test
     public void testReclaimResourceNonsecureVsSecureLowHighResolution() throws Exception {
         doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_NONSECURE,
-                ResourceManagerTestActivityBase.TYPE_NONSECURE, false, true);
+                ResourceManagerTestActivityBase.TYPE_SECURE, false, true);
     }
 
     @Test
     public void testReclaimResourceSecureVsNonsecureLowHighResolution() throws Exception {
-        doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_NONSECURE,
+        doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_SECURE,
                 ResourceManagerTestActivityBase.TYPE_NONSECURE, false, true);
     }
 
     @Test
     public void testReclaimResourceSecureVsSecureLowHighResolution() throws Exception {
-        doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_NONSECURE,
-                ResourceManagerTestActivityBase.TYPE_NONSECURE, false, true);
+        doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_SECURE,
+                ResourceManagerTestActivityBase.TYPE_SECURE, false, true);
     }
 
     @Test
@@ -231,19 +231,19 @@ public class ResourceManagerTest {
     @Test
     public void testReclaimResourceNonsecureVsSecureHighLowResolution() throws Exception {
         doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_NONSECURE,
-                ResourceManagerTestActivityBase.TYPE_NONSECURE, true, false);
+                ResourceManagerTestActivityBase.TYPE_SECURE, true, false);
     }
 
     @Test
     public void testReclaimResourceSecureVsNonsecureHighLowResolution() throws Exception {
-        doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_NONSECURE,
+        doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_SECURE,
                 ResourceManagerTestActivityBase.TYPE_NONSECURE, true, false);
     }
 
     @Test
     public void testReclaimResourceSecureVsSecureHighLowResolution() throws Exception {
-        doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_NONSECURE,
-                ResourceManagerTestActivityBase.TYPE_NONSECURE, true, false);
+        doTestReclaimResource(ResourceManagerTestActivityBase.TYPE_SECURE,
+                ResourceManagerTestActivityBase.TYPE_SECURE, true, false);
     }
 
     @Test
