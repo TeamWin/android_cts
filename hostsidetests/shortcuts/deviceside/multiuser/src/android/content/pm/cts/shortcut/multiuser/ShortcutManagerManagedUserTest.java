@@ -26,9 +26,8 @@ import android.content.pm.ShortcutInfo;
 import android.content.pm.cts.shortcut.device.common.ShortcutManagerDeviceTestBase;
 import android.os.UserHandle;
 import android.os.UserManager;
-import android.test.suitebuilder.annotation.Suppress;
 
-import java.util.List;
+import androidx.test.filters.Suppress;
 
 public class ShortcutManagerManagedUserTest extends ShortcutManagerDeviceTestBase {
     public void test01_managedProfileNotStarted() {
