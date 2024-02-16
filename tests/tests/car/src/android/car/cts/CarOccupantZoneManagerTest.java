@@ -39,10 +39,10 @@ import android.hardware.display.DisplayManager;
 import android.os.Process;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Log;
 import android.view.Display;
 
+import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 

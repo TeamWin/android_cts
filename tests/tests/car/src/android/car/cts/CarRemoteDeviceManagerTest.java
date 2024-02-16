@@ -34,9 +34,9 @@ import android.content.pm.Signature;
 import android.content.pm.SigningInfo;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
-import android.test.suitebuilder.annotation.SmallTest;
 
 import androidx.annotation.NonNull;
+import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiTest;
