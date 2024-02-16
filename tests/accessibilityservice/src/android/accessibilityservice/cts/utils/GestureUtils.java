@@ -25,6 +25,7 @@ import android.accessibilityservice.GestureDescription.StrokeDescription;
 import android.graphics.Path;
 import android.graphics.PointF;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
@@ -42,6 +43,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class GestureUtils {
 
+    public static final String LOG_TAG = "GestureUtils";
     public static final long STROKE_TIME_GAP_MS_MIN = 1;
     public static final long STROKE_TIME_GAP_MS_DEFAULT = 40;
     public static final long STROKE_TIME_GAP_MS_MAX = ViewConfiguration.getDoubleTapTimeout() - 1;
@@ -489,9 +491,11 @@ public class GestureUtils {
             sRandomSeed = new Random().nextLong();
             sRandom = new Random(sRandomSeed);
         }
+        Log.d(LOG_TAG, "Randomized values. Seed = " + sRandomSeed);
         sStrokeGapTimeMs =
                 sRandom.nextLong(STROKE_TIME_GAP_MS_MAX - STROKE_TIME_GAP_MS_MIN)
                         + STROKE_TIME_GAP_MS_MIN;
+        Log.d(LOG_TAG, "Stroke gap time = " + sStrokeGapTimeMs);
     }
 
     /** Rule used to report values in the failure message for easier bug reporting. */
@@ -516,18 +520,22 @@ public class GestureUtils {
                 } catch (Throwable throwable) {
                     if (sShouldRandomize) {
                         // Give instructions on how to reproduce this behavior
-                        String message =
-                                throwable.getMessage()
-                                        + "To reproduce this failure using atest, run this test"
-                                        + " with the options -- --test-arg"
-                                        + " com.android.tradefed.testtype.AndroidJUnitTest:"
-                                        + "instrumentation-arg:randomize:="
-                                        + sShouldRandomize
-                                        + " --test-arg"
-                                        + " com.android.tradefed.testtype.AndroidJUnitTest:"
-                                        + "instrumentation-arg:randomSeed:="
-                                        + sRandomSeed;
-                        throw new Exception(message, throwable);
+                        StringBuilder message = new StringBuilder();
+                        message.append(throwable.getMessage());
+                        message.append("\nFor convenience, the randomized values are as follows:");
+                        message.append("\nStroke gap time: ");
+                        message.append(sStrokeGapTimeMs);
+                        message.append("\nTo reproduce this failure using atest,");
+                        message.append(" run this test with the options");
+                        message.append("\n-- --test-arg");
+                        message.append(" com.android.tradefed.testtype.AndroidJUnitTest:");
+                        message.append("instrumentation-arg:randomize:=");
+                        message.append(sShouldRandomize);
+                        message.append(" --test-arg");
+                        message.append(" com.android.tradefed.testtype.AndroidJUnitTest:");
+                        message.append("instrumentation-arg:randomSeed:=");
+                        message.append(sRandomSeed);
+                        throw new Exception(message.toString(), throwable);
                     } else {
                         throw throwable;
                     }
