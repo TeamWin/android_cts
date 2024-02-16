@@ -233,7 +233,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     "Landroid/app/sdksandbox/ISdkSandboxProcessDeathCallback;",
                     "Landroid/app/sdksandbox/ISendDataCallback;",
                     "Landroid/app/sdksandbox/ISharedPreferencesSyncCallback;",
-                    "Landroid/app/sdksandbox/ISdkToServiceCallback;"
+                    "Landroid/app/sdksandbox/ISdkToServiceCallback;",
+                    "Landroid/app/sdksandbox/IUnloadSdkCallback;"
             );
 
     private static final String FEATURE_WEARABLE = "android.hardware.type.watch";
@@ -736,8 +737,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                 "Lcom/android/sdksandbox/ISdkSandboxManagerToSdkSandboxCallback;",
                 "Lcom/android/sdksandbox/ISdkSandboxService;",
                 "Lcom/android/sdksandbox/SandboxLatencyInfo-IA;",
-                "Lcom/android/sdksandbox/SandboxLatencyInfo;",
-                "Lcom/android/sdksandbox/IUnloadSdkCallback;"
+                "Lcom/android/sdksandbox/SandboxLatencyInfo;"
             );
 
     private static final ImmutableMap<String, ImmutableSet<String>> FULL_APK_IN_APEX_BURNDOWN =
