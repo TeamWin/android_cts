@@ -18,7 +18,9 @@ package android.voiceinteraction.cts;
 
 import static android.Manifest.permission.CAMERA;
 import static android.Manifest.permission.RECORD_AUDIO;
+import static android.voiceinteraction.common.Utils.toggleVisualQueryAccessibilitySettings;
 import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
+import static android.voiceinteraction.cts.testcore.Helper.WAIT_TIMEOUT_IN_MS;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -47,6 +49,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 
 /**
@@ -63,6 +69,8 @@ public class VisualQueryDetectorTest {
     protected final Context mContext = getInstrumentation().getTargetContext();
 
     private CtsBasicVoiceInteractionService mService;
+
+    private CountDownLatch mAccessibilitySettingChangeLatch;
 
     @Rule
     public AssumptionCheckerRule checkVisualQueryDetectionServiceEnabledRule =
@@ -135,5 +143,88 @@ public class VisualQueryDetectorTest {
         }, CAMERA, RECORD_AUDIO);
 
         visualQueryDetector.destroy();
+    }
+
+    @Test
+    public void testVisualQueryDetector_getCurrentAccessibilitySettingsSuccess()
+            throws Exception {
+        // Create VisualQueryDetector and wait onSandboxedDetectionServiceInitialized() callback
+        mService.createVisualQueryDetector();
+
+        // verify callback result
+        mService.waitSandboxedDetectionServiceInitializedCalledOrException();
+
+        // The VisualQueryDetector should be created correctly
+        VisualQueryDetector visualQueryDetector = mService.getVisualQueryDetector();
+        Objects.requireNonNull(visualQueryDetector);
+
+        AtomicBoolean settingsEnabled = new AtomicBoolean(false);
+
+        // Subscribe to the settings enable value
+        visualQueryDetector.setAccessibilityDetectionEnabledListener(settingsEnabled::set);
+
+        // Test if the getter gets the settings update
+        toggleVisualQueryAccessibilitySettings(false);
+        assertThat(visualQueryDetector.isAccessibilityDetectionEnabled()).isFalse();
+        toggleVisualQueryAccessibilitySettings(true);
+        assertThat(visualQueryDetector.isAccessibilityDetectionEnabled()).isTrue();
+    }
+
+    @Test
+    public void testVisualQueryDetector_setAccessibilitySettingsListener_notifySuccess()
+            throws Exception {
+        // Create VisualQueryDetector and wait onSandboxedDetectionServiceInitialized() callback
+        mService.createVisualQueryDetector();
+
+        // verify callback result
+        mService.waitSandboxedDetectionServiceInitializedCalledOrException();
+
+        // The VisualQueryDetector should be created correctly
+        VisualQueryDetector visualQueryDetector = mService.getVisualQueryDetector();
+        Objects.requireNonNull(visualQueryDetector);
+
+        AtomicBoolean settingsEnabled = new AtomicBoolean(false);
+
+        // Reset settings to be false
+        toggleVisualQueryAccessibilitySettings(false);
+
+        Consumer<Boolean> listener = enable -> {
+            Log.i(TAG, "callback triggered " + enable);
+            mAccessibilitySettingChangeLatch.countDown();
+            settingsEnabled.set(enable);
+        };
+
+        // Subscribe to the settings enable value
+        visualQueryDetector.setAccessibilityDetectionEnabledListener(listener);
+
+        // When toggled true - the value should be true
+        initAccessibilityCountDownLatch(1);
+        toggleVisualQueryAccessibilitySettings(true);
+        waitForAccessibilitySettingsUpdated();
+        assertThat(settingsEnabled.get()).isEqualTo(true);
+
+        // When toggled false - the value should be false
+        initAccessibilityCountDownLatch(1);
+        toggleVisualQueryAccessibilitySettings(false);
+        waitForAccessibilitySettingsUpdated();
+        assertThat(settingsEnabled.get()).isEqualTo(false);
+
+        // Unsubscribe
+        visualQueryDetector.clearAccessibilityDetectionEnabledListener();
+    }
+
+    private void initAccessibilityCountDownLatch(int count) {
+        mAccessibilitySettingChangeLatch = new CountDownLatch(count);
+    }
+
+    private void waitForAccessibilitySettingsUpdated() throws InterruptedException {
+        Log.d(TAG, "waitForAccessibilitySettingsUpdated(), latch="
+                + mAccessibilitySettingChangeLatch);
+        if (!mAccessibilitySettingChangeLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS)
+                || mAccessibilitySettingChangeLatch == null) {
+            mAccessibilitySettingChangeLatch = null;
+            throw new IllegalStateException("Accessibility settings notify listener fails.");
+        }
+        mAccessibilitySettingChangeLatch = null;
     }
 }

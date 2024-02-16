@@ -20,6 +20,7 @@ package android.voiceinteraction.cts;
 import static android.Manifest.permission.CAMERA;
 import static android.Manifest.permission.RECORD_AUDIO;
 import static android.service.voice.SandboxedDetectionInitializer.INITIALIZATION_STATUS_SUCCESS;
+import static android.voiceinteraction.common.Utils.toggleVisualQueryAccessibilitySettings;
 import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -363,6 +364,84 @@ public class VisualQueryDetectionServiceBasicTest {
             assertThat(streamedQueries.get(0)).isEqualTo(
                     MainVisualQueryDetectionService.FAKE_QUERY_FIRST);
             assertThat(streamedQueries.size()).isEqualTo(1);
+
+        } finally {
+            visualQueryDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    @RequiresDevice
+    public void testVisualQueryDetectionService_startRecogintion_enableA11ySettingStreamSuccess()
+            throws Throwable {
+        // Create VisualQueryDetector
+        VisualQueryDetector visualQueryDetector = createVisualQueryDetector();
+
+        // Sleep as this should be toggled by UI instead.
+        toggleVisualQueryAccessibilitySettings(true);
+        SystemClock.sleep(SETUP_WAIT_MS);
+
+        runWithShellPermissionIdentity(() -> {
+            PersistableBundle options = Helper.createFakePersistableBundleData();
+            options.putInt(MainVisualQueryDetectionService.KEY_VQDS_TEST_SCENARIO,
+                    MainVisualQueryDetectionService.SCENARIO_STREAM_WITH_ACCESSIBILITY_DATA);
+            visualQueryDetector.updateState(options, Helper.createFakeSharedMemoryData());
+        });
+        try {
+            adoptShellPermissionIdentityForVisualQueryDetection();
+
+            mService.initQueryFinishRejectLatch(1);
+            visualQueryDetector.startRecognition();
+
+            // wait onStartDetection() called and verify the result
+            mService.waitOnQueryFinishedRejectCalled();
+
+            // verify results
+            ArrayList<byte[]> streamedAccessibilityData = mService.getAccessibilityDataResult();
+            assertThat(streamedAccessibilityData.get(0)).isEqualTo(
+                    MainVisualQueryDetectionService.TEST_BYTES);
+            assertThat(streamedAccessibilityData.size()).isEqualTo(1);
+
+        } finally {
+            visualQueryDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    @RequiresDevice
+    public void testVisualQueryDetectionService_startRecogintion_disableA11ySettingStreamFailure()
+            throws Throwable {
+        // Create VisualQueryDetector
+        VisualQueryDetector visualQueryDetector = createVisualQueryDetector();
+
+        // Sleep as this should be toggled by UI instead.
+        toggleVisualQueryAccessibilitySettings(false);
+        SystemClock.sleep(SETUP_WAIT_MS);
+
+        runWithShellPermissionIdentity(() -> {
+            PersistableBundle options = Helper.createFakePersistableBundleData();
+            options.putInt(MainVisualQueryDetectionService.KEY_VQDS_TEST_SCENARIO,
+                    MainVisualQueryDetectionService.SCENARIO_STREAM_WITH_ACCESSIBILITY_DATA);
+            visualQueryDetector.updateState(options, Helper.createFakeSharedMemoryData());
+        });
+        try {
+            adoptShellPermissionIdentityForVisualQueryDetection();
+
+            mService.initOnFailureLatch();
+            visualQueryDetector.startRecognition();
+
+            // wait onFailure() called since this would not be permitted.
+            mService.waitOnFailureCalled();
+
+            // verify results - nothing should be here
+            ArrayList<byte[]> streamedAccessibilityData = mService.getAccessibilityDataResult();
+            assertThat(streamedAccessibilityData.size()).isEqualTo(0);
 
         } finally {
             visualQueryDetector.destroy();

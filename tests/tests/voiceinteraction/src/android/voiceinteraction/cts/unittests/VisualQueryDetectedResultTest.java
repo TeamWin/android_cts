@@ -31,6 +31,7 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class VisualQueryDetectedResultTest {
 
+    private static final byte[] TEST_BYTES = new byte[] { 0, 1, 2, 3 };
     private static final String TEST_QUERY = "What time is it?";
 
     @Test
@@ -47,7 +48,8 @@ public class VisualQueryDetectedResultTest {
         final VisualQueryDetectedResult visualQueryDetectedResult =
                 buildVisualQueryDetectedResult(
                         /* partialQuery= */ TEST_QUERY,
-                        /* speakerId= */ 1);
+                        /* speakerId= */ 1,
+                        /* AccessibilityDetectionData= */ TEST_BYTES);
         assertVisualQueryDetectedResult(visualQueryDetectedResult);
 
     }
@@ -57,7 +59,8 @@ public class VisualQueryDetectedResultTest {
         final VisualQueryDetectedResult visualQueryDetectedResult =
                 buildVisualQueryDetectedResult(
                         /* partialQuery= */ TEST_QUERY,
-                        /* speakerId= */ 1);
+                        /* speakerId= */ 1,
+                        /* AccessibilityDetectionData= */ TEST_BYTES);
         final Parcel p = Parcel.obtain();
         visualQueryDetectedResult.writeToParcel(p, 0);
         p.setDataPosition(0);
@@ -70,10 +73,12 @@ public class VisualQueryDetectedResultTest {
 
     private VisualQueryDetectedResult buildVisualQueryDetectedResult(
             String partialQuery,
-            int speakerId) {
+            int speakerId,
+            byte[] accessibilityDetectionData) {
         return new VisualQueryDetectedResult.Builder()
                 .setPartialQuery(TEST_QUERY)
                 .setSpeakerId(speakerId)
+                .setAccessibilityDetectionData(accessibilityDetectionData)
                 .build();
     }
 
@@ -81,5 +86,6 @@ public class VisualQueryDetectedResultTest {
             VisualQueryDetectedResult visualQueryDetectedResult) {
         assertThat(visualQueryDetectedResult.getPartialQuery()).isEqualTo(TEST_QUERY);
         assertThat(visualQueryDetectedResult.getSpeakerId()).isEqualTo(1);
+        assertThat(visualQueryDetectedResult.getAccessibilityDetectionData()).isEqualTo(TEST_BYTES);
     }
 }

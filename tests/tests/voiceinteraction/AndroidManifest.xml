@@ -19,6 +19,8 @@
      package="android.voiceinteraction.cts">
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+
     <queries>
         <package android:name="android.voiceinteraction.service" />
     </queries>
