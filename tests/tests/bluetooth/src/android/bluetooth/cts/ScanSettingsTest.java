@@ -21,9 +21,9 @@ import static org.junit.Assert.assertThrows;
 
 import android.bluetooth.le.ScanSettings;
 import android.os.Parcel;
-import android.test.suitebuilder.annotation.SmallTest;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.CddTest;

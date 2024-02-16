@@ -26,6 +26,7 @@ android_test {
         "PlatformProperties",
         "bluetooth_flags_java_lib",
         "flag-junit",
+        "androidx.test.rules",
     ],
     libs: [
         "android.test.runner",

@@ -19,7 +19,8 @@ package android.bluetooth.cts;
 import android.bluetooth.BluetoothClass;
 import android.os.Parcel;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.filters.SmallTest;
 
 /**
  * Unit test cases for {@link BluetoothClass}.
