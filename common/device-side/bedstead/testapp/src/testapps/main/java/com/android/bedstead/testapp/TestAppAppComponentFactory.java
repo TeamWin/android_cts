@@ -40,6 +40,7 @@ import android.security.KeyChain;
 import android.telecom.TelecomManager;
 import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
+import android.telephony.euicc.EuiccManager;
 import android.util.Log;
 
 import com.android.bedstead.testapp.processor.annotations.FrameworkClass;
@@ -75,7 +76,9 @@ import com.android.eventlib.premade.EventLibService;
                 @FrameworkClass(frameworkClass = WallpaperManager.class, constructor =
                         "context.getSystemService(android.app.WallpaperManager.class)"),
                 @FrameworkClass(frameworkClass = TelephonyManager.class, constructor =
-                        "context.getSystemService(android.telephony.TelephonyManager.class)")
+                        "context.getSystemService(android.telephony.TelephonyManager.class)"),
+                @FrameworkClass(frameworkClass = EuiccManager.class, constructor =
+                        "context.getSystemService(android.telephony.euicc.EuiccManager.class)")
         }
 )
 public final class TestAppAppComponentFactory extends AppComponentFactory {

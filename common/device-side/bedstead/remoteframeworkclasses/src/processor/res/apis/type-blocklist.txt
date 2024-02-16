@@ -114,4 +114,8 @@ android.telephony.PhoneStateListener
 android.telephony.TelephonyManager.EmergencyCallDiagnosticData
 android.telephony.TelephonyManager.UssdResponseCallback
 android.telephony.TelephonyManager.CarrierPrivilegesCallback
+android.telephony.TelephonyManager.EmergencyCallDiagnosticData
+android.telephony.TelephonyManager.EmergencyCallDiagnosticParams
 android.telephony.TelephonyCallback
+android.content.pm.ArchivedPackageInfo
+android.telephony.euicc.EuiccManager
