@@ -2451,8 +2451,8 @@ public class ASurfaceControlTest {
                 });
 
         float headroom = getStableHdrSdrRatio(display);
-	// Add some small threshold for finding a lower restriction
-	assumeTrue(headroom < 1.02f);
+        // Require some small threshold for allowable headroom
+        assumeTrue(headroom > 1.02f);
         float targetHeadroom = 1.f + (headroom - 1.f) / 2;
 
         verifyTest(
