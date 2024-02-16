@@ -24,6 +24,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.nfc.NfcAdapter;
 import android.nfc.cardemulation.HostApduService;
+import android.nfc.cardemulation.PollingFrame;
 import android.os.Bundle;
 
 import com.android.cts.verifier.R;
@@ -144,7 +145,7 @@ public class PollingLoopEmulatorActivity extends BaseEmulatorActivity {
             if (action.equals(PollingLoopService.POLLING_FRAME_ACTION)) {
                 processPollingFrames(
                         intent.getParcelableArrayListExtra(PollingLoopService.POLLING_FRAME_EXTRA,
-                                Bundle.class));
+                                PollingFrame.class));
             }
         }
     };
@@ -176,8 +177,8 @@ public class PollingLoopEmulatorActivity extends BaseEmulatorActivity {
         setupServices(this, PollingLoopService.COMPONENT);
     }
 
-    void processPollingFrames(List<Bundle> frames) {
-        for (Bundle frame : frames) {
+    void processPollingFrames(List<PollingFrame> frames) {
+        for (PollingFrame frame : frames) {
             processPollingFrame(frame);
         }
         if (seenCorrectPollingLoop() && !mAllowedTransaction && mCustomFrame == null) {
@@ -207,8 +208,8 @@ public class PollingLoopEmulatorActivity extends BaseEmulatorActivity {
         return false;
     }
 
-    void processPollingFrame(Bundle frame) {
-        char type = frame.getChar(HostApduService.KEY_POLLING_LOOP_TYPE);
+    void processPollingFrame(PollingFrame frame) {
+        char type = frame.getType();
         if (type == HostApduService.POLLING_LOOP_TYPE_A) {
             mNfcACount++;
         } else if (type == HostApduService.POLLING_LOOP_TYPE_B) {
@@ -219,7 +220,7 @@ public class PollingLoopEmulatorActivity extends BaseEmulatorActivity {
             mNfcOffCount++;
         } else if (type == HostApduService.POLLING_LOOP_TYPE_UNKNOWN) {
             if (mCustomFrame != null && !mAllowedTransaction) {
-                byte[] passedData = frame.getByteArray("android.nfc.cardemulation.DATA");
+                byte[] passedData = frame.getData();
                 if (mCustomFrame.equals(HexFormat.of().formatHex(passedData))) {
                     getPassButton().setEnabled(true);
                 }

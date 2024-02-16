@@ -27,7 +27,7 @@ public class CtsMyHostApduService extends HostApduService {
     }
 
     @Override
-    public void processPollingFrames(List<Bundle> frames) {
+    public void processPollingFrames(List<PollingFrame> frames) {
         if (CardEmulationTest.sCurrentPollLoopReceiver != null) {
             CardEmulationTest.sCurrentPollLoopReceiver.notifyPollingLoop(this.getClass().getName(),
                     frames);
