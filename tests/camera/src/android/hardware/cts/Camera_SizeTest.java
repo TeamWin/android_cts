@@ -19,12 +19,12 @@ package android.hardware.cts;
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.hardware.cts.helpers.CameraUtils;
-import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
+
+import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 
-import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import java.util.Collections;
