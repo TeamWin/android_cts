@@ -317,6 +317,8 @@
             android:process=":attributionSourceServiceProcess">
         </service>
 
+        <activity android:name="android.security.cts.BUG_293602970.PocActivity" />
+
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
