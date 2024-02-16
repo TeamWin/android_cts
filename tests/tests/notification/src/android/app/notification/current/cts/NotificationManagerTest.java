@@ -3239,6 +3239,11 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             fail("registerCallNotificationListener should not succeed - privileged call");
         } catch (SecurityException e) {
             // Expected SecurityException
+        } finally {
+            PermissionUtils.grantPermission(mContext.getPackageName(),
+                    android.Manifest.permission.INTERACT_ACROSS_USERS);
+            PermissionUtils.setAppOp(mContext.getPackageName(),
+                    android.Manifest.permission.ACCESS_NOTIFICATIONS, MODE_ALLOWED);
         }
     }
 
@@ -3247,11 +3252,6 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     public void testCallNotificationListener_registerCallback_withPermission()
             throws Exception {
         try {
-            PermissionUtils.grantPermission(mContext.getPackageName(),
-                    android.Manifest.permission.INTERACT_ACROSS_USERS);
-            PermissionUtils.setAppOp(mContext.getPackageName(),
-                    android.Manifest.permission.ACCESS_NOTIFICATIONS, MODE_ALLOWED);
-
             mNotificationManager.registerCallNotificationEventListener(mContext.getPackageName(),
                     UserHandle.SYSTEM, mContext.getMainExecutor(),
                     new CallNotificationEventListener() {
