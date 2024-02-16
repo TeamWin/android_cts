@@ -367,6 +367,12 @@ public class TransactionalVoipAppControlMain extends Service {
             return mTelecomManager.getOwnSelfManagedPhoneAccounts();
         }
 
+        @Override
+        public List<PhoneAccount> getRegisteredPhoneAccounts() {
+            Log.i(mTag, "getRegisteredPhoneAccounts");
+            return mTelecomManager.getRegisteredPhoneAccounts();
+        }
+
         private TransactionalCall getCallOrThrowError(String id, List<String> stackTrace) {
             if (!mIdToControl.containsKey(id)) {
                 throw new TestAppException(mPackageName,

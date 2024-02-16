@@ -46,4 +46,8 @@
             class="com.android.tradefed.testtype.suite.module.TestFailureModuleController">
         <option name="bugreportz-on-failure" value="true" />
     </object>
+    <target_preparer class="com.android.tradefed.targetprep.FeatureFlagTargetPreparer">
+        <option name="flag-value"
+                value="telecom/com.android.server.telecom.flags.get_registered_phone_accounts=true"/>
+    </target_preparer>
 </configuration>

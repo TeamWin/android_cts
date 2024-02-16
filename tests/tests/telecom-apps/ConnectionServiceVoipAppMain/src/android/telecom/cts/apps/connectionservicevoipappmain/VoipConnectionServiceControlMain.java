@@ -25,12 +25,12 @@ import static android.telecom.cts.apps.AssertOutcome.assertCountDownLatchWasCall
 import static android.telecom.cts.apps.AttributesUtil.getExtrasWithPhoneAccount;
 import static android.telecom.cts.apps.AttributesUtil.hasSetInactiveCapabilities;
 import static android.telecom.cts.apps.AttributesUtil.isOutgoing;
+import static android.telecom.cts.apps.StackTraceUtil.appendStackTraceList;
+import static android.telecom.cts.apps.StackTraceUtil.createStackTraceList;
 import static android.telecom.cts.apps.TelecomTestApp.SELF_MANAGED_CS_CLONE_ACCOUNT;
 import static android.telecom.cts.apps.TelecomTestApp.SELF_MANAGED_CS_CLONE_PACKAGE_NAME;
 import static android.telecom.cts.apps.TelecomTestApp.SELF_MANAGED_CS_MAIN_ACCOUNT;
 import static android.telecom.cts.apps.TelecomTestApp.VOIP_CS_CONTROL_INTERFACE_ACTION;
-import static android.telecom.cts.apps.StackTraceUtil.appendStackTraceList;
-import static android.telecom.cts.apps.StackTraceUtil.createStackTraceList;
 import static android.telecom.cts.apps.WaitUntil.waitUntilAvailableEndpointsIsSet;
 import static android.telecom.cts.apps.WaitUntil.waitUntilCallAudioStateIsSet;
 import static android.telecom.cts.apps.WaitUntil.waitUntilConnectionIsNonNull;
@@ -55,9 +55,9 @@ import android.telecom.cts.apps.IAppControl;
 import android.telecom.cts.apps.LatchedEndpointOutcomeReceiver;
 import android.telecom.cts.apps.NoDataTransaction;
 import android.telecom.cts.apps.PhoneAccountTransaction;
+import android.telecom.cts.apps.TestAppConnection;
 import android.telecom.cts.apps.TestAppException;
 import android.telecom.cts.apps.TestAppTransaction;
-import android.telecom.cts.apps.TestAppConnection;
 import android.telecom.cts.apps.WaitUntil;
 import android.util.Log;
 
@@ -314,6 +314,12 @@ public class VoipConnectionServiceControlMain extends Service {
         public List<PhoneAccountHandle> getOwnAccountHandlesForApp() {
             Log.i(mTag, "getOwnAccountHandlesForApp:");
             return mTelecomManager.getOwnSelfManagedPhoneAccounts();
+        }
+
+        @Override
+        public List<PhoneAccount> getRegisteredPhoneAccounts() {
+            Log.i(mTag, "getRegisteredPhoneAccounts");
+            return mTelecomManager.getRegisteredPhoneAccounts();
         }
 
         private TestAppConnection getConnectionOrThrow(String id, List<String> stackTrace) {

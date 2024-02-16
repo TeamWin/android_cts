@@ -25,6 +25,8 @@ import android.content.Context;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.RemoteException;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telecom.Call;
 import android.telecom.CallAttributes;
 import android.telecom.CallEndpoint;
@@ -40,6 +42,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 
 import java.util.List;
 
@@ -48,6 +51,8 @@ import java.util.List;
  * cts/tests/tests/telecomApps directory.
  */
 public class BaseAppVerifier {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
     public static final boolean S_IS_TEST_DISABLED = true;
     public boolean mShouldTestTelecom = true;
     private BaseAppVerifierImpl mBaseAppVerifierImpl;
@@ -56,8 +61,9 @@ public class BaseAppVerifier {
      /  ManagedConnectionServiceApp - The PhoneAccountHandle and PhoneAccount must reside in the
      /  CTS test process.
      /***********************************************************/
-    PhoneAccountHandle mManagedHandle = new PhoneAccountHandle(MANAGED_APP_CN, MANAGED_APP_ID);
-    PhoneAccount mManagedAccount = PhoneAccount.builder(mManagedHandle, MANAGED_APP_LABEL)
+    public PhoneAccountHandle mManagedHandle =
+            new PhoneAccountHandle(MANAGED_APP_CN, MANAGED_APP_ID);
+    public PhoneAccount mManagedAccount = PhoneAccount.builder(mManagedHandle, MANAGED_APP_LABEL)
             .setAddress(Uri.parse(MANAGED_ADDRESS))
             .setSubscriptionAddress(Uri.parse(MANAGED_ADDRESS))
             .setCapabilities(PhoneAccount.CAPABILITY_VIDEO_CALLING
@@ -270,6 +276,14 @@ public class BaseAppVerifier {
     public List<PhoneAccountHandle> getAccountHandlesForApp(AppControlWrapper appControl)
             throws Exception {
         return mBaseAppVerifierImpl.getAccountHandlesForApp(appControl);
+    }
+
+    /**
+     * Fetch the PhoneAccount associated with the given PhoneAccountHandle
+     */
+    public List<PhoneAccount> getRegisteredPhoneAccounts(AppControlWrapper appControl)
+            throws Exception {
+        return appControl.getRegisteredPhoneAccounts();
     }
 
     public boolean isPhoneAccountRegistered(PhoneAccountHandle handle) {

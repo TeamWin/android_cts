@@ -40,6 +40,7 @@ interface IAppControl {
     // The following AIDL methods cannot fail so they do not need to be wrapped in a Transaction
     boolean isBound();
     List<PhoneAccountHandle> getOwnAccountHandlesForApp();
+    List<PhoneAccount> getRegisteredPhoneAccounts();
     void registerCustomPhoneAccount(in PhoneAccount account);
     void unregisterPhoneAccountWithHandle( in PhoneAccountHandle handle);
 

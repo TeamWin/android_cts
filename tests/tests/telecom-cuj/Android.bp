@@ -26,6 +26,9 @@ android_test {
         "androidx.test.core",
         "androidx.test.rules",
         "TelecomTestAppUtilsLib",
+        "telecom_flags_core_java_lib",
+        "telephony_flags_core_java_lib",
+        "flag-junit",
     ],
     libs: [
         "android.test.base",
