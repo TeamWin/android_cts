@@ -236,11 +236,20 @@ public class VirtualDeviceRule implements TestRule {
      */
     @NonNull
     public static VirtualDisplayConfig.Builder createDefaultVirtualDisplayConfigBuilder() {
+        return createDefaultVirtualDisplayConfigBuilder(
+                DEFAULT_VIRTUAL_DISPLAY_WIDTH, DEFAULT_VIRTUAL_DISPLAY_HEIGHT);
+    }
+
+    /**
+     * Default config for virtual display creation with custom dimensions.
+     */
+    @NonNull
+    public static VirtualDisplayConfig.Builder createDefaultVirtualDisplayConfigBuilder(
+            int width, int height) {
         SurfaceTexture texture = new SurfaceTexture(1);
-        texture.setDefaultBufferSize(DEFAULT_VIRTUAL_DISPLAY_WIDTH, DEFAULT_VIRTUAL_DISPLAY_HEIGHT);
+        texture.setDefaultBufferSize(width, height);
         return new VirtualDisplayConfig.Builder(
-                DEFAULT_VIRTUAL_DISPLAY_NAME, DEFAULT_VIRTUAL_DISPLAY_WIDTH,
-                DEFAULT_VIRTUAL_DISPLAY_HEIGHT, DEFAULT_VIRTUAL_DISPLAY_DPI)
+                DEFAULT_VIRTUAL_DISPLAY_NAME, width, height,  DEFAULT_VIRTUAL_DISPLAY_DPI)
                 .setSurface(new Surface(texture));
     }
 
@@ -283,6 +292,23 @@ public class VirtualDeviceRule implements TestRule {
         UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
         final Set<String> currentPermissions = uiAutomation.getAdoptedShellPermissions();
         uiAutomation.adoptShellPermissionIdentity(permissions);
+        try {
+            return supplier.get();
+        } finally {
+            // Revert the permissions needed for the test again.
+            uiAutomation.adoptShellPermissionIdentity(
+                    currentPermissions.toArray(new String[0]));
+        }
+    }
+
+    /**
+     * Temporarily drops any permissions and executes the given supplier. Reverts any permissions
+     * currently held after the execution.
+     */
+    public <T> T runWithoutPermissions(Supplier<T> supplier) {
+        UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
+        final Set<String> currentPermissions = uiAutomation.getAdoptedShellPermissions();
+        uiAutomation.dropShellPermissionIdentity();
         try {
             return supplier.get();
         } finally {
