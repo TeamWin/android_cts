@@ -62,6 +62,7 @@ android_test {
         "telephony_flags_core_java_lib",
         "flag-junit",
         "telecom_flags_core_java_lib",
+        "androidx.test.rules",
     ],
     srcs: [
         "src/**/*.java",
