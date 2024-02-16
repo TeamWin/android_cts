@@ -19,6 +19,7 @@ package android.app.cts.testcomponentcaller;
 import static android.app.cts.testcomponentcaller.Constants.ACTION_ID;
 import static android.app.cts.testcomponentcaller.Constants.EXTRA_CHECK_CONTENT_URI_PERMISSION_RESULT;
 import static android.app.cts.testcomponentcaller.Constants.EXTRA_ILLEGAL_ARG_EXCEPTION_CAUGHT;
+import static android.app.cts.testcomponentcaller.Constants.EXTRA_UNKNOWN;
 import static android.app.cts.testcomponentcaller.Constants.IS_NEW_INTENT;
 import static android.app.cts.testcomponentcaller.Constants.MODE_FLAGS_TO_CHECK;
 import static android.app.cts.testcomponentcaller.Constants.EXTRA_SECURITY_EXCEPTION_CAUGHT;
@@ -29,8 +30,12 @@ import static android.app.cts.testcomponentcaller.Constants.START_TEST_ACTIVITY_
 import static android.app.cts.testcomponentcaller.Constants.TEST_INITIAL_CALLER_ACTIVITY;
 import static android.app.cts.testcomponentcaller.Constants.TEST_RECEIVER;
 import static android.app.cts.testcomponentcaller.Constants.TEST_RECEIVER_ACTION;
+import static android.app.cts.testcomponentcaller.Constants.TRY_TO_RETRIEVE_EXTRA_STREAM_REFERRER_NAME;
+import static android.app.cts.testcomponentcaller.Constants.URI_IN_ARRAY_LIST_EXTRA_STREAMS_LOCATION_ID;
 import static android.app.cts.testcomponentcaller.Constants.URI_IN_CLIP_DATA_LOCATION_ID;
 import static android.app.cts.testcomponentcaller.Constants.URI_IN_DATA_LOCATION_ID;
+import static android.app.cts.testcomponentcaller.Constants.URI_IN_EXTRA_STREAM_LOCATION_ID;
+import static android.app.cts.testcomponentcaller.Constants.URI_IN_EXTRA_UNKNOWN_LOCATION_ID;
 import static android.app.cts.testcomponentcaller.Constants.URI_LOCATION_ID;
 
 import android.app.Activity;
@@ -56,12 +61,14 @@ public class TestInitialCallerActivity extends Activity {
         int modeFlags = intent.getIntExtra(MODE_FLAGS_TO_CHECK, -1);
         boolean isNewIntent = intent.getBooleanExtra(IS_NEW_INTENT, false);
 
-        Uri uri = getUriToCheck(uriLocationId, intent);
-        Log.i(TAG, uri.toString());
         switch (actionId) {
-            case START_TEST_ACTIVITY_ACTION_ID -> startTestActivity(uri, modeFlags, isNewIntent);
-            case SEND_TEST_BROADCAST_ACTION_ID -> sendTestBroadcast(uri, modeFlags, caller,
-                    isNewIntent);
+            case START_TEST_ACTIVITY_ACTION_ID ->
+                    startTestActivity(getUriToCheck(uriLocationId, intent), modeFlags, isNewIntent);
+            case SEND_TEST_BROADCAST_ACTION_ID ->
+                    sendTestBroadcast(getUriToCheck(uriLocationId, intent), modeFlags, caller,
+                            isNewIntent);
+            case TRY_TO_RETRIEVE_EXTRA_STREAM_REFERRER_NAME ->
+                    tryToRetrieveExtraStreamReferrerName(intent);
             default -> throw new RuntimeException("Invalid action ID");
         }
     }
@@ -118,12 +125,32 @@ public class TestInitialCallerActivity extends Activity {
         }
     }
 
+    private void tryToRetrieveExtraStreamReferrerName(Intent intent) {
+        String streamString = intent.getStringExtra(Intent.EXTRA_STREAM);
+        String referrerName = intent.getStringExtra(Intent.EXTRA_REFERRER_NAME);
+
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setComponent(TEST_RECEIVER);
+        broadcastIntent.setAction(TEST_RECEIVER_ACTION);
+
+        broadcastIntent.putExtra(Intent.EXTRA_STREAM, streamString);
+        broadcastIntent.putExtra(Intent.EXTRA_REFERRER_NAME, referrerName);
+
+        sendBroadcast(broadcastIntent);
+        finish();
+    }
+
     private Uri getUriToCheck(int uriLocationId, Intent intent) {
         return switch (uriLocationId) {
             case URI_IN_DATA_LOCATION_ID -> intent.getData();
             case URI_IN_CLIP_DATA_LOCATION_ID -> getClipDataUri(intent);
+            case URI_IN_EXTRA_STREAM_LOCATION_ID ->
+                    intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri.class);
+            case URI_IN_ARRAY_LIST_EXTRA_STREAMS_LOCATION_ID -> getArrayListExtraStreams(intent);
+            case URI_IN_EXTRA_UNKNOWN_LOCATION_ID ->
+                    intent.getParcelableExtra(EXTRA_UNKNOWN, Uri.class);
             case NONE_PROVIDED_USE_HELPER_APP_URI_LOCATION_ID -> TestProvider.CONTENT_URI;
-            default -> throw new RuntimeException("Invalid URI location ID");
+            default -> throw new RuntimeException("Invalid URI location ID: " + uriLocationId);
         };
     }
 
@@ -133,5 +160,14 @@ public class TestInitialCallerActivity extends Activity {
             throw new RuntimeException("Testing clip data, but it wasn't provided");
         }
         return intent.getClipData().getItemAt(0).getUri();
+    }
+
+    private Uri getArrayListExtraStreams(Intent intent) {
+        try {
+            return intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM, Uri.class).get(0);
+        } catch (Exception e) {
+            throw new RuntimeException("Testing ArrayList EXTRA_STREAM, but getting this exception:"
+                    + e);
+        }
     }
 }
