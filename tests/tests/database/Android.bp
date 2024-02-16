@@ -29,6 +29,7 @@ android_test {
         "flag-junit",
         "android.database.sqlite-aconfig-java",
         "ravenwood-junit",
+        "androidx.test.rules",
     ],
     libs: [
         "android.test.runner",
