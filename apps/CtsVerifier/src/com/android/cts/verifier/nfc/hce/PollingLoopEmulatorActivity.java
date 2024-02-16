@@ -23,7 +23,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.nfc.NfcAdapter;
-import android.nfc.cardemulation.HostApduService;
 import android.nfc.cardemulation.PollingFrame;
 import android.os.Bundle;
 
@@ -209,16 +208,16 @@ public class PollingLoopEmulatorActivity extends BaseEmulatorActivity {
     }
 
     void processPollingFrame(PollingFrame frame) {
-        char type = frame.getType();
-        if (type == HostApduService.POLLING_LOOP_TYPE_A) {
+        int type = frame.getType();
+        if (type == PollingFrame.POLLING_LOOP_TYPE_A) {
             mNfcACount++;
-        } else if (type == HostApduService.POLLING_LOOP_TYPE_B) {
+        } else if (type == PollingFrame.POLLING_LOOP_TYPE_B) {
             mNfcBCount++;
-        } else if (type == HostApduService.POLLING_LOOP_TYPE_ON) {
+        } else if (type == PollingFrame.POLLING_LOOP_TYPE_ON) {
             mNfcOnCount++;
-        } else if (type == HostApduService.POLLING_LOOP_TYPE_OFF) {
+        } else if (type == PollingFrame.POLLING_LOOP_TYPE_OFF) {
             mNfcOffCount++;
-        } else if (type == HostApduService.POLLING_LOOP_TYPE_UNKNOWN) {
+        } else if (type == PollingFrame.POLLING_LOOP_TYPE_UNKNOWN) {
             if (mCustomFrame != null && !mAllowedTransaction) {
                 byte[] passedData = frame.getData();
                 if (mCustomFrame.equals(HexFormat.of().formatHex(passedData))) {

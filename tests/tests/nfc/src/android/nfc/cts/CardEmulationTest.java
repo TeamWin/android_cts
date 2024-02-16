@@ -32,8 +32,8 @@ import android.nfc.NfcAdapter;
 import android.nfc.cardemulation.AidGroup;
 import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
-import android.nfc.cardemulation.HostApduService;
 import android.nfc.cardemulation.PollingFrame;
+import android.nfc.cardemulation.PollingFrame.PollingFrameType;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
@@ -372,12 +372,12 @@ public class CardEmulationTest {
         try {
             originalDefault = setDefaultPaymentService(CustomHostApduService.class);
             ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(6);
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_ON));
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_A));
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_OFF));
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_ON));
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_A));
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_OFF));
+            frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_ON));
+            frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_A));
+            frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_OFF));
+            frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_ON));
+            frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_A));
+            frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_OFF));
             ensurePreferredService(CustomHostApduService.class);
             notifyPollingLoopAndWait(new ArrayList<PollingFrame>(frames),
                     CustomHostApduService.class.getName());
@@ -396,12 +396,12 @@ public class CardEmulationTest {
                     NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
                     adapter.notifyHceDeactivated();
                     ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(6);
-                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_ON));
-                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_A));
-                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_OFF));
-                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_ON));
-                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_A));
-                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_OFF));
+                    frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_ON));
+                    frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_A));
+                    frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_OFF));
+                    frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_ON));
+                    frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_A));
+                    frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_OFF));
                     ensurePreferredService(WalletRoleTestUtils.WALLET_HOLDER_SERVICE_DESC);
                     notifyPollingLoopAndWait(new ArrayList<PollingFrame>(frames),
                             WalletRoleTestUtils.getWalletRoleHolderService().getClassName());
@@ -421,12 +421,12 @@ public class CardEmulationTest {
                     new ComponentName(mContext,
                             CtsMyHostApduService.class)));
             ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(6);
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_ON));
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_A));
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_OFF));
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_ON));
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_A));
-            frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_OFF));
+            frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_ON));
+            frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_A));
+            frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_OFF));
+            frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_ON));
+            frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_A));
+            frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_OFF));
             ensurePreferredService(CtsMyHostApduService.class);
             notifyPollingLoopAndWait(frames, CtsMyHostApduService.class.getName());
         } finally {
@@ -450,12 +450,12 @@ public class CardEmulationTest {
                             new ComponentName(mContext,
                                     CtsMyHostApduService.class)));
                     ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(6);
-                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_ON));
-                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_A));
-                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_OFF));
-                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_ON));
-                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_A));
-                    frames.add(createFrame(HostApduService.POLLING_LOOP_TYPE_OFF));
+                    frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_ON));
+                    frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_A));
+                    frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_OFF));
+                    frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_ON));
+                    frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_A));
+                    frames.add(createFrame(PollingFrame.POLLING_LOOP_TYPE_OFF));
                     ensurePreferredService(CtsMyHostApduService.class);
                     notifyPollingLoopAndWait(frames, CtsMyHostApduService.class.getName());
                     Assert.assertTrue(cardEmulation.unsetPreferredService(activity));
@@ -506,7 +506,7 @@ public class CardEmulationTest {
         Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(customServiceName,
                 annotationStringHex));
         ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
-        frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
+        frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
                 HexFormat.of().parseHex(annotationStringHex)));
         notifyPollingLoopAndWait(frames, CustomHostApduService.class.getName());
         adapter.notifyHceDeactivated();
@@ -540,7 +540,7 @@ public class CardEmulationTest {
             Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(ctsMyServiceName,
                     annotationStringHex));
             ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
-            frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
+            frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
                     HexFormat.of().parseHex(annotationStringHex)));
             ensurePreferredService(CtsMyHostApduService.class);
             notifyPollingLoopAndWait(frames, CtsMyHostApduService.class.getName());
@@ -573,7 +573,7 @@ public class CardEmulationTest {
             Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(
                     backgroundServiceName, annotationStringHex));
             ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
-            frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
+            frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
                     HexFormat.of().parseHex(annotationStringHex)));
             ensurePreferredService(CtsMyHostApduService.class);
             notifyPollingLoopAndWait(frames, CtsMyHostApduService.class.getName());
@@ -609,7 +609,7 @@ public class CardEmulationTest {
             Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(
                     backgroundServiceName, annotationStringHex));
             ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
-            frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
+            frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
                     HexFormat.of().parseHex(annotationStringHex)));
             ensurePreferredService(CustomHostApduService.class);
             notifyPollingLoopAndWait(frames, CustomHostApduService.class.getName());
@@ -628,7 +628,7 @@ public class CardEmulationTest {
         }.getClass().getEnclosingMethod().getName();
         String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
         ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
-        frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
+        frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
                 HexFormat.of().parseHex(annotationStringHex)));
         notifyPollingLoopAndWait(frames, CustomHostApduService.class.getName());
         adapter.notifyHceDeactivated();
@@ -651,7 +651,7 @@ public class CardEmulationTest {
             }.getClass().getEnclosingMethod().getName();
             String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
             ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
-            frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
+            frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
                     HexFormat.of().parseHex(annotationStringHex)));
             ensurePreferredService(CtsMyHostApduService.class);
             notifyPollingLoopAndWait(frames, CtsMyHostApduService.class.getName());
@@ -679,7 +679,7 @@ public class CardEmulationTest {
                     }.getClass().getEnclosingMethod().getName();
                     String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
                     ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
-                    frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
+                    frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
                             HexFormat.of().parseHex(annotationStringHex)));
                     ensurePreferredService(CtsMyHostApduService.class);
                     notifyPollingLoopAndWait(frames, CtsMyHostApduService.class.getName());
@@ -703,7 +703,7 @@ public class CardEmulationTest {
             }.getClass().getEnclosingMethod().getName();
             String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
             ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
-            frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
+            frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
                     HexFormat.of().parseHex(annotationStringHex)));
             ensurePreferredService(CtsMyHostApduService.class);
             notifyPollingLoopAndWait(frames, CtsMyHostApduService.class.getName());
@@ -727,7 +727,7 @@ public class CardEmulationTest {
             }.getClass().getEnclosingMethod().getName();
             String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
             ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
-            frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
+            frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
                     HexFormat.of().parseHex(annotationStringHex)));
             ensurePreferredService(CustomHostApduService.class);
             notifyPollingLoopAndWait(frames, CustomHostApduService.class.getName());
@@ -750,7 +750,7 @@ public class CardEmulationTest {
             String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
             android.util.Log.i("PLF", annotationStringHex);
             ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
-            frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
+            frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
                     HexFormat.of().parseHex(annotationStringHex)));
             ensurePreferredService(WALLET_HOLDER_SERVICE_DESC);
             notifyPollingLoopAndWait(frames, getWalletRoleHolderService().getClassName());
@@ -773,7 +773,7 @@ public class CardEmulationTest {
         String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
         android.util.Log.i("PLF", annotationStringHex);
         ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
-        frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
+        frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
                 HexFormat.of().parseHex(annotationStringHex)));
         Assert.assertTrue(adapter.setTransactionAllowed(false));
         Assert.assertTrue(adapter.isObserveModeEnabled());
@@ -800,7 +800,7 @@ public class CardEmulationTest {
             String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
             android.util.Log.i("PLF", annotationStringHex);
             ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
-            frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
+            frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
                     HexFormat.of().parseHex(annotationStringHex)));
             Assert.assertTrue(adapter.setTransactionAllowed(false));
             Assert.assertTrue(adapter.isObserveModeEnabled());
@@ -838,11 +838,11 @@ public class CardEmulationTest {
         }
     }
 
-    private PollingFrame createFrame(char type) {
+    private PollingFrame createFrame(@PollingFrameType int type) {
         return new PollingFrame(type, null, 8, 0);
     }
 
-    private PollingFrame createFrameWithData(char type, byte[] data) {
+    private PollingFrame createFrameWithData(@PollingFrameType int type, byte[] data) {
         return new PollingFrame(type, data, 8, 0);
     }
 
