@@ -51,7 +51,6 @@ import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.CddTest;
-import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
@@ -599,7 +598,7 @@ public class SystemFeaturesTest {
                 !mPackageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK) &&
                 !mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH) &&
                 !mPackageManager.hasSystemFeature(PackageManager.FEATURE_EMBEDDED) &&
-                !isAndroidEmulator() &&
+                !Build.IS_EMULATOR &&
                 !mPackageManager.hasSystemFeature(PackageManager.FEATURE_PC) &&
                 mPackageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE) &&
                 mPackageManager.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)) {
@@ -658,10 +657,6 @@ public class SystemFeaturesTest {
         } else {
             fail("Must support at least one of " + feature1 + " or " + feature2);
         }
-    }
-
-    private boolean isAndroidEmulator() {
-        return PropertyUtil.propertyEquals("ro.boot.qemu", "1");
     }
 
     private void assertFeature(boolean exist, String feature) {
