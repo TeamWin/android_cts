@@ -19,6 +19,7 @@ package android.media.audio.cts;
 import static android.Manifest.permission.ACTIVITY_EMBEDDING;
 import static android.Manifest.permission.ADD_ALWAYS_UNLOCKED_DISPLAY;
 import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
+import static android.Manifest.permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED;
 import static android.Manifest.permission.QUERY_AUDIO_STATE;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_AUDIO;
@@ -77,6 +78,7 @@ public class AudioFocusWithVdmTest {
             ACTIVITY_EMBEDDING,
             ADD_ALWAYS_UNLOCKED_DISPLAY,
             CREATE_VIRTUAL_DEVICE,
+            MODIFY_AUDIO_SETTINGS_PRIVILEGED, // ensures focus request is independent of proc state
             QUERY_AUDIO_STATE);
 
     @Rule
@@ -184,7 +186,6 @@ public class AudioFocusWithVdmTest {
             mAudioFocusRequest = new AudioFocusRequest.Builder(AUDIOFOCUS_GAIN)
                     .setOnAudioFocusChangeListener(mFocusListener).build();
             return mAudioManager.requestAudioFocus(mAudioFocusRequest);
-
         }
 
         public Optional<Integer> getLastFocusChange() {
