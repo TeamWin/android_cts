@@ -26,9 +26,10 @@ import android.content.pm.ShortcutInfo;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.UserHandle;
-import android.test.suitebuilder.annotation.SmallTest;
-import android.test.suitebuilder.annotation.Suppress;
 import android.util.Log;
+
+import androidx.test.filters.SmallTest;
+import androidx.test.filters.Suppress;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.ShortcutListAsserter;

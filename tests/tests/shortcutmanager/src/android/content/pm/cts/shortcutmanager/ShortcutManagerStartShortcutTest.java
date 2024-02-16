@@ -27,8 +27,9 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.test.suitebuilder.annotation.SmallTest;
-import android.test.suitebuilder.annotation.Suppress;
+
+import androidx.test.filters.SmallTest;
+import androidx.test.filters.Suppress;
 
 import com.android.compatibility.common.util.CddTest;
 

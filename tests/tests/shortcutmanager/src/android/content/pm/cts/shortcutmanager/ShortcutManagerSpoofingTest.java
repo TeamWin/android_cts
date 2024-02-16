@@ -31,7 +31,8 @@ import android.content.pm.LauncherApps;
 import android.content.pm.ShortcutInfo;
 import android.os.Handler;
 import android.os.Looper;
-import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.filters.SmallTest;
 
 /**
  * Make sure switching between mPackageContext1..3 and mLauncherContext1..3 will work as intended.
