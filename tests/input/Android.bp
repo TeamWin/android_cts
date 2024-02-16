@@ -37,6 +37,7 @@ android_test {
     ],
     resource_dirs: ["res"],
     static_libs: [
+        "CtsVirtualDeviceCommonLib",
         "androidx.test.core",
         "androidx.test.ext.junit",
         "com.android.hardware.input-aconfig-java",

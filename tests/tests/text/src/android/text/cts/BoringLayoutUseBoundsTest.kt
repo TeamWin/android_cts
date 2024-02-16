@@ -51,11 +51,15 @@ class BoringLayoutUseBoundsTest {
         textSize = 10f // make 1em = 10px
     }
 
-    private fun buildLayout(text: String, widthPx: Int) =
+    private fun buildLayout(text: String, widthPx: Int, shiftDrawingOffset: Boolean = false) =
             Layout.Builder(text, 0, text.length, overshootPaint, widthPx)
                     .setUseBoundsForWidth(true)
+                    .setShiftDrawingOffsetForStartOverhang(shiftDrawingOffset)
                     .build().also {
                         assertThat(it).isInstanceOf(BoringLayout::class.java)
+                        assertThat(it.useBoundsForWidth).isTrue()
+                        assertThat(it.shiftDrawingOffsetForStartOverhang)
+                                .isEqualTo(shiftDrawingOffset)
                     }
 
     @Test
@@ -64,9 +68,10 @@ class BoringLayoutUseBoundsTest {
 
         // Width constraint: 1000px
         // |aaaa bbbb cccc dddd     : width: 205, max: 205
+        assertThat(getDrawingHorizontalOffset(buildLayout(text, 1000, false))).isEqualTo(0)
+        assertThat(getDrawingHorizontalOffset(buildLayout(text, 1000, true))).isEqualTo(0)
         var layout = buildLayout(text, 1000)
         assertThat(layout.computeDrawingBoundingBox()).isEqualTo(RectF(0f, 0f, 205f, 10f))
-        assertThat(getDrawingHorizontalOffset(layout)).isEqualTo(0)
         assertThat(layout.lineCount).isEqualTo(1)
         assertThat(layout.getLineEnd(0)).isEqualTo(19)
         assertThat(layout.getLineWidth(0)).isEqualTo(205)
@@ -79,9 +84,10 @@ class BoringLayoutUseBoundsTest {
 
         // Width constraint: 1000px
         // |gggg ffff eeee aaaa     : width: 205, max: 205
+        assertThat(getDrawingHorizontalOffset(buildLayout(text, 1000, false))).isEqualTo(0)
+        assertThat(getDrawingHorizontalOffset(buildLayout(text, 1000, true))).isEqualTo(15)
         var layout = buildLayout(text, 1000)
         assertThat(layout.computeDrawingBoundingBox()).isEqualTo(RectF(-15f, 0f, 190f, 10f))
-        assertThat(getDrawingHorizontalOffset(layout)).isEqualTo(15)
         assertThat(layout.lineCount).isEqualTo(1)
         assertThat(layout.getLineEnd(0)).isEqualTo(19)
         assertThat(layout.getLineWidth(0)).isEqualTo(205)

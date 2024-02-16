@@ -19,6 +19,8 @@ package android.telecom.cts;
 import static android.telecom.CallAttributes.AUDIO_CALL;
 import static android.telecom.CallAttributes.DIRECTION_INCOMING;
 import static android.telecom.CallAttributes.DIRECTION_OUTGOING;
+import static android.telecom.CallAttributes.VIDEO_CALL;
+import static android.telecom.cts.TestUtils.PACKAGE;
 import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
@@ -28,6 +30,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Person;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -88,6 +91,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     private static final String SET_INACTIVE = "SetInactive";
     private static final String DISCONNECT = "Disconnect";
     private static final String SET_MUTE_STATE = "RequestMuteState";
+    private static final String REQUEST_VIDEO_STATE = "RequestVideoState";
 
     // CallControlCallback
     private static final String ON_SET_ACTIVE = "OnSetActive";
@@ -196,21 +200,36 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     }
 
     // Call constants
-    public final PhoneAccountHandle HANDLE = TestUtils.TEST_SELF_MANAGED_HANDLE_1;
+    public final PhoneAccountHandle DEFAULT_T_HANDLE =
+            new PhoneAccountHandle(new ComponentName(PACKAGE, PACKAGE), "1");
 
-    public final PhoneAccount ACCOUNT =
-            PhoneAccount.builder(HANDLE, TestUtils.ACCOUNT_LABEL)
+    public final PhoneAccountHandle NO_VIDEO_CAPABILITIES_T_HANDLE =
+            new PhoneAccountHandle(new ComponentName(PACKAGE, PACKAGE), "2");
+
+    public final PhoneAccount DEFAULT_TRANSACTIONAL_ACCOUNT =
+            PhoneAccount.builder(DEFAULT_T_HANDLE, "TransactionalApisTest default acct")
+                    .setCapabilities(
+                            PhoneAccount.CAPABILITY_SUPPORTS_TRANSACTIONAL_OPERATIONS
+                            | PhoneAccount.CAPABILITY_VIDEO_CALLING
+                            | PhoneAccount.CAPABILITY_SUPPORTS_VIDEO_CALLING
+                    ).build();
+
+    public final PhoneAccount NO_VIDEO_CAPABILITIES_ACCOUNT =
+            PhoneAccount.builder(NO_VIDEO_CAPABILITIES_T_HANDLE,
+                            "TransactionalApisTest no video acct")
                     .setCapabilities(
                             PhoneAccount.CAPABILITY_SUPPORTS_TRANSACTIONAL_OPERATIONS
                     ).build();
 
-    CallAttributes mOutgoingCallAttributes = new CallAttributes.Builder(HANDLE, DIRECTION_OUTGOING,
+    CallAttributes mOutgoingCallAttributes = new CallAttributes.Builder(DEFAULT_T_HANDLE,
+            DIRECTION_OUTGOING,
             TEST_NAME_1, TEST_URI_1)
             .setCallType(CallAttributes.AUDIO_CALL)
             .setCallCapabilities(CallAttributes.SUPPORTS_SET_INACTIVE)
             .build();
 
-    CallAttributes mIncomingCallAttributes = new CallAttributes.Builder(HANDLE, DIRECTION_INCOMING,
+    CallAttributes mIncomingCallAttributes = new CallAttributes.Builder(DEFAULT_T_HANDLE,
+            DIRECTION_INCOMING,
             TEST_NAME_2, TEST_URI_2)
             .setCallType(CallAttributes.AUDIO_CALL)
             .setCallCapabilities(CallAttributes.SUPPORTS_SET_INACTIVE)
@@ -230,7 +249,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         mNotificationManager =  mContext.getSystemService(NotificationManager.class);
         NewOutgoingCallBroadcastReceiver.reset();
         setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
-        mTelecomManager.registerPhoneAccount(ACCOUNT);
+        mTelecomManager.registerPhoneAccount(DEFAULT_TRANSACTIONAL_ACCOUNT);
         configureNotificationChannel();
         cleanup();
     }
@@ -274,7 +293,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             return;
         }
         // outgoing call
-        assertEquals(HANDLE, mOutgoingCallAttributes.getPhoneAccountHandle());
+        assertEquals(DEFAULT_T_HANDLE, mOutgoingCallAttributes.getPhoneAccountHandle());
         assertEquals(AUDIO_CALL, mOutgoingCallAttributes.getCallType());
         assertEquals(CallAttributes.SUPPORTS_SET_INACTIVE,
                 mOutgoingCallAttributes.getCallCapabilities());
@@ -283,7 +302,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         assertEquals(TEST_URI_1, mOutgoingCallAttributes.getAddress());
 
         // incoming call
-        assertEquals(HANDLE, mIncomingCallAttributes.getPhoneAccountHandle());
+        assertEquals(DEFAULT_T_HANDLE, mIncomingCallAttributes.getPhoneAccountHandle());
         assertEquals(AUDIO_CALL, mIncomingCallAttributes.getCallType());
         assertEquals(CallAttributes.SUPPORTS_SET_INACTIVE,
                 mIncomingCallAttributes.getCallCapabilities());
@@ -503,6 +522,136 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     }
 
     /**
+     * Test the scenario where an outgoing call starts toggles the video state.
+     */
+    public void testTransactionalVideoStateChanges() {
+        if (!mShouldTestTelecom || !Flags.transactionalVideoState()) {
+            return;
+        }
+        try {
+            startCallWithAttributesAndVerify(new CallAttributes.Builder(DEFAULT_T_HANDLE,
+                    DIRECTION_OUTGOING, TEST_NAME_1, TEST_URI_1)
+                    .setCallType(CallAttributes.AUDIO_CALL)
+                    .setCallCapabilities(CallAttributes.SUPPORTS_VIDEO_CALLING)
+                    .build(), mCall1);
+            // set the call active
+            callControlAction(SET_ACTIVE, mCall1);
+            waitUntilVideoStateIs(AUDIO_CALL, mCall1);
+            // change the video state to VIDEO
+            callControlAction(REQUEST_VIDEO_STATE, mCall1, VIDEO_CALL);
+            waitUntilVideoStateIs(CallAttributes.VIDEO_CALL, mCall1);
+            // change the video state back to AUDIO
+            callControlAction(REQUEST_VIDEO_STATE, mCall1, AUDIO_CALL);
+            waitUntilVideoStateIs(AUDIO_CALL, mCall1);
+            // disconnect
+            callControlAction(DISCONNECT, mCall1);
+            assertNumCalls(getInCallService(), 0);
+        } finally {
+            cleanup();
+        }
+    }
+
+    /**
+     * Common fail case: Test the scenario where an outgoing call that does not set the
+     * {@link CallAttributes.CallCapability#SUPPORTS_VIDEO_CALLING}
+     */
+    public void testTransactionalVideoStateChanges_withoutVideoCapabilitiesForCall() {
+        if (!mShouldTestTelecom || !Flags.transactionalVideoState()) {
+            return;
+        }
+        try {
+            startCallWithAttributesAndVerify(
+                    new CallAttributes.Builder(DEFAULT_T_HANDLE, DIRECTION_OUTGOING,
+                            TEST_NAME_1, TEST_URI_1)
+                            .setCallType(CallAttributes.AUDIO_CALL)
+                            .setCallCapabilities(0 /* purposely do not add VIDEO capabilities */)
+                            .build(), mCall1);
+            // set the call active
+            callControlAction(SET_ACTIVE, mCall1);
+            waitUntilVideoStateIs(AUDIO_CALL, mCall1);
+            final CountDownLatch latch = new CountDownLatch(1);
+            // request the video state change
+            mCall1.mCallControl.requestVideoState(CallAttributes.VIDEO_CALL, Runnable::run,
+                    new OutcomeReceiver<Void, CallException>() {
+                        @Override
+                        public void onResult(Void result) {
+                        }
+
+                        @Override
+                        public void onError(CallException exception) {
+                            latch.countDown();
+                        }
+                    });
+            // wait for the latch to count down signaling the onError was called
+            assertOnErrorWasReceived(latch);
+            // disconnect
+            callControlAction(DISCONNECT, mCall1);
+            assertNumCalls(getInCallService(), 0);
+        } finally {
+            cleanup();
+        }
+    }
+
+    /**
+     * Common fail case: Test the scenario where an application failed to register a PhoneAccount
+     * with {@link PhoneAccount#CAPABILITY_SUPPORTS_VIDEO_CALLING} and requests video state changes
+     * via {@link android.telecom.CallControl#requestVideoState(int, Executor, OutcomeReceiver)}
+     */
+    public void testTransactionalVideoStateChanges_withoutVideoCapabilitiesInAccount() {
+        if (!mShouldTestTelecom || !Flags.transactionalVideoState()) {
+            return;
+        }
+        try {
+            mTelecomManager.registerPhoneAccount(NO_VIDEO_CAPABILITIES_ACCOUNT);
+            startCallWithAttributesAndVerify(
+                    new CallAttributes.Builder(NO_VIDEO_CAPABILITIES_T_HANDLE, DIRECTION_OUTGOING,
+                            TEST_NAME_1, TEST_URI_1)
+                            .setCallType(CallAttributes.AUDIO_CALL)
+                            .setCallCapabilities(CallAttributes.SUPPORTS_VIDEO_CALLING)
+                            .build(), mCall1);
+            // set the call active
+            callControlAction(SET_ACTIVE, mCall1);
+            waitUntilVideoStateIs(AUDIO_CALL, mCall1);
+            final CountDownLatch latch = new CountDownLatch(1);
+            // request the video state change
+            mCall1.mCallControl.requestVideoState(CallAttributes.VIDEO_CALL, Runnable::run,
+                    new OutcomeReceiver<Void, CallException>() {
+                        @Override
+                        public void onResult(Void result) {
+                        }
+
+                        @Override
+                        public void onError(CallException exception) {
+                            latch.countDown();
+                        }
+                    });
+            // wait for the latch to count down signaling the onError was called
+            assertOnErrorWasReceived(latch);
+            // disconnect
+            callControlAction(DISCONNECT, mCall1);
+            assertNumCalls(getInCallService(), 0);
+        } finally {
+            cleanup();
+        }
+    }
+
+    private void waitUntilVideoStateIs(int videoState, TelecomCtsVoipCall call) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return videoState;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return call.mEvents.getVideoState();
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, "Video State is not desired state");
+    }
+
+    /**
      * Calls that do not have the {@link CallAttributes#SUPPORTS_SET_INACTIVE} and call
      * {@link CallControl#setInactive(Executor, OutcomeReceiver)} should always result in an
      * OutcomeReceiver#onError with CallException#CODE_CANNOT_HOLD_CURRENT_ACTIVE_CALL
@@ -517,7 +666,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             return;
         }
         final CallAttributes cannotSetInactiveAttributes =
-                new CallAttributes.Builder(HANDLE, DIRECTION_OUTGOING,
+                new CallAttributes.Builder(DEFAULT_T_HANDLE, DIRECTION_OUTGOING,
                         TEST_NAME_1, TEST_URI_1)
                         .setCallCapabilities(CallAttributes.SUPPORTS_STREAM)
                         .build();
@@ -1127,6 +1276,19 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         }
     }
 
+    public void assertOnErrorWasReceived(CountDownLatch latch) {
+        Log.i(TAG, "assertOnErrorWasReceived: waiting for latch");
+        try {
+            boolean success = latch.await(5000, TimeUnit.MILLISECONDS);
+            if (!success) {
+                fail("failed to receive onError");
+            }
+
+        } catch (InterruptedException ie) {
+            fail("failed to receive onError");
+        }
+    }
+
     public String startCallWithAttributesAndVerify(CallAttributes attributes,
             TelecomCtsVoipCall call) {
         final CountDownLatch latch = new CountDownLatch(1);
@@ -1187,6 +1349,13 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
                     isMuted = (boolean) objects[0];
                 }
                 call.mCallControl.requestMuteState(isMuted, Runnable::run, outcome);
+                break;
+            case REQUEST_VIDEO_STATE:
+                int requestedVideoState = AUDIO_CALL;
+                if (isArgumentAvailable(objects)) {
+                    requestedVideoState = (int) objects[0];
+                }
+                call.mCallControl.requestVideoState(requestedVideoState, Runnable::run, outcome);
                 break;
             case DISCONNECT:
                 if (isArgumentAvailable(objects)) {

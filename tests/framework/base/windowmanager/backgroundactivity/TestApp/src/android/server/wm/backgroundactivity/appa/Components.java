@@ -75,6 +75,8 @@ public class Components extends ComponentsBase {
         // Keep in sync with  android.server.wm.backgroundactivity.common.CommonComponents
         // .CommonForegroundActivityExtras
         public final String ACTIVITY_ID = "ACTIVITY_ID_EXTRA";
+        public final String ALLOW_CROSS_UID = "ALLOW_CROSS_UID_EXTRA";
+
         public final String LAUNCH_INTENTS = "LAUNCH_INTENTS_EXTRA";
         public final String LAUNCH_PENDING_INTENTS = "LAUNCH_PENDING_INTENTS_EXTRA";
         public final String LAUNCH_FOR_RESULT_AND_FINISH = "LAUNCH_FOR_RESULT_AND_FINISH";

@@ -628,6 +628,11 @@ public final class MockIme extends InputMethodService {
                         finishStylusHandwriting();
                         return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     }
+                    case "finishConnectionlessStylusHandwriting": {
+                        finishConnectionlessStylusHandwriting(
+                                command.getExtras().getCharSequence("text"));
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    }
                     case "getCurrentWindowMetricsBounds": {
                         return getSystemService(WindowManager.class)
                                 .getCurrentWindowMetrics().getBounds();
@@ -1079,6 +1084,17 @@ public final class MockIme extends InputMethodService {
     }
 
     @Override
+    public boolean onStartConnectionlessStylusHandwriting(
+            int inputType, @Nullable CursorAnchorInfo cursorAnchorInfo) {
+        if (mEvents != null) {
+            mEvents.clear();
+        }
+        getTracer().onStartConnectionlessStylusHandwriting(
+                () -> super.onStartConnectionlessStylusHandwriting(inputType, cursorAnchorInfo));
+        return mSettings.isConnectionlessHandwritingEnabled();
+    }
+
+    @Override
     public void onStylusHandwritingMotionEvent(@NonNull MotionEvent motionEvent) {
         if (mEvents == null) {
             mEvents = new ArrayList<>();
@@ -1473,6 +1489,10 @@ public final class MockIme extends InputMethodService {
             final Bundle arguments = new Bundle();
             arguments.putParcelable("editorInfo", mIme.getCurrentInputEditorInfo());
             recordEventInternal("onStartStylusHandwriting", runnable, arguments);
+        }
+
+        void onStartConnectionlessStylusHandwriting(@NonNull Runnable runnable) {
+            recordEventInternal("onStartConnectionlessStylusHandwriting", runnable);
         }
 
         void onStylusHandwritingMotionEvent(@NonNull Runnable runnable) {

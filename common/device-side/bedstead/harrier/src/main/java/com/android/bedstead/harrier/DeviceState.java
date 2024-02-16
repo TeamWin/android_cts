@@ -54,6 +54,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.UserManager;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.service.quicksettings.TileService;
 import android.util.Log;
 import androidx.annotation.Nullable;
@@ -1544,31 +1545,27 @@ public final class DeviceState extends HarrierRule {
         };
     }
 
-    private static final Map<Class<? extends Annotation>, Class<? extends Annotation>>
+    private static final Map<String, String>
             BANNED_ANNOTATIONS_TO_REPLACEMENTS = getBannedAnnotationsToReplacements();
 
-    private static Map<
-            Class<? extends Annotation>,
-            Class<? extends Annotation>> getBannedAnnotationsToReplacements() {
-        Map<
-                Class<? extends Annotation>,
-                Class<? extends Annotation>> bannedAnnotationsToReplacements = new HashMap<>();
-        bannedAnnotationsToReplacements.put(org.junit.BeforeClass.class, BeforeClass.class);
-        bannedAnnotationsToReplacements.put(org.junit.AfterClass.class, AfterClass.class);
+    private static Map<String, String> getBannedAnnotationsToReplacements() {
+        Map<String, String> bannedAnnotationsToReplacements = new HashMap<>();
+        bannedAnnotationsToReplacements.put(org.junit.BeforeClass.class.getCanonicalName(), BeforeClass.class.getCanonicalName());
+        bannedAnnotationsToReplacements.put(org.junit.AfterClass.class.getCanonicalName(), AfterClass.class.getCanonicalName());
+        // bannedAnnotationsToReplacements.put("android.platform.test.annotations.RequiresFlagsEnabled", "com.android.bedstead.flags.annotations.RequireFlagsEnabled");
+        // bannedAnnotationsToReplacements.put("android.platform.test.annotations.RequiresFlagsDisabled", "com.android.bedstead.flags.annotations.RequireFlagsDisabled");
         return bannedAnnotationsToReplacements;
     }
 
     private void checkValidAnnotations(Description classDescription) {
         for (Method method : classDescription.getTestClass().getMethods()) {
-            for (Map.Entry<
-                    Class<? extends Annotation>,
-                    Class<? extends Annotation>> bannedAnnotation
-                    : BANNED_ANNOTATIONS_TO_REPLACEMENTS.entrySet()) {
-                if (method.isAnnotationPresent(bannedAnnotation.getKey())) {
+            for (Map.Entry<String, String> bannedAnnotation : BANNED_ANNOTATIONS_TO_REPLACEMENTS.entrySet()) {
+
+                if (Arrays.stream(method.getAnnotations()).anyMatch((i) -> i.annotationType().getCanonicalName().equals(bannedAnnotation.getKey()))) {
                     throw new IllegalStateException("Do not use "
-                            + bannedAnnotation.getKey().getCanonicalName()
+                            + bannedAnnotation.getKey()
                             + " when using DeviceState, replace with "
-                            + bannedAnnotation.getValue().getCanonicalName());
+                            + bannedAnnotation.getValue());
                 }
             }
 

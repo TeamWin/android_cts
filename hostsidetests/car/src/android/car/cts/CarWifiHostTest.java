@@ -22,13 +22,21 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.car.feature.Flags;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.host.HostFlagsValueProvider;
+
+import com.android.car.wifi.CarWifiDumpProto;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.ProtoUtils;
 import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.AfterClassWithInfo;
 import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -38,20 +46,26 @@ import java.util.concurrent.TimeUnit;
 public final class CarWifiHostTest extends CarHostJUnit4TestCase {
     private static final long TIMEOUT_MS = TimeUnit.SECONDS.toMillis(15);
 
-    private static final String GET_TETHERING_PERSISTING =
-            "settings get global android.car.ENABLE_TETHERING_PERSISTING";
-    private static final String ENABLE_TETHERING_PERSISTING =
-            "settings put global android.car.ENABLE_TETHERING_PERSISTING true";
-    private static final String DISABLE_TETHERING_PERSISTING =
-            "settings put global android.car.ENABLE_TETHERING_PERSISTING false";
+    private static final String GET_PERSISTENT_TETHERING =
+            "settings get global android.car.ENABLE_PERSISTENT_TETHERING";
+    private static final String ENABLE_PERSISTENT_TETHERING =
+            "settings put global android.car.ENABLE_PERSISTENT_TETHERING true";
+    private static final String DISABLE_PERSISTENT_TETHERING =
+            "settings put global android.car.ENABLE_PERSISTENT_TETHERING false";
     private static final String CMD_DUMPSYS_WIFI =
             "dumpsys car_service --services CarWifiService";
+    private static final String CMD_DUMPSYS_WIFI_PROTO =
+            "dumpsys car_service --services CarWifiService --proto";
     private static final String GET_TETHERING_CAPABILITY =
             "cmd car_service get-tethering-capability";
     private static final String WIFI_HOTSPOT_ON = "cmd wifi start-softap CarWifiService open";
     private static final String WIFI_HOTSPOT_OFF = "cmd wifi stop-softap";
     private static boolean sTetheringStatusBefore;
     private static boolean sTetheringPersistingBefore;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            HostFlagsValueProvider.createCheckFlagsRule(this::getDevice);
 
     /**
      * Prepares the device to restore back to original state post-test.
@@ -61,10 +75,11 @@ public final class CarWifiHostTest extends CarHostJUnit4TestCase {
      */
     @BeforeClassWithInfo
     public static void beforeClassWithDevice(TestInformation testInfo) throws Exception {
+        // TODO: b/324961709 - Re-factor to use proto dump
         sTetheringStatusBefore = testInfo.getDevice().executeShellCommand(CMD_DUMPSYS_WIFI)
                 .contains("Tethering enabled: true");
         sTetheringPersistingBefore = testInfo.getDevice().executeShellCommand(
-                GET_TETHERING_PERSISTING).contains("true");
+                GET_PERSISTENT_TETHERING).contains("true");
     }
 
     /**
@@ -79,56 +94,61 @@ public final class CarWifiHostTest extends CarHostJUnit4TestCase {
         testInfo.getDevice().executeShellCommand(hotspotCommand);
 
         String persistTetheringCommand =
-                (sTetheringPersistingBefore ? ENABLE_TETHERING_PERSISTING
-                        : DISABLE_TETHERING_PERSISTING);
+                (sTetheringPersistingBefore ? ENABLE_PERSISTENT_TETHERING
+                        : DISABLE_PERSISTENT_TETHERING);
         testInfo.getDevice().executeShellCommand(persistTetheringCommand);
     }
 
     @Test
-    @ApiTest(apis = {"android.car.settings.CarSettings#ENABLE_TETHERING_PERSISTING"})
+    @RequiresFlagsEnabled({Flags.FLAG_PERSIST_AP_SETTINGS, Flags.FLAG_CAR_DUMP_TO_PROTO})
+    @ApiTest(apis = {"android.car.settings.CarSettings#ENABLE_PERSISTENT_TETHERING"})
     public void testPersistTetheringCarSetting_enablingWithCapability_autoShutdownDisabled()
             throws Exception {
         assumeTrue("Skipping test: tethering capability disabled",
                 isPersistTetheringCapabilityEnabled());
-        executeCommand(ENABLE_TETHERING_PERSISTING);
+        executeCommand(ENABLE_PERSISTENT_TETHERING);
         assertThat(isAutoShutdownDisabled()).isTrue();
     }
 
     @Test
-    @ApiTest(apis = {"android.car.settings.CarSettings#ENABLE_TETHERING_PERSISTING"})
+    @RequiresFlagsEnabled({Flags.FLAG_PERSIST_AP_SETTINGS, Flags.FLAG_CAR_DUMP_TO_PROTO})
+    @ApiTest(apis = {"android.car.settings.CarSettings#ENABLE_PERSISTENT_TETHERING"})
     public void testPersistTetheringCarSetting_disablingWithCapability_autoShutdownEnabled()
             throws Exception {
         assumeTrue("Skipping test: tethering capability disabled",
                 isPersistTetheringCapabilityEnabled());
-        executeCommand(DISABLE_TETHERING_PERSISTING);
+        executeCommand(DISABLE_PERSISTENT_TETHERING);
         assertThat(isAutoShutdownDisabled()).isFalse();
     }
 
     @Test
-    @ApiTest(apis = {"android.car.settings.CarSettings#ENABLE_TETHERING_PERSISTING"})
+    @RequiresFlagsEnabled({Flags.FLAG_PERSIST_AP_SETTINGS, Flags.FLAG_CAR_DUMP_TO_PROTO})
+    @ApiTest(apis = {"android.car.settings.CarSettings#ENABLE_PERSISTENT_TETHERING"})
     public void testPersistTetheringCarSetting_enablingNoCapability_autoShutdownUnchanged()
             throws Exception {
         assumeFalse("Skipping test: tethering capability enabled",
                 isPersistTetheringCapabilityEnabled());
         boolean autoShutdownEnabledBefore = isAutoShutdownDisabled();
-        executeCommand(ENABLE_TETHERING_PERSISTING);
+        executeCommand(ENABLE_PERSISTENT_TETHERING);
         assertThat(isAutoShutdownDisabled()).isEqualTo(autoShutdownEnabledBefore);
     }
 
     @Test
-    @ApiTest(apis = {"android.car.settings.CarSettings#ENABLE_TETHERING_PERSISTING"})
+    @RequiresFlagsEnabled({Flags.FLAG_PERSIST_AP_SETTINGS, Flags.FLAG_CAR_DUMP_TO_PROTO})
+    @ApiTest(apis = {"android.car.settings.CarSettings#ENABLE_PERSISTENT_TETHERING"})
     public void testPersistTetheringCarSetting_disablingNoCapability_autoShutdownUnchanged()
             throws Exception {
         assumeFalse("Skipping test: tethering capability enabled",
                 isPersistTetheringCapabilityEnabled());
         boolean autoShutdownEnabledBefore = isAutoShutdownDisabled();
-        executeCommand(DISABLE_TETHERING_PERSISTING);
+        executeCommand(DISABLE_PERSISTENT_TETHERING);
         assertThat(isAutoShutdownDisabled()).isEqualTo(autoShutdownEnabledBefore);
     }
 
     @Test
+    @RequiresFlagsEnabled({Flags.FLAG_PERSIST_AP_SETTINGS, Flags.FLAG_CAR_DUMP_TO_PROTO})
     @ApiTest(apis = {"android.car.wifi.CarWifiManager#canControlPersistTetheringSettings",
-            "android.car.settings.CarSettings#ENABLE_TETHERING_PERSISTING"})
+            "android.car.settings.CarSettings#ENABLE_PERSISTENT_TETHERING"})
     public void testPersistTetheringCarSetting_withCapabilityTetheringEnabled_tetheringOnReboot()
             throws Exception {
         assumeTrue("Skipping test: tethering capability disabled",
@@ -141,8 +161,9 @@ public final class CarWifiHostTest extends CarHostJUnit4TestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled({Flags.FLAG_PERSIST_AP_SETTINGS, Flags.FLAG_CAR_DUMP_TO_PROTO})
     @ApiTest(apis = {"android.car.wifi.CarWifiManager#canControlPersistTetheringSettings",
-            "android.car.settings.CarSettings#ENABLE_TETHERING_PERSISTING"})
+            "android.car.settings.CarSettings#ENABLE_PERSISTENT_TETHERING"})
     public void testPersistTetheringCarSetting_withCapabilityTetheringDisabled_noTetheringOnReboot()
             throws Exception {
         assumeTrue("Skipping test: tethering capability disabled",
@@ -156,8 +177,9 @@ public final class CarWifiHostTest extends CarHostJUnit4TestCase {
     }
 
     @Test
+    @RequiresFlagsEnabled({Flags.FLAG_PERSIST_AP_SETTINGS, Flags.FLAG_CAR_DUMP_TO_PROTO})
     @ApiTest(apis = {"android.car.wifi.CarWifiManager#canControlPersistTetheringSettings",
-            "android.car.settings.CarSettings#ENABLE_TETHERING_PERSISTING"})
+            "android.car.settings.CarSettings#ENABLE_PERSISTENT_TETHERING"})
     public void testPersistTetheringCarSetting_noCapabilityTetheringEnabled_noTetheringOnReboot()
             throws Exception {
         assumeFalse("Skipping test: tethering capability enabled",
@@ -171,13 +193,15 @@ public final class CarWifiHostTest extends CarHostJUnit4TestCase {
     }
 
     private boolean isTetheringEnabled() throws Exception {
-        String output = executeCommand(CMD_DUMPSYS_WIFI);
-        return output.contains("Tethering enabled: true");
+        CarWifiDumpProto carWifiDump = ProtoUtils.getProto(getDevice(),
+                CarWifiDumpProto.parser(), CMD_DUMPSYS_WIFI_PROTO);
+        return carWifiDump.getTetheringEnabled();
     }
 
     private boolean isAutoShutdownDisabled() throws Exception {
-        String output = executeCommand(CMD_DUMPSYS_WIFI);
-        return output.contains("Auto shutdown enabled: false");
+        CarWifiDumpProto carWifiDump = ProtoUtils.getProto(getDevice(),
+                CarWifiDumpProto.parser(), CMD_DUMPSYS_WIFI_PROTO);
+        return carWifiDump.getAutoShutdownEnabled();
     }
 
     private boolean isPersistTetheringCapabilityEnabled() throws Exception {
@@ -189,7 +213,7 @@ public final class CarWifiHostTest extends CarHostJUnit4TestCase {
         String hotspotCommand = (enableTethering ? WIFI_HOTSPOT_ON : WIFI_HOTSPOT_OFF);
         executeCommand(hotspotCommand);
 
-        executeCommand(ENABLE_TETHERING_PERSISTING);
+        executeCommand(ENABLE_PERSISTENT_TETHERING);
 
         reboot();
         waitForCarServiceReady();

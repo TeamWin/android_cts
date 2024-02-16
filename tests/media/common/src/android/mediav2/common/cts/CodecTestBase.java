@@ -343,7 +343,7 @@ public abstract class CodecTestBase {
 
     protected final boolean mIsAudio;
     protected final boolean mIsVideo;
-    protected final CodecAsyncHandler mAsyncHandle;
+    protected CodecAsyncHandler mAsyncHandle;
     protected boolean mIsCodecInAsyncMode;
     protected boolean mSawInputEOS;
     protected boolean mSawOutputEOS;

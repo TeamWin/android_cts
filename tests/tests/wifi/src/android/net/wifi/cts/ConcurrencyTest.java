@@ -69,6 +69,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -161,7 +162,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
     private WifiP2pConfig mTestWifiP2pPeerConfig;
     private static boolean sWasWifiEnabled;
     private static boolean sWasScanThrottleEnabled;
-
+    private final Object mLock = new Object();
 
     private static final String TAG = "ConcurrencyTest";
     private static final int TIMEOUT_MS = 15000;
@@ -1393,5 +1394,127 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         List<OuiKeyedData> vendorData = createTestOuiKeyedDataList(5);
         device.setVendorData(vendorData);
         assertEquals(vendorData, device.getVendorData());
+    }
+
+    private class TestWifiP2pListener implements WifiP2pManager.WifiP2pListener {
+        final Object mP2pListenerLock;
+        int mListenState = -1;
+        boolean mP2pGroupCreating = false;
+        boolean mP2pGroupRemoved = false;
+        WifiP2pInfo mP2pInfo = null;
+        WifiP2pGroup mP2pGroup = null;
+
+        TestWifiP2pListener(Object lock) {
+            mP2pListenerLock = lock;
+        }
+
+        public int getListenState() {
+            synchronized (mP2pListenerLock) {
+                return mListenState;
+            }
+        }
+
+        public boolean getP2pGroupCreating() {
+            synchronized (mP2pListenerLock) {
+                return mP2pGroupCreating;
+            }
+        }
+
+        public boolean getP2pGroupRemoved() {
+            synchronized (mP2pListenerLock) {
+                return mP2pGroupRemoved;
+            }
+        }
+
+        public WifiP2pInfo getP2pInfo() {
+            synchronized (mP2pListenerLock) {
+                return mP2pInfo;
+            }
+        }
+
+        public WifiP2pGroup getP2pGroup() {
+            synchronized (mP2pListenerLock) {
+                return mP2pGroup;
+            }
+        }
+
+        @Override
+        public void onListenStateChanged(boolean started) {
+            synchronized (mP2pListenerLock) {
+                mListenState = started ? WifiP2pManager.WIFI_P2P_LISTEN_STARTED
+                        : WifiP2pManager.WIFI_P2P_LISTEN_STOPPED;
+                mP2pListenerLock.notify();
+            }
+        }
+
+        @Override
+        public void onGroupCreated(@NonNull WifiP2pInfo wifiP2pInfo,
+                @NonNull WifiP2pGroup wifiP2pGroup) {
+            synchronized (mP2pListenerLock) {
+                mP2pInfo = wifiP2pInfo;
+                mP2pGroup = wifiP2pGroup;
+                mP2pListenerLock.notify();
+            }
+        }
+
+        @Override
+        public void onGroupCreating() {
+            synchronized (mP2pListenerLock) {
+                mP2pGroupCreating = true;
+                mP2pListenerLock.notify();
+            }
+        }
+
+        @Override
+        public void onGroupRemoved() {
+            synchronized (mP2pListenerLock) {
+                mP2pGroupRemoved = true;
+                mP2pListenerLock.notify();
+            }
+        }
+    }
+
+    private void waitForP2pListenerCallbackCalled(TestWifiP2pListener p2pListener) {
+        synchronized (p2pListener.mP2pListenerLock) {
+            long timeout = System.currentTimeMillis() + TIMEOUT_MS;
+            while (System.currentTimeMillis() < timeout) {
+                try {
+                    p2pListener.mP2pListenerLock.wait(WAIT_MS);
+                } catch (InterruptedException e) { }
+            }
+        }
+    }
+
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#registerWifiP2pListener",
+            "android.net.wifi.p2p.WifiP2pManager#unregisterWifiP2pListener"})
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
+    @Test
+    public void testWifiP2pListener() {
+        TestWifiP2pListener p2pListener = new TestWifiP2pListener(mLock);
+
+        sWifiP2pManager.registerWifiP2pListener(mExecutor, p2pListener);
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.startListening(sWifiP2pChannel, sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        waitForP2pListenerCallbackCalled(p2pListener);
+        assertEquals(WifiP2pManager.WIFI_P2P_LISTEN_STARTED, p2pListener.getListenState());
+
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.stopListening(sWifiP2pChannel, sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        waitForP2pListenerCallbackCalled(p2pListener);
+        assertEquals(WifiP2pManager.WIFI_P2P_LISTEN_STOPPED, p2pListener.getListenState());
+
+        resetResponse(MY_RESPONSE);
+        sWifiP2pManager.createGroup(sWifiP2pChannel, sActionListener);
+        assertTrue(waitForServiceResponse(MY_RESPONSE));
+        assertTrue(MY_RESPONSE.success);
+        waitForP2pListenerCallbackCalled(p2pListener);
+        assertTrue(p2pListener.getP2pGroupCreating());
+        assertTrue(p2pListener.getP2pInfo().groupFormed);
+        assertNotNull(p2pListener.getP2pGroup());
+
+        sWifiP2pManager.unregisterWifiP2pListener(p2pListener);
     }
 }

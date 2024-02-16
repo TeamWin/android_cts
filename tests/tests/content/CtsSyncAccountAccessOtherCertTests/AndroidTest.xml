@@ -19,6 +19,8 @@
     <option name="config-descriptor:metadata" key="component" value="framework" />
     <!-- Instant apps can't have a sync adapter. -->
     <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
+    <!-- SDK sandboxes can't have a sync adapter as they cannot declare services. -->
+    <option name="config-descriptor:metadata" key="parameter" value="not_run_on_sdk_sandbox" />
     <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
     <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
     <option name="config-descriptor:metadata" key="parameter" value="no_foldable_states" />

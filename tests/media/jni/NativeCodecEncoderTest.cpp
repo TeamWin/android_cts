@@ -278,6 +278,7 @@ bool CodecEncoderTest::dequeueOutput(size_t bufferIndex, AMediaCodecBufferInfo* 
             // NdkMediaCodec calls ABuffer::data, which already adds offset
             info->offset = 0;
             mOutputBuff->saveToMemory(buf, info);
+            mOutputBuff->updateChecksum(buf, info);
         }
         if ((info->flags & AMEDIACODEC_BUFFER_FLAG_KEY_FRAME) != 0) {
             mNumSyncFramesReceived += 1;

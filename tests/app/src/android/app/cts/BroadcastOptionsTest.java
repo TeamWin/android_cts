@@ -16,6 +16,7 @@
 
 package android.app.cts;
 
+import static android.app.Flags.FLAG_BCAST_EVENT_TIMESTAMPS;
 import static com.google.common.truth.Truth.assertThat;
 
 import static junit.framework.Assert.assertEquals;
@@ -27,16 +28,25 @@ import static org.junit.Assert.assertNull;
 import android.app.BroadcastOptions;
 import android.os.Build;
 import android.os.PowerExemptionManager;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
+import android.platform.test.ravenwood.RavenwoodRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class BroadcastOptionsTest {
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = RavenwoodRule.isOnRavenwood()
+            ? null : DeviceFlagsValueProvider.createCheckFlagsRule();
+
     /**
      * Creates a clone of BroadcastOptions, using toBundle().
      */
@@ -262,5 +272,31 @@ public class BroadcastOptionsTest {
 
         options.clearDeliveryGroupMatchingKey();
         assertNull(options.getDeliveryGroupMatchingKey());
+    }
+
+    @RequiresFlagsEnabled(FLAG_BCAST_EVENT_TIMESTAMPS)
+    @Test
+    public void testSetGetEventTriggerTimestampMillis() {
+        final BroadcastOptions options = BroadcastOptions.makeBasic();
+
+        final long timestampMillis = System.currentTimeMillis();
+        options.setEventTriggerTimestampMillis(timestampMillis);
+        assertEquals(timestampMillis, options.getEventTriggerTimestampMillis());
+
+        final BroadcastOptions options2 = cloneViaBundle(options);
+        assertEquals(timestampMillis, options2.getEventTriggerTimestampMillis());
+    }
+
+    @RequiresFlagsEnabled(FLAG_BCAST_EVENT_TIMESTAMPS)
+    @Test
+    public void testSetGetRemoteEventTriggerTimestampMillis() {
+        final BroadcastOptions options = BroadcastOptions.makeBasic();
+
+        final long timestampMillis = System.currentTimeMillis();
+        options.setRemoteEventTriggerTimestampMillis(timestampMillis);
+        assertEquals(timestampMillis, options.getRemoteEventTriggerTimestampMillis());
+
+        final BroadcastOptions options2 = cloneViaBundle(options);
+        assertEquals(timestampMillis, options2.getRemoteEventTriggerTimestampMillis());
     }
 }

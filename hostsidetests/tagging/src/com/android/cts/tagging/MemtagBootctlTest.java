@@ -21,12 +21,14 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assume.assumeThat;
 
+import com.android.bedstead.harrier.annotations.enterprise.DevicePolicyRelevant;
 import com.android.compatibility.common.util.CddTest;
 import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.AfterClassWithInfo;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
+import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,7 +38,10 @@ import org.junit.runner.RunWith;
 // This will reboot the device multiple times, which is perfectly normal.
 
 @RunWith(DeviceJUnit4ClassRunner.class)
+@DevicePolicyRelevant
 public class MemtagBootctlTest extends BaseHostJUnit4Test {
+    protected static final String TEST_PKG = "android.cts.tagging.is_mte_policy_enforced";
+    protected static final String DEVICE_TEST_CLASS_NAME = "TaggingTest";
     private static String mPreviousState = null;
 
     @BeforeClassWithInfo
@@ -58,16 +63,33 @@ public class MemtagBootctlTest extends BaseHostJUnit4Test {
         }
     }
 
+    private void runDeviceTest(String method) throws Exception {
+        var options = new DeviceTestRunOptions(TEST_PKG);
+        options.setTestClassName(TEST_PKG + "." + DEVICE_TEST_CLASS_NAME);
+        options.setTestMethodName(method);
+        runDeviceTests(options);
+    }
+
+    void checkMteOn() throws Exception {
+        assertThat(getDevice().pullFileContents("/proc/cpuinfo")).contains(" mte");
+        runDeviceTest("testMteIsEnabled");
+    }
+
+    void checkMteOff() throws Exception {
+        assertThat(getDevice().pullFileContents("/proc/cpuinfo")).doesNotContain(" mte");
+        runDeviceTest("testMteIsDisabled");
+    }
+
     @Test
     @CddTest(requirements = {"9.7/C-3-1,9.7/C-3-2,9.7/C-3-3"})
     public void testMemtagOnce() throws Exception {
         getDevice().setProperty("arm64.memtag.bootctl", "memtag-once");
         getDevice().reboot();
         assertThat(getDevice().getProperty("arm64.memtag.bootctl")).isAnyOf("", "none", null);
-        assertThat(getDevice().pullFileContents("/proc/cpuinfo")).contains(" mte");
+        checkMteOn();
         getDevice().reboot();
         assertThat(getDevice().getProperty("arm64.memtag.bootctl")).isAnyOf("", "none", null);
-        assertThat(getDevice().pullFileContents("/proc/cpuinfo")).doesNotContain(" mte");
+        checkMteOff();
     }
 
     @Test
@@ -76,10 +98,10 @@ public class MemtagBootctlTest extends BaseHostJUnit4Test {
         getDevice().setProperty("arm64.memtag.bootctl", "memtag-off");
         getDevice().reboot();
         assertThat(getDevice().getProperty("arm64.memtag.bootctl")).isEqualTo("memtag-off");
-        assertThat(getDevice().pullFileContents("/proc/cpuinfo")).doesNotContain(" mte");
+        checkMteOff();
         getDevice().reboot();
         assertThat(getDevice().getProperty("arm64.memtag.bootctl")).isEqualTo("memtag-off");
-        assertThat(getDevice().pullFileContents("/proc/cpuinfo")).doesNotContain(" mte");
+        checkMteOff();
     }
 
     @Test
@@ -88,10 +110,10 @@ public class MemtagBootctlTest extends BaseHostJUnit4Test {
         getDevice().setProperty("arm64.memtag.bootctl", "memtag");
         getDevice().reboot();
         assertThat(getDevice().getProperty("arm64.memtag.bootctl")).isEqualTo("memtag");
-        assertThat(getDevice().pullFileContents("/proc/cpuinfo")).contains(" mte");
+        checkMteOn();
         getDevice().reboot();
         assertThat(getDevice().getProperty("arm64.memtag.bootctl")).isEqualTo("memtag");
-        assertThat(getDevice().pullFileContents("/proc/cpuinfo")).contains(" mte");
+        checkMteOn();
     }
 
     @Test
@@ -100,9 +122,9 @@ public class MemtagBootctlTest extends BaseHostJUnit4Test {
         getDevice().setProperty("arm64.memtag.bootctl", "memtag,memtag-once");
         getDevice().reboot();
         assertThat(getDevice().getProperty("arm64.memtag.bootctl")).isEqualTo("memtag");
-        assertThat(getDevice().pullFileContents("/proc/cpuinfo")).contains(" mte");
+        checkMteOn();
         getDevice().reboot();
         assertThat(getDevice().getProperty("arm64.memtag.bootctl")).isEqualTo("memtag");
-        assertThat(getDevice().pullFileContents("/proc/cpuinfo")).contains(" mte");
+        checkMteOn();
     }
 }

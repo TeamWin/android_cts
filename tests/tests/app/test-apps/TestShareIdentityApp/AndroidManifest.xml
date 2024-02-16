@@ -29,6 +29,14 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <receiver android:name=".TestShareIdentityReceiver"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.app.cts.testshareidentity.RECEIVER_ACTION" />
+            </intent-filter>
+        </receiver>
+
     </application>
 </manifest>
 

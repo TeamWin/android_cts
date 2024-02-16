@@ -219,7 +219,7 @@ public class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
         run(false, failure);
     }
 
-    private void run(boolean expectingSuccess, String failure) throws DeviceNotAvailableException {
+    void run(boolean expectingSuccess, String failure) throws DeviceNotAvailableException {
         if (mUseIncremental) {
             runIncremental(expectingSuccess, failure);
         } else {

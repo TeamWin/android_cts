@@ -61,10 +61,15 @@ public class EmbeddedSCVHService extends Service {
 
     private SurfaceControl mSurfaceControl;
 
+    private WindowManager mWm;
+
+    private InputTransferToken mEmbeddedInputTransferToken;
+
     @Override
     public void onCreate() {
         super.onCreate();
         mHandler = new Handler(Looper.getMainLooper());
+        mWm = getSystemService(WindowManager.class);
     }
 
     @Nullable
@@ -161,8 +166,8 @@ public class EmbeddedSCVHService extends Service {
 
         @Override
         public String attachEmbeddedSurfaceControl(SurfaceControl parentSc, int displayId,
-                InputTransferToken hostToken, int width, int height,
-                IMotionEventReceiver receiver) {
+                InputTransferToken hostToken, int width, int height, boolean transferTouchToHost,
+                @Nullable IMotionEventReceiver receiver) {
             CountDownLatch registeredLatch = new CountDownLatch(1);
             String name = "Child SurfaceControl";
             mHandler.post(() -> {
@@ -176,19 +181,24 @@ public class EmbeddedSCVHService extends Service {
                 c.drawColor(Color.BLUE);
                 surface.unlockCanvasAndPost(c);
 
-                getSystemService(WindowManager.class)
-                        .registerBatchedSurfaceControlInputReceiver(displayId,
-                                hostToken, mSurfaceControl, Choreographer.getInstance(), event -> {
-                                    if (event instanceof MotionEvent) {
-                                        try {
-                                            receiver.onMotionEventReceived(
-                                                    MotionEvent.obtain((MotionEvent) event));
-                                        } catch (RemoteException e) {
-                                            Log.e(TAG, "Failed to send motion event to host", e);
-                                        }
-                                    }
-                                    return false;
-                                });
+                mEmbeddedInputTransferToken = mWm.registerBatchedSurfaceControlInputReceiver(
+                        displayId, hostToken, mSurfaceControl, Choreographer.getInstance(),
+                        event -> {
+                            if (event instanceof MotionEvent) {
+                                if (transferTouchToHost) {
+                                    mWm.transferTouchGesture(mEmbeddedInputTransferToken,
+                                            hostToken);
+                                }
+
+                                try {
+                                    receiver.onMotionEventReceived(
+                                            MotionEvent.obtain((MotionEvent) event));
+                                } catch (RemoteException e) {
+                                    Log.e(TAG, "Failed to send motion event to host", e);
+                                }
+                            }
+                            return false;
+                        });
                 registeredLatch.countDown();
             });
 
@@ -206,11 +216,15 @@ public class EmbeddedSCVHService extends Service {
         }
 
         @Override
+        public InputTransferToken getEmbeddedInputTransferToken() {
+            return mEmbeddedInputTransferToken;
+        }
+
+        @Override
         public void tearDownEmbeddedSurfaceControl() {
             mHandler.post(() -> {
                 if (mSurfaceControl != null) {
-                    getSystemService(WindowManager.class)
-                            .unregisterSurfaceControlInputReceiver(mSurfaceControl);
+                    mWm.unregisterSurfaceControlInputReceiver(mSurfaceControl);
                     new Transaction().reparent(mSurfaceControl, null);
                     mSurfaceControl.release();
                 }

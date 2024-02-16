@@ -30,7 +30,8 @@
         </intent>
     </queries>
 
-    <application android:testOnly="true" android:manageSpaceActivity=".BackgroundActivity">
+    <application android:testOnly="true" android:manageSpaceActivity=".BackgroundActivity"
+        android:allowCrossUidActivitySwitchFromBelow="false">
         <uses-library android:name="androidx.window.extensions"
             android:required="false" />
         <service android:name="android.server.wm.backgroundactivity.common.TestService"

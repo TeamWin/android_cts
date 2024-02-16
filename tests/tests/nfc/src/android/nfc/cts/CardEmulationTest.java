@@ -1,6 +1,9 @@
 package android.nfc.cts;
 
 import static android.nfc.cts.WalletRoleTestUtils.CTS_PACKAGE_NAME;
+import static android.nfc.cts.WalletRoleTestUtils.WALLET_HOLDER_PACKAGE_NAME;
+import static android.nfc.cts.WalletRoleTestUtils.WALLET_HOLDER_SERVICE_DESC;
+import static android.nfc.cts.WalletRoleTestUtils.getWalletRoleHolderService;
 import static android.nfc.cts.WalletRoleTestUtils.runWithRole;
 import static android.nfc.cts.WalletRoleTestUtils.runWithRoleNone;
 
@@ -464,21 +467,29 @@ public class CardEmulationTest {
     }
 
     void ensurePreferredService(Class serviceClass) {
-        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        ensurePreferredService(serviceClass, mContext);
+    }
+
+    static void ensurePreferredService(Class serviceClass, Context context) {
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(context);
         final CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
         int resId = (serviceClass == CtsMyHostApduService.class
                 ? R.string.CtsPaymentService
                 : (serviceClass == CustomHostApduService.class
-                    ? R.string.CtsCustomPaymentService : R.string.CtsBackgroundPaymentService));
-        final String desc = mContext.getResources().getString(resId);
-        ensurePreferredService(desc);
+                        ? R.string.CtsCustomPaymentService : R.string.CtsBackgroundPaymentService));
+        final String desc = context.getResources().getString(resId);
+        ensurePreferredService(desc, context);
     }
 
     void ensurePreferredService(String serviceDesc) {
-        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        ensurePreferredService(serviceDesc, mContext);
+    }
+
+    static void ensurePreferredService(String serviceDesc, Context context) {
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(context);
         final CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
         try {
-            CommonTestUtils.waitUntil("Default service hasn't updated", 3,
+            CommonTestUtils.waitUntil("Default service hasn't updated", 6,
                     () -> serviceDesc.equals(
                             cardEmulation.getDescriptionForPreferredPaymentService()));
         } catch (InterruptedException ie) { }
@@ -728,6 +739,27 @@ public class CardEmulationTest {
         }
     }
 
+    @Test
+    @RequiresFlagsEnabled({android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP,
+            Flags.FLAG_NFC_OBSERVE_MODE,
+            android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED})
+    public void testBackgroundWalletConflictPollingLoopToWallet_walletRoleEnabled() {
+        runWithRole(mContext, WALLET_HOLDER_PACKAGE_NAME, () -> {
+            NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+            adapter.notifyHceDeactivated();
+            String testName = new Object() {
+            }.getClass().getEnclosingMethod().getName();
+            String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
+            android.util.Log.i("PLF", annotationStringHex);
+            ArrayList<Bundle> frames = new ArrayList<Bundle>(1);
+            frames.add(createFrameWithData(HostApduService.POLLING_LOOP_TYPE_UNKNOWN,
+                    HexFormat.of().parseHex(annotationStringHex)));
+            ensurePreferredService(WALLET_HOLDER_SERVICE_DESC);
+            notifyPollingLoopAndWait(frames, getWalletRoleHolderService().getClassName());
+            adapter.notifyHceDeactivated();
+        });
+    }
+
 
     @Test
     @RequiresFlagsEnabled({android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP,
@@ -735,6 +767,7 @@ public class CardEmulationTest {
     @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
     public void testAutoTransact() {
         NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        assumeTrue(adapter.isObserveModeSupported());
         adapter.notifyHceDeactivated();
         createAndResumeActivity();
         String testName = new Object() {
@@ -761,6 +794,7 @@ public class CardEmulationTest {
         restoreOriginalService();
         runWithRole(mContext, CTS_PACKAGE_NAME, () -> {
             NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+            assumeTrue(adapter.isObserveModeSupported());
             adapter.notifyHceDeactivated();
             createAndResumeActivity();
             String testName = new Object() {
@@ -772,7 +806,7 @@ public class CardEmulationTest {
                     HexFormat.of().parseHex(annotationStringHex)));
             Assert.assertTrue(adapter.setTransactionAllowed(false));
             Assert.assertTrue(adapter.isObserveModeEnabled());
-            notifyPollingLoopAndWait(frames, CtsMyHostApduService.class.getName());
+            notifyPollingLoopAndWait(frames, CustomHostApduService.class.getName());
             Assert.assertFalse(adapter.isObserveModeEnabled());
             adapter.notifyHceDeactivated();
             Assert.assertTrue(adapter.isObserveModeEnabled());

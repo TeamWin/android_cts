@@ -329,6 +329,20 @@ public class InstrumentationTest {
     }
 
     @Test
+    public void testCallActivityOnNewIntentCaller() throws Throwable {
+        mActivity.setOnNewIntentCalled(false);
+        runTestOnUiThread(new Runnable() {
+            public void run() {
+                mInstrumentation.callActivityOnNewIntent(mActivity, new Intent(),
+                        mActivity.getInitialCaller());
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertTrue(mActivity.isOnNewIntentCalled());
+    }
+
+    @Test
     public void testCallActivityOnResume() throws Throwable {
         mActivity.setOnResume(false);
         runTestOnUiThread(new Runnable() {

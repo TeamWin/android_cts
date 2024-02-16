@@ -36,7 +36,24 @@
         <activity android:name=".ShareIdentityTest$ShareIdentityTestActivity"
                   android:exported="true" />
 
-        <activity android:name=".ShareIdentityTest$ActivityCallerShareIdentityTestActivity"
+        <activity android:name=".ShareIdentityTest$ActivityInitialCallerShareIdentityTestActivity"
+            android:exported="true" />
+
+        <activity android:name=".ShareIdentityTest$ActivityNewIntentGetCurrentCallerShareIdentityTestActivity"
+            android:exported="true"
+            android:launchMode="singleInstance"/>
+
+        <activity android:name=".ShareIdentityTest$ActivityNewIntentOverloadCallerShareIdentityTestActivity"
+            android:exported="true"
+            android:launchMode="singleInstance"/>
+
+        <activity android:name=".ShareIdentityTest$ActivityResultGetCurrentCallerShareIdentityTestActivity"
+            android:exported="true" />
+
+        <activity android:name=".ShareIdentityTest$ActivityResultOverloadCallerShareIdentityTestActivity"
+            android:exported="true" />
+
+        <activity android:name=".ShareIdentityTest$ActivitySetResultSameUidShareIdentityTestActivity"
             android:exported="true" />
 
         <receiver android:name=".ShareIdentityTest$ShareIdentityTestReceiver"
@@ -47,6 +64,31 @@
         </receiver>
 
         <activity android:name=".ComponentCallerTest$InitialCallerTestActivity"
+            android:exported="true" />
+
+        <activity android:name=".ComponentCallerTest$NewIntentGetCurrentCallerTestActivity"
+            android:exported="true"
+            android:launchMode="singleInstance" />
+
+        <activity android:name=".ComponentCallerTest$NewIntentOverloadCallerTestActivity"
+            android:exported="true"
+            android:launchMode="singleInstance" />
+
+        <activity android:name=".ComponentCallerTest$NewIntentGetSetIntentCurrentCallerTestActivity"
+            android:exported="true"
+            android:launchMode="singleInstance" />
+
+        <activity android:name=".ComponentCallerTest$NewIntentGetSetIntentOverloadCallerTestActivity"
+            android:exported="true"
+            android:launchMode="singleInstance" />
+
+        <activity android:name=".ComponentCallerTest$ResultGetSetIntentCurrentCallerTestActivity"
+            android:exported="true" />
+
+        <activity android:name=".ComponentCallerTest$ResultGetSetIntentOverloadCallerTestActivity"
+            android:exported="true" />
+
+        <activity android:name=".ComponentCallerTest$SetResultTestActivity"
             android:exported="true" />
 
         <receiver android:name=".ComponentCallerTest$TestReceiver"

@@ -183,6 +183,18 @@
         <option name="push-file" key="HelloVerifierDisabled.apk.idsig" value="/data/local/tmp/cts/content/HelloVerifierDisabled.apk.idsig" />
         <option name="push-file" key="HelloWorldSystemUserOnly.apk" value="/data/local/tmp/cts/content/HelloWorldSystemUserOnly.apk" />
         <option name="push-file" key="HelloWorldSystemUserOnly.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldSystemUserOnly.apk.idsig" />
+        <option name="push-file" key="CtsMultiArchApp32_arm.apk" value="/data/local/tmp/cts/content/CtsMultiArchApp32_arm.apk" />
+        <option name="push-file" key="CtsMultiArchApp32_x86.apk" value="/data/local/tmp/cts/content/CtsMultiArchApp32_x86.apk" />
+        <option name="push-file" key="CtsMultiArchApp64_arm.apk" value="/data/local/tmp/cts/content/CtsMultiArchApp64_arm.apk" />
+        <option name="push-file" key="CtsMultiArchApp64_x86.apk" value="/data/local/tmp/cts/content/CtsMultiArchApp64_x86.apk" />
+        <option name="push-file" key="CtsMultiArchAppBoth_arm.apk" value="/data/local/tmp/cts/content/CtsMultiArchAppBoth_arm.apk" />
+        <option name="push-file" key="CtsMultiArchAppBoth_x86.apk" value="/data/local/tmp/cts/content/CtsMultiArchAppBoth_x86.apk" />
+        <option name="push-file" key="CtsMultiArchApp32_targetSdk33_arm.apk" value="/data/local/tmp/cts/content/CtsMultiArchApp32_targetSdk33_arm.apk" />
+        <option name="push-file" key="CtsMultiArchApp32_targetSdk33_x86.apk" value="/data/local/tmp/cts/content/CtsMultiArchApp32_targetSdk33_x86.apk" />
+        <option name="push-file" key="CtsMultiArchApp64_targetSdk33_arm.apk" value="/data/local/tmp/cts/content/CtsMultiArchApp64_targetSdk33_arm.apk" />
+        <option name="push-file" key="CtsMultiArchApp64_targetSdk33_x86.apk" value="/data/local/tmp/cts/content/CtsMultiArchApp64_targetSdk33_x86.apk" />
+        <option name="push-file" key="CtsMultiArchAppBoth_targetSdk33_arm.apk" value="/data/local/tmp/cts/content/CtsMultiArchAppBoth_targetSdk33_arm.apk" />
+        <option name="push-file" key="CtsMultiArchAppBoth_targetSdk33_x86.apk" value="/data/local/tmp/cts/content/CtsMultiArchAppBoth_targetSdk33_x86.apk" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">

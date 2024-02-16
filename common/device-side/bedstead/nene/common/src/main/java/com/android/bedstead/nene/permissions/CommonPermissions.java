@@ -1948,6 +1948,8 @@ public class CommonPermissions {
     public static final String MANAGE_DEVICE_POLICY_OVERRIDE_APN = "android.permission.MANAGE_DEVICE_POLICY_OVERRIDE_APN";
     /** See {@link Manifest#MANAGE_DEVICE_POLICY_SECURITY_LOGGING} */
     public static final String MANAGE_DEVICE_POLICY_SECURITY_LOGGING = "android.permission.MANAGE_DEVICE_POLICY_SECURITY_LOGGING";
+    /** See {@link Manifest#MANAGE_DEVICE_POLICY_AUDIT_LOGGING} */
+    public static final String MANAGE_DEVICE_POLICY_AUDIT_LOGGING = "android.permission.MANAGE_DEVICE_POLICY_AUDIT_LOGGING";
     /** See {@link Manifest#MANAGE_DEVICE_POLICY_SYSTEM_UPDATES} */
     public static final String MANAGE_DEVICE_POLICY_SYSTEM_UPDATES = "android.permission.MANAGE_DEVICE_POLICY_SYSTEM_UPDATES";
     /** See {@link Manifest#MANAGE_DEVICE_POLICY_QUERY_SYSTEM_UPDATES} */
@@ -1978,6 +1980,8 @@ public class CommonPermissions {
     public static final String MANAGE_DEVICE_POLICY_APP_USER_DATA = "android.permission.MANAGE_DEVICE_POLICY_APP_USER_DATA";
     /** See {@link Manifest#MANAGE_DEVICE_POLICY_LOCK} */
     public static final String MANAGE_DEVICE_POLICY_LOCK = "android.permission.MANAGE_DEVICE_POLICY_LOCK";
+    /** See {@link Manifest#MANAGE_DEVICE_POLICY_THEFT_DETECTION} */
+    public static final String MANAGE_DEVICE_POLICY_THEFT_DETECTION = "android.permission.MANAGE_DEVICE_POLICY_THEFT_DETECTION";
     /** See {@link Manifest#MANAGE_DEVICE_POLICY_SYSTEM_APPS} */
     public static final String MANAGE_DEVICE_POLICY_SYSTEM_APPS = "android.permission.MANAGE_DEVICE_POLICY_SYSTEM_APPS";
     /** See {@link Manifest#MANAGE_DEVICE_POLICY_WIPE_DATA} */

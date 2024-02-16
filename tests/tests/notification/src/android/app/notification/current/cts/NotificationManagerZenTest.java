@@ -115,6 +115,7 @@ import androidx.test.uiautomator.UiDevice;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.ScreenUtils;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.modules.utils.build.SdkLevel;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -1142,10 +1143,12 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         //assertTrue("Alarm stream should be muted",
         //        mAudioManager.isStreamMute(AudioManager.STREAM_ALARM));
 
-        // Test requires that the phone's default state has no channels that can bypass dnd
-        // which we can't currently guarantee (b/169267379)
-        // assertTrue("Ringer stream should be muted",
-        //        mAudioManager.isStreamMute(AudioManager.STREAM_RING));
+        if (SdkLevel.isAtLeastV()) {
+            // For the audio stream to be muted correctly, we need the priority channels setting;
+            // otherwise, pre-V, we cannot guarantee that no channels are bypassing DND.
+            assertTrue("Ringer stream should be muted",
+                    mAudioManager.isStreamMute(AudioManager.STREAM_RING));
+        }
     }
 
     @Test
@@ -1179,10 +1182,12 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         assertFalse("Alarm stream should not be muted",
                 mAudioManager.isStreamMute(AudioManager.STREAM_ALARM));
 
-        // Test requires that the phone's default state has no channels that can bypass dnd
-        // which we can't currently guarantee (b/169267379)
-        // assertTrue("Ringer stream should be muted",
-        //  mAudioManager.isStreamMute(AudioManager.STREAM_RING));
+        if (SdkLevel.isAtLeastV()) {
+            // For the audio stream to be muted correctly, we need the priority channels setting;
+            // otherwise, pre-V, we cannot guarantee that no channels are bypassing DND.
+            assertTrue("Ringer stream should be muted",
+                    mAudioManager.isStreamMute(AudioManager.STREAM_RING));
+        }
     }
 
     @Test
@@ -2045,10 +2050,10 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                 InstrumentationRegistry.getInstrumentation(), true);
 
         // Setup: no contacts, so nobody counts as "priority" in terms of senders.
-        // Construct a policy that doesn't allow anything through; apply it via zen rule
+        // Construct a policy that doesn't specify anything about channels; apply it via zen rule
         AutomaticZenRule rule = createRule("test_channel_bypass",
                 INTERRUPTION_FILTER_PRIORITY);
-        rule.setZenPolicy(new ZenPolicy.Builder().disallowAllSounds().build());
+        rule.setZenPolicy(new ZenPolicy.Builder().build());
         String id = mNotificationManager.addAutomaticZenRule(rule);
 
         // enable rule

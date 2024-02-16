@@ -18,6 +18,7 @@ package android.location.cts.fine;
 
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -35,12 +36,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -51,17 +48,11 @@ import java.util.Locale;
 public class GeocoderTest {
     private static final String TAG = GeocoderTest.class.getSimpleName();
 
-    @Rule public final MockitoRule mocks = MockitoJUnit.rule();
-
     private Context mContext;
     private Geocoder mGeocoder;
 
-    private @Mock Runnable mCallbackRunnable;
-    private GeocodeListener mListener;
-
     @Before
     public void setUp() {
-        mListener = new TestGeocodeListener(mCallbackRunnable);
         mContext = ApplicationProvider.getApplicationContext();
         mGeocoder = new Geocoder(mContext, Locale.US);
 
@@ -70,47 +61,26 @@ public class GeocoderTest {
                 !mContext.getPackageManager().isInstantApp() || VERSION.SDK_INT >= VERSION_CODES.S);
     }
 
-    /**
-     * GeocodeListener for tests. For the purposes of this test class, we don't care whether the
-     * request succeeds or fails. Invokes the runnable so we can verify that the callback is invoked
-     * in either case.
-     */
-    private static class TestGeocodeListener implements GeocodeListener {
-        private Runnable mCallbackRunnable;
-
-        TestGeocodeListener(Runnable callbackRunnable) {
-            this.mCallbackRunnable = callbackRunnable;
-        }
-
-        @Override
-        public void onGeocode(List<Address> addresses) {
-            mCallbackRunnable.run();
-        }
-
-        @Override
-        public void onError(String errorMessage) {
-            mCallbackRunnable.run();
-        }
-    }
-
     @ApiTest(apis = "android.location.Geocoder#getFromLocation")
     @Test
     public void testGetFromLocation() {
         assumeTrue(Geocoder.isPresent());
 
-        mGeocoder.getFromLocation(60, 30, 5, mListener);
-        verify(mCallbackRunnable, timeout(10000)).run();
+        Runnable runnable = mock(Runnable.class);
+        mGeocoder.getFromLocation(60, 30, 5, new TestGeocodeListener(runnable));
+        verify(runnable, timeout(10000)).run();
     }
 
     @ApiTest(apis = "android.location.Geocoder#getFromLocation")
     @Test
-    public void testGetFromLocation_sync() throws Exception {
+    public void testGetFromLocation_sync() {
         assumeTrue(Geocoder.isPresent());
 
         try {
             mGeocoder.getFromLocation(60, 30, 5);
         } catch (IOException e) {
-            Log.e(TAG, "GeoCoder getFromLocation request failed.", e);
+            // test succeeds, we don't care about geocoding failure
+            Log.e(TAG, "getFromLocation() request failed", e);
         }
     }
 
@@ -119,16 +89,16 @@ public class GeocoderTest {
     public void testGetFromLocation_badInput() {
         assertThrows(
                 IllegalArgumentException.class,
-                () -> mGeocoder.getFromLocation(-91, 30, 5, mListener));
+                () -> mGeocoder.getFromLocation(-91, 30, 5, addresses -> {}));
         assertThrows(
                 IllegalArgumentException.class,
-                () -> mGeocoder.getFromLocation(91, 30, 5, mListener));
+                () -> mGeocoder.getFromLocation(91, 30, 5, addresses -> {}));
         assertThrows(
                 IllegalArgumentException.class,
-                () -> mGeocoder.getFromLocation(10, -181, 5, mListener));
+                () -> mGeocoder.getFromLocation(10, -181, 5, addresses -> {}));
         assertThrows(
                 IllegalArgumentException.class,
-                () -> mGeocoder.getFromLocation(10, 181, 5, mListener));
+                () -> mGeocoder.getFromLocation(10, 181, 5, addresses -> {}));
     }
 
     @ApiTest(apis = "android.location.Geocoder#getFromLocationName")
@@ -136,19 +106,21 @@ public class GeocoderTest {
     public void testGetFromLocationName() {
         assumeTrue(Geocoder.isPresent());
 
-        mGeocoder.getFromLocationName("Dalvik,Iceland", 5, mListener);
-        verify(mCallbackRunnable, timeout(10000)).run();
+        Runnable runnable = mock(Runnable.class);
+        mGeocoder.getFromLocationName("Dalvik,Iceland", 5, new TestGeocodeListener(runnable));
+        verify(runnable, timeout(10000)).run();
     }
 
     @ApiTest(apis = "android.location.Geocoder#getFromLocationName")
     @Test
-    public void testGetFromLocationName_sync() throws Exception {
+    public void testGetFromLocationName_sync() {
         assumeTrue(Geocoder.isPresent());
 
         try {
             mGeocoder.getFromLocationName("Dalvik,Iceland", 5);
         } catch (IOException e) {
-            Log.e(TAG, "GeoCoder getFromLocatioName request failed.", e);
+            // test succeeds, we don't care about geocoding failure
+            Log.e(TAG, "getFromLocationName() request failed", e);
         }
     }
 
@@ -157,19 +129,27 @@ public class GeocoderTest {
     public void testGetFromLocationName_badInput() {
         assertThrows(
                 IllegalArgumentException.class,
-                () -> mGeocoder.getFromLocationName(null, 5, mListener));
+                () -> mGeocoder.getFromLocationName(null, 5, addresses -> {}));
         assertThrows(
                 IllegalArgumentException.class,
-                () -> mGeocoder.getFromLocationName("Beijing", 5, -91, 100, 45, 130, mListener));
+                () ->
+                        mGeocoder.getFromLocationName(
+                                "Beijing", 5, -91, 100, 45, 130, addresses -> {}));
         assertThrows(
                 IllegalArgumentException.class,
-                () -> mGeocoder.getFromLocationName("Beijing", 5, 25, 190, 45, 130, mListener));
+                () ->
+                        mGeocoder.getFromLocationName(
+                                "Beijing", 5, 25, 190, 45, 130, addresses -> {}));
         assertThrows(
                 IllegalArgumentException.class,
-                () -> mGeocoder.getFromLocationName("Beijing", 5, 25, 100, 91, 130, mListener));
+                () ->
+                        mGeocoder.getFromLocationName(
+                                "Beijing", 5, 25, 100, 91, 130, addresses -> {}));
         assertThrows(
                 IllegalArgumentException.class,
-                () -> mGeocoder.getFromLocationName("Beijing", 5, 25, 100, 45, -181, mListener));
+                () ->
+                        mGeocoder.getFromLocationName(
+                                "Beijing", 5, 25, 100, 45, -181, addresses -> {}));
     }
 
     @ApiTest(
@@ -179,7 +159,26 @@ public class GeocoderTest {
             })
     @Test
     public void testGeocodeListener() {
-        mListener.onGeocode(new ArrayList<>());
-        mListener.onError(null);
+        GeocodeListener listener = addresses -> {};
+        listener.onGeocode(new ArrayList<>());
+        listener.onError(null);
+    }
+
+    private static class TestGeocodeListener implements GeocodeListener {
+        private final Runnable mRunnable;
+
+        TestGeocodeListener(Runnable runnable) {
+            mRunnable = runnable;
+        }
+
+        @Override
+        public void onGeocode(List<Address> addresses) {
+            mRunnable.run();
+        }
+
+        @Override
+        public void onError(String errorMessage) {
+            mRunnable.run();
+        }
     }
 }

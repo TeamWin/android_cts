@@ -16,11 +16,11 @@
 
 package com.android.bedstead.harrier.annotations;
 
-/** Used to define the order in which the bedstead annotations are run based on their
- * {@code cost} .
+/**
+ * Used to define the order in which the test methods are run based on their {@code cost} .
  */
 public final class AnnotationCostRunPrecedence {
-    // Use to ensure that an annotation is the first to run.
+    // Use to ensure that the test method is the first to run.
     public static final int LOW = 0;
     // To run around the middle in the order.
     public static final int MIDDLE = 5000;

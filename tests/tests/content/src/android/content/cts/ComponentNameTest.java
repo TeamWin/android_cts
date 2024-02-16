@@ -43,6 +43,7 @@ import org.junit.runner.RunWith;
  * Test {@link ComponentName}.
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ComponentNameTest {
     @Rule public final RavenwoodRule mRavenwood = new RavenwoodRule();
 
@@ -50,7 +51,7 @@ public class ComponentNameTest {
 
     @Before
     public void setUp() {
-        if (mRavenwood.isUnderRavenwood()) {
+        if (mRavenwood.isUnderRavenwood() || Process.isSdkSandbox()) {
             // TODO: replace with mockito when better supported
             mContext = new MockContext() {
                 @Override
@@ -64,7 +65,6 @@ public class ComponentNameTest {
     }
 
     @Test
-    @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
     public void testConstructor() {
         // new the ComponentName instance
         new ComponentName("com.android.app", "com.android.app.InstrumentationTestActivity");
@@ -131,15 +131,10 @@ public class ComponentNameTest {
     }
 
     @Test
-    @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
     public void testGetShortClassName() {
-        // SDK running in the sandbox cannot declare components. ComponentName created from the
-        // current package name and class name do not need to be CTS tested.
-        if (!Process.isSdkSandbox()) {
-            // set the expected value, test normal value
-            String actual = getComponentName().getShortClassName();
-            assertEquals(".ComponentNameTest", actual);
-        }
+        // set the expected value, test normal value
+        String actual = getComponentName().getShortClassName();
+        assertEquals(".ComponentNameTest", actual);
 
         // Test class name which can be abbreviated
         ComponentName componentName = new ComponentName("com.android.view",
@@ -147,13 +142,12 @@ public class ComponentNameTest {
         final String className = componentName.getClassName();
         // First, check the string return by getClassName().
         assertEquals("com.android.view.View", className);
-        String actual = componentName.getShortClassName();
+        actual = componentName.getShortClassName();
         // Then, check the string return by getShortClassName().
         assertEquals(".View", actual);
     }
 
     @Test
-    @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
     public void testReadFromParcel() {
         ComponentName expected = getComponentName();
         final Parcel parcel1 = Parcel.obtain();
@@ -175,7 +169,6 @@ public class ComponentNameTest {
     }
 
     @Test
-    @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
     public void testUnflattenFromString() {
         final ComponentName componentName = getComponentName();
         final String flattenString = getComponentName().flattenToString();
@@ -185,15 +178,10 @@ public class ComponentNameTest {
     }
 
     @Test
-    @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
     public void testFlattenToShortString() {
-        // SDK running in the sandbox cannot declare components. ComponentName created from the
-        // current package name and class name do not need to be CTS tested.
-        if (!Process.isSdkSandbox()) {
-            // Test normal
-            String actual = getComponentName().flattenToShortString();
-            assertEquals("android.content.cts/.ComponentNameTest", actual);
-        }
+        // Test normal
+        String actual = getComponentName().flattenToShortString();
+        assertEquals("android.content.cts/.ComponentNameTest", actual);
 
         // Test long class name
         final ComponentName componentName = new ComponentName("com.android.view",
@@ -201,13 +189,12 @@ public class ComponentNameTest {
         final String falttenString = componentName.flattenToString();
         // First, compare the string return by flattenToString().
         assertEquals("com.android.view/com.android.view.View", falttenString);
-        String actual = componentName.flattenToShortString();
+        actual = componentName.flattenToShortString();
         // Then, compare the string return by flattenToShortString().
         assertEquals("com.android.view/.View", actual);
     }
 
     @Test
-    @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
     public void testEquals() {
         // new the ComponentName instances, both are the same.
         final ComponentName componentName1 = getComponentName();
@@ -224,7 +211,6 @@ public class ComponentNameTest {
     }
 
     @Test
-    @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
     public void testToString() {
         assertNotNull(getComponentName().toString());
     }
@@ -270,7 +256,6 @@ public class ComponentNameTest {
     }
 
     @Test
-    @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
     public void testWriteNullDataToParcel() {
         // Test null data
         Parcel parcel = Parcel.obtain();
@@ -279,7 +264,6 @@ public class ComponentNameTest {
     }
 
     @Test
-    @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
     public void testDescribeContents() {
         assertEquals(0, getComponentName().describeContents());
     }

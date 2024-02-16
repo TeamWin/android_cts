@@ -27,10 +27,15 @@ import static android.appsecurity.cts.Utils.PKG;
 
 import static org.junit.Assert.assertNotNull;
 
+import android.content.pm.Flags;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 import android.platform.test.annotations.PlatinumTest;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.host.HostFlagsValueProvider;
 
 import com.android.compatibility.common.util.CpuFeatures;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -42,6 +47,7 @@ import com.android.tradefed.util.AbiUtils;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -104,6 +110,8 @@ public class SplitTests extends BaseAppSecurityTest {
 
     private static final String APK_REVISION_A = "CtsSplitAppRevisionA.apk";
     private static final String APK_FEATURE_WARM_REVISION_A = "CtsSplitAppFeatureWarmRevisionA.apk";
+    private static final String BITNESS_32 = "32";
+    private static final String BITNESS_64 = "64";
 
     // Apk includes a provider and service declared in other split apk. And only could be tested in
     // instant app mode.
@@ -119,6 +127,88 @@ public class SplitTests extends BaseAppSecurityTest {
         ABI_TO_REVISION_APK.put("arm64-v8a", "CtsSplitApp_revision12_arm64-v8a.apk");
         ABI_TO_REVISION_APK.put("mips64", "CtsSplitApp_revision12_mips64.apk");
         ABI_TO_REVISION_APK.put("mips", "CtsSplitApp_revision12_mips.apk");
+    }
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            HostFlagsValueProvider.createCheckFlagsRule(this::getDevice);
+
+    private String mDeviceDefaultAbi = null;
+    private String mDeviceDefaultBitness = null;
+    private String mDeviceDefaultBaseArch = null;
+    private String[] mDeviceSupported32BitSet = null;
+    private String[] mDeviceSupported64BitSet = null;
+
+    private String[] getDeviceSupported32AbiSet() throws Exception {
+        if (mDeviceSupported32BitSet != null) {
+            return mDeviceSupported32BitSet;
+        }
+        mDeviceSupported32BitSet = getDeviceSupportedAbiSet(BITNESS_32);
+        return mDeviceSupported32BitSet;
+    }
+
+    private String[] getDeviceSupported64AbiSet() throws Exception {
+        if (mDeviceSupported64BitSet != null) {
+            return mDeviceSupported64BitSet;
+        }
+        mDeviceSupported64BitSet = getDeviceSupportedAbiSet(BITNESS_64);
+        return mDeviceSupported64BitSet;
+    }
+
+    private String[] getDeviceSupportedAbiSet(String bitness) throws Exception {
+        String abis = getDevice().getProperty("ro.product.cpu.abilist" + bitness);
+        if (abis == null) {
+            return new String[0];
+        }
+        return abis.split(",");
+    }
+
+    private String getDeviceDefaultAbi() throws Exception {
+        if (mDeviceDefaultAbi != null) {
+            return mDeviceDefaultAbi;
+        }
+        mDeviceDefaultAbi = getDevice().getProperty("ro.product.cpu.abi");
+        return mDeviceDefaultAbi;
+    }
+
+    private String getDeviceDefaultBitness() throws Exception {
+        if (mDeviceDefaultBitness != null) {
+            return mDeviceDefaultBitness;
+        }
+        mDeviceDefaultBitness = AbiUtils.getBitness(getDeviceDefaultAbi());
+        return mDeviceDefaultBitness;
+    }
+
+    private String getDeviceDefaultBaseArch() throws Exception {
+        if (mDeviceDefaultBaseArch != null) {
+            return mDeviceDefaultBaseArch;
+        }
+        mDeviceDefaultBaseArch = AbiUtils.getBaseArchForAbi(getDeviceDefaultAbi());
+        return mDeviceDefaultBaseArch;
+    }
+
+    /*
+     * Return true if the device supports both 32 bit and 64 bit ABIs. Otherwise, false.
+     */
+    private boolean isDeviceSupportedBothBitness() throws Exception {
+        final String deviceDefaultBaseArch = getDeviceDefaultBaseArch();
+        if (getDeviceDefaultBitness().equals(BITNESS_32)) {
+            String[] abis64 = getDeviceSupported64AbiSet();
+            for (int i = 0; i < abis64.length; i++) {
+                if (AbiUtils.getBaseArchForAbi(abis64[i]).equals(deviceDefaultBaseArch)) {
+                    return true;
+                }
+            }
+        } else {
+            String[] abis32 = getDeviceSupported32AbiSet();
+            for (int i = 0; i < abis32.length; i++) {
+                if (AbiUtils.getBaseArchForAbi(abis32[i]).equals(deviceDefaultBaseArch)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     @Before
@@ -260,6 +350,19 @@ public class SplitTests extends BaseAppSecurityTest {
         return installMultiple;
     }
 
+    private void testNativeSingle_assertFail(boolean instant, boolean useNaturalAbi,
+            String failure) throws Exception {
+        Assume.assumeTrue(isDeviceSupportedBothBitness());
+        final String abi = getAbi().getName();
+        final String apk = ABI_TO_APK.get(abi);
+        assertNotNull("Failed to find APK for ABI " + abi, apk);
+
+        getInstallMultiple(instant, useNaturalAbi)
+                .addFile(APK)
+                .addFile(apk)
+                .run(/* expectingSuccess= */ false, failure);
+    }
+
     private void testNativeSingle(boolean instant, boolean useNaturalAbi) throws Exception {
         final String abi = getAbi().getName();
         final String apk = ABI_TO_APK.get(abi);
@@ -329,13 +432,30 @@ public class SplitTests extends BaseAppSecurityTest {
      */
     @Test
     @AppModeFull(reason = "'full' portion of the hostside test")
+    @RequiresFlagsDisabled(Flags.FLAG_FORCE_MULTI_ARCH_NATIVE_LIBS_MATCH)
     public void testNativeSingleNatural_full() throws Exception {
         testNativeSingle(false, true);
     }
     @Test
     @AppModeInstant(reason = "'instant' portion of the hostside test")
+    @RequiresFlagsDisabled(Flags.FLAG_FORCE_MULTI_ARCH_NATIVE_LIBS_MATCH)
     public void testNativeSingleNatural_instant() throws Exception {
         testNativeSingle(true, true);
+    }
+
+    @Test
+    @AppModeFull(reason = "'full' portion of the hostside test")
+    @RequiresFlagsEnabled(Flags.FLAG_FORCE_MULTI_ARCH_NATIVE_LIBS_MATCH)
+    public void testNativeSingleNatural_full_fail() throws Exception {
+        testNativeSingle_assertFail(/* instant= */ false, /* useNaturalAbi= */ true,
+                "don't support all the natively supported ABIs of the device");
+    }
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    @RequiresFlagsEnabled(Flags.FLAG_FORCE_MULTI_ARCH_NATIVE_LIBS_MATCH)
+    public void testNativeSingleNatural_instant_fail() throws Exception {
+        testNativeSingle_assertFail(/* instant= */ true, /* useNaturalAbi= */ true,
+                "don't support all the natively supported ABIs of the device");
     }
 
     private void assumeNativeAbi() throws Exception {
