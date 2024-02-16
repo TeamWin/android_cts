@@ -15,8 +15,7 @@
  */
 package android.graphics.cts;
 
-import android.test.suitebuilder.annotation.LargeTest;
-
+import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 

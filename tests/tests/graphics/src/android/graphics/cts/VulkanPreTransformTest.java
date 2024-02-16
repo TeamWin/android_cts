@@ -23,12 +23,12 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 import android.view.PixelCopy;
 import android.view.SurfaceView;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 

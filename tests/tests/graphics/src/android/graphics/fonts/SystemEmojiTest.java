@@ -21,8 +21,8 @@ import static com.google.common.truth.Truth.assertThat;
 import android.graphics.Paint;
 import android.graphics.text.PositionedGlyphs;
 import android.graphics.text.TextRunShaper;
-import android.test.suitebuilder.annotation.SmallTest;
 
+import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
