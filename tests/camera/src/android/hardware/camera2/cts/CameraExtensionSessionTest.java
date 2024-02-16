@@ -39,17 +39,20 @@ import com.android.ex.camera2.exceptions.TimeoutRuntimeException;
 import com.android.ex.camera2.pos.AutoFocusStateMachine;
 
 import android.graphics.ImageFormat;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.HardwareBuffer;
 import android.hardware.camera2.CameraCaptureSession;
-import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraExtensionCharacteristics;
 import android.hardware.camera2.CameraExtensionSession;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.ExtensionCaptureRequest;
+import android.hardware.camera2.ExtensionCaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.cts.helpers.CameraErrorCollector;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
@@ -63,6 +66,7 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
 import android.os.SystemClock;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.util.Range;
 import android.util.Size;
 
@@ -97,6 +101,38 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
     private static final long REPEATING_REQUEST_TIMEOUT_MS = 5000;
     private static final int MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS = 10000;
     private static final float ZOOM_ERROR_MARGIN = 0.05f;
+
+    private static final CaptureRequest.Key[] FOCUS_CAPTURE_REQUEST_SET = {
+            CaptureRequest.CONTROL_AF_MODE,
+            CaptureRequest.CONTROL_AF_REGIONS,
+            CaptureRequest.CONTROL_AF_TRIGGER};
+    private static final CaptureResult.Key[] FOCUS_CAPTURE_RESULT_SET = {
+            CaptureResult.CONTROL_AF_MODE,
+            CaptureResult.CONTROL_AF_REGIONS,
+            CaptureResult.CONTROL_AF_TRIGGER,
+            CaptureResult.CONTROL_AF_STATE};
+    private static final CaptureRequest.Key[] ZOOM_CAPTURE_REQUEST_SET = {
+            CaptureRequest.CONTROL_ZOOM_RATIO};
+    private static final CaptureResult.Key[] ZOOM_CAPTURE_RESULT_SET = {
+            CaptureResult.CONTROL_ZOOM_RATIO};
+    private static final CaptureRequest.Key[] EYES_FREE_AUTO_ZOOM_REQUEST_SET = {
+            ExtensionCaptureRequest.EFV_AUTO_ZOOM,
+            ExtensionCaptureRequest.EFV_MAX_PADDING_ZOOM_FACTOR};
+    private static final CaptureResult.Key[] EYES_FREE_AUTO_ZOOM_RESULT_SET = {
+            ExtensionCaptureResult.EFV_AUTO_ZOOM,
+            ExtensionCaptureResult.EFV_AUTO_ZOOM_PADDING_REGION};
+    private static final CaptureRequest.Key[] EYES_FREE_REQUEST_SET = {
+            ExtensionCaptureRequest.EFV_PADDING_ZOOM_FACTOR,
+            ExtensionCaptureRequest.EFV_STABILIZATION_MODE,
+            ExtensionCaptureRequest.EFV_TRANSLATE_VIEWPORT,
+            ExtensionCaptureRequest.EFV_ROTATE_VIEWPORT};
+    private static final CaptureResult.Key[] EYES_FREE_RESULT_SET = {
+            ExtensionCaptureResult.EFV_PADDING_REGION,
+            ExtensionCaptureResult.EFV_TARGET_COORDINATES,
+            ExtensionCaptureResult.EFV_PADDING_ZOOM_FACTOR,
+            ExtensionCaptureResult.EFV_STABILIZATION_MODE,
+            ExtensionCaptureResult.EFV_ROTATE_VIEWPORT,
+            ExtensionCaptureResult.EFV_TRANSLATE_VIEWPORT};
 
     private SurfaceTexture mSurfaceTexture = null;
     private Camera2AndroidTestRule mTestRule = null;
@@ -684,6 +720,9 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                         verify(captureMockCallback, times(0))
                                 .onCaptureFailed(any(CameraExtensionSession.class),
                                         any(CaptureRequest.class));
+                        verify(captureMockCallback, times(0))
+                                .onCaptureFailed(any(CameraExtensionSession.class),
+                                        any(CaptureRequest.class), anyInt());
                         Range<Long> latencyRange =
                                 extensionChars.getEstimatedCaptureLatencyRangeMillis(extension,
                                         maxSize, captureFormat);
@@ -860,6 +899,9 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                         verify(captureMockCallback, times(0))
                                 .onCaptureFailed(any(CameraExtensionSession.class),
                                         any(CaptureRequest.class));
+                        verify(captureMockCallback, times(0))
+                                .onCaptureFailed(any(CameraExtensionSession.class),
+                                        any(CaptureRequest.class), anyInt());
                         Range<Long> latencyRange =
                                 extensionChars.getEstimatedCaptureLatencyRangeMillis(extension,
                                         maxSize, captureFormat);
@@ -1058,9 +1100,9 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                 boolean supportsStrengthControl = supportedRequestKeys.contains(
                         CaptureRequest.EXTENSION_STRENGTH);
 
+                Set<CaptureResult.Key> supportedResultKeys =
+                        extensionChars.getAvailableCaptureResultKeys(extension);
                 if (supportsStrengthControl) {
-                    Set<CaptureResult.Key> supportedResultKeys =
-                            extensionChars.getAvailableCaptureResultKeys(extension);
                     assertTrue(supportedResultKeys.contains(CaptureResult.EXTENSION_STRENGTH));
                 }
 
@@ -1225,6 +1267,9 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     verify(captureCallback, times(0))
                             .onCaptureFailed(any(CameraExtensionSession.class),
                                     any(CaptureRequest.class));
+                    verify(captureCallback, times(0))
+                            .onCaptureFailed(any(CameraExtensionSession.class),
+                                    any(CaptureRequest.class), anyInt());
 
                     extensionSession.stopRepeating();
 
@@ -1261,6 +1306,184 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     texturedSurface.release();
                     extensionImageReader.close();
                 }
+            }
+        }
+    }
+
+    // Test case for eyes free videography extension mode
+    @Test
+    @RequiresFlagsEnabled(com.android.internal.camera.flags.Flags.FLAG_CONCERT_MODE)
+    public void testEyesFreeExtension() throws Exception {
+        for (String id : getCameraIdsUnderTest()) {
+            StaticMetadata staticMeta =
+                    new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
+            if (!staticMeta.isColorOutputSupported()) {
+                continue;
+            }
+            updatePreviewSurfaceTexture();
+            CameraExtensionCharacteristics extensionChars =
+                    mTestRule.getCameraManager().getCameraExtensionCharacteristics(id);
+            List<Integer> supportedExtensions = extensionChars.getSupportedExtensions();
+
+            if (!supportedExtensions.contains(
+                    CameraExtensionCharacteristics.EXTENSION_EYES_FREE_VIDEOGRAPHY)) {
+                continue;
+            }
+
+            int extension = CameraExtensionCharacteristics.EXTENSION_EYES_FREE_VIDEOGRAPHY;
+            List<Size> extensionSizes = extensionChars.getExtensionSupportedSizes(extension,
+                    mSurfaceTexture.getClass());
+            Size maxSize =
+                    CameraTestUtils.getMaxSize(extensionSizes.toArray(new Size[0]));
+            mSurfaceTexture.setDefaultBufferSize(maxSize.getWidth(),
+                    maxSize.getHeight());
+            Surface texturedSurface = new Surface(mSurfaceTexture);
+
+            List<OutputConfiguration> outputConfigs = new ArrayList<>();
+            outputConfigs.add(new OutputConfiguration(texturedSurface));
+
+            BlockingExtensionSessionCallback sessionListener =
+                    new BlockingExtensionSessionCallback(mock(
+                            CameraExtensionSession.StateCallback.class));
+            ExtensionSessionConfiguration configuration =
+                    new ExtensionSessionConfiguration(extension, outputConfigs,
+                            new HandlerExecutor(mTestRule.getHandler()),
+                            sessionListener);
+
+            Set<CaptureResult.Key> supportedResultKeys =
+                    extensionChars.getAvailableCaptureResultKeys(extension);
+            Set<CaptureRequest.Key> supportedRequestKeys =
+                    extensionChars.getAvailableCaptureRequestKeys(extension);
+
+            CameraTestUtils.checkKeysAreSupported(Arrays.asList(
+                    EYES_FREE_REQUEST_SET, FOCUS_CAPTURE_REQUEST_SET,
+                    ZOOM_CAPTURE_REQUEST_SET), supportedRequestKeys, true);
+            CameraTestUtils.checkKeysAreSupported(Arrays.asList(
+                    EYES_FREE_RESULT_SET, FOCUS_CAPTURE_RESULT_SET,
+                    ZOOM_CAPTURE_RESULT_SET), supportedResultKeys, true);
+
+            if (supportedRequestKeys.contains(ExtensionCaptureRequest.EFV_AUTO_ZOOM)) {
+                CameraTestUtils.checkKeysAreSupported(EYES_FREE_AUTO_ZOOM_REQUEST_SET,
+                        supportedRequestKeys, true);
+                CameraTestUtils.checkKeysAreSupported(EYES_FREE_AUTO_ZOOM_RESULT_SET,
+                        supportedResultKeys, true);
+            }
+
+            try {
+                mTestRule.openDevice(id);
+                CameraDevice camera = mTestRule.getCamera();
+                camera.createExtensionSession(configuration);
+                CameraExtensionSession extensionSession =
+                        sessionListener.waitAndGetSession(
+                            SESSION_CONFIGURE_TIMEOUT_MS);
+                assertNotNull(extensionSession);
+
+                CameraExtensionSession.ExtensionCaptureCallback captureCallbackMock =
+                        mock(CameraExtensionSession.ExtensionCaptureCallback.class);
+                SimpleCaptureCallback simpleCaptureCallback =
+                        new SimpleCaptureCallback(extension, captureCallbackMock,
+                                extensionChars.getAvailableCaptureResultKeys(extension),
+                                mCollector, staticMeta);
+
+                if (supportedRequestKeys.contains(ExtensionCaptureRequest.EFV_AUTO_ZOOM)) {
+                    CaptureRequest.Builder captureBuilder =
+                            mTestRule.getCamera().createCaptureRequest(
+                                android.hardware.camera2.CameraDevice.TEMPLATE_PREVIEW);
+                    captureBuilder.addTarget(texturedSurface);
+                    captureBuilder.set(ExtensionCaptureRequest.EFV_AUTO_ZOOM, true);
+                    captureBuilder.set(ExtensionCaptureRequest.EFV_STABILIZATION_MODE,
+                            ExtensionCaptureRequest.EFV_STABILIZATION_MODE_LOCKED);
+                    CaptureRequest request = captureBuilder.build();
+
+                    int seqId = extensionSession.setRepeatingRequest(request,
+                            new HandlerExecutor(mTestRule.getHandler()),
+                            simpleCaptureCallback);
+                    assertTrue(seqId > 0);
+
+                    verify(captureCallbackMock,
+                            timeout(REPEATING_REQUEST_TIMEOUT_MS).atLeastOnce())
+                            .onCaptureResultAvailable(eq(extensionSession), eq(request),
+                            any(TotalCaptureResult.class));
+
+                    captureBuilder.set(ExtensionCaptureRequest.EFV_AUTO_ZOOM, false);
+                    request = captureBuilder.build();
+
+                    seqId = extensionSession.setRepeatingRequest(request,
+                            new HandlerExecutor(mTestRule.getHandler()),
+                            simpleCaptureCallback);
+                    assertTrue(seqId > 0);
+
+                    verify(captureCallbackMock,
+                            timeout(REPEATING_REQUEST_TIMEOUT_MS).atLeastOnce())
+                            .onCaptureResultAvailable(eq(extensionSession), eq(request),
+                            any(TotalCaptureResult.class));
+                }
+
+                CaptureRequest.Builder captureBuilder =
+                        mTestRule.getCamera().createCaptureRequest(
+                                android.hardware.camera2.CameraDevice.TEMPLATE_PREVIEW);
+                captureBuilder.addTarget(texturedSurface);
+
+                Range<Float> paddingZoomFactorRange =
+                        extensionChars.get(extension,
+                        CameraExtensionCharacteristics.EFV_PADDING_ZOOM_FACTOR_RANGE);
+                Float paddingZoomFactor = (paddingZoomFactorRange.getUpper()
+                        + paddingZoomFactorRange.getLower()) / 2;
+                captureBuilder.set(ExtensionCaptureRequest.EFV_PADDING_ZOOM_FACTOR,
+                        paddingZoomFactor);
+                captureBuilder.set(ExtensionCaptureRequest.EFV_STABILIZATION_MODE,
+                        ExtensionCaptureRequest.EFV_STABILIZATION_MODE_LOCKED);
+                CaptureRequest request = captureBuilder.build();
+
+                int seqId = extensionSession.setRepeatingRequest(request,
+                        new HandlerExecutor(mTestRule.getHandler()),
+                        simpleCaptureCallback);
+                assertTrue(seqId > 0);
+
+                verify(captureCallbackMock,
+                        timeout(REPEATING_REQUEST_TIMEOUT_MS).atLeastOnce())
+                        .onCaptureResultAvailable(eq(extensionSession), eq(request),
+                                any(TotalCaptureResult.class));
+
+                verify(captureCallbackMock,
+                        timeout(REPEATING_REQUEST_TIMEOUT_MS).atLeastOnce())
+                        .onCaptureStarted(eq(extensionSession), eq(request), anyLong());
+                verify(captureCallbackMock,
+                        timeout(REPEATING_REQUEST_TIMEOUT_MS).atLeastOnce())
+                        .onCaptureProcessStarted(extensionSession, request);
+
+                extensionSession.stopRepeating();
+
+                verify(captureCallbackMock,
+                        timeout(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS).times(1))
+                        .onCaptureSequenceCompleted(extensionSession, seqId);
+
+                verify(captureCallbackMock, times(0))
+                        .onCaptureSequenceAborted(any(CameraExtensionSession.class),
+                        anyInt());
+
+                extensionSession.close();
+
+                sessionListener.getStateWaiter().waitForState(
+                        BlockingExtensionSessionCallback.SESSION_CLOSED,
+                        SESSION_CLOSE_TIMEOUT_MS);
+
+                assertTrue("The sum of onCaptureProcessStarted and onCaptureFailed"
+                                + " callbacks must be greater or equal than the number of calls"
+                                + " to onCaptureStarted!",
+                        simpleCaptureCallback.getTotalFramesArrived()
+                        + simpleCaptureCallback.getTotalFramesFailed()
+                        >= simpleCaptureCallback.getTotalFramesStarted());
+                assertTrue(String.format("The last repeating request surface timestamp "
+                                + "%d must be less than or equal to the last "
+                                + "onCaptureStarted "
+                                + "timestamp %d", mSurfaceTexture.getTimestamp(),
+                        simpleCaptureCallback.getLastTimestamp()),
+                        mSurfaceTexture.getTimestamp()
+                        <= simpleCaptureCallback.getLastTimestamp());
+            } finally {
+                mTestRule.closeDevice(id);
+                texturedSurface.release();
             }
         }
     }
@@ -1348,6 +1571,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         private int mLastProgressValue = -1;
         private boolean mNonIncreasingTimestamps = false;
         private HashSet<Long> mExpectedResultTimestamps = new HashSet<>();
+        private StaticMetadata mStaticInfo;
         private final CameraExtensionSession.ExtensionCaptureCallback mProxy;
         private final AutoFocusStateMachine mAFStateMachine;
         private final FlashStateListener mFlashStateListener;
@@ -1362,6 +1586,15 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                 Set<CaptureResult.Key> supportedResultKeys, CameraErrorCollector errorCollector) {
             this(extensionType, proxy, supportedResultKeys, errorCollector, null /*afListener*/,
                     null /*flashState*/, null /*aeState*/, false /*perFrameControl*/);
+        }
+
+        public SimpleCaptureCallback(int extensionType,
+                CameraExtensionSession.ExtensionCaptureCallback proxy,
+                Set<CaptureResult.Key> supportedResultKeys, CameraErrorCollector errorCollector,
+                StaticMetadata staticInfo) {
+            this(extensionType, proxy, supportedResultKeys, errorCollector, null /*afListener*/,
+                    null /*flashState*/, null /*aeState*/, false /*perFrameControl*/);
+            mStaticInfo = staticInfo;
         }
 
         public SimpleCaptureCallback(int extensionType,
@@ -1412,6 +1645,15 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
             mNumFramesFailed++;
             if (mProxy != null) {
                 mProxy.onCaptureFailed(session, request);
+            }
+        }
+
+        @Override
+        public void onCaptureFailed(CameraExtensionSession session,
+                CaptureRequest request, int failure) {
+            mNumFramesFailed++;
+            if (mProxy != null) {
+                mProxy.onCaptureFailed(session, request, failure);
             }
         }
 
@@ -1630,6 +1872,8 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                 mAFStateMachine.onCaptureCompleted(result);
             }
 
+            verifyExtensionSpecificCaptureResults(result, request);
+
             if (mProxy != null) {
                 mProxy.onCaptureResultAvailable(session, request, result);
             }
@@ -1652,6 +1896,78 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                 throw new IllegalStateException("Non-monotonically increasing timestamps!");
             }
             return mLastTimestamp;
+        }
+
+        private void verifyExtensionSpecificCaptureResults(TotalCaptureResult result,
+                CaptureRequest request) {
+            if (mExtensionType != CameraExtensionCharacteristics.EXTENSION_EYES_FREE_VIDEOGRAPHY) {
+                return;
+            }
+
+            Boolean enableAutoZoomRequest = request.get(ExtensionCaptureRequest.EFV_AUTO_ZOOM);
+            if (enableAutoZoomRequest != null) {
+                Boolean enableAutoZoomResult = result.get(ExtensionCaptureResult.EFV_AUTO_ZOOM);
+                mCollector.expectTrue("Request auto zoom doesn't match with "
+                        + " result auto zoom mode ",
+                        enableAutoZoomRequest.equals(enableAutoZoomResult));
+
+                if (!enableAutoZoomRequest) {
+                    int[] autoZoomPaddingRegion =
+                            result.get(ExtensionCaptureResult.EFV_AUTO_ZOOM_PADDING_REGION);
+                    mCollector.expectTrue("Unexpected EFV_AUTO_ZOOM_PADDING_REGION when "
+                            + "auto zoom is disabled ", autoZoomPaddingRegion == null);
+                }
+            }
+
+            Integer stabilizationModeRequest =
+                    request.get(ExtensionCaptureRequest.EFV_STABILIZATION_MODE);
+            if (stabilizationModeRequest != null) {
+                Integer stabilizationModeResult =
+                        result.get(ExtensionCaptureResult.EFV_STABILIZATION_MODE);
+                mCollector.expectTrue("Request stabilization mode doesn't match with "
+                        + " result stabilization mode ",
+                        stabilizationModeRequest.equals(stabilizationModeResult));
+
+                if (stabilizationModeRequest
+                        == ExtensionCaptureRequest.EFV_STABILIZATION_MODE_LOCKED) {
+                    int[] paddingRegion =
+                            result.get(ExtensionCaptureResult.EFV_PADDING_REGION);
+                    mCollector.expectTrue("Expected EFV_PADDING_REGION when "
+                            + " stabilization is in locked mode ", paddingRegion != null);
+                    PointF[] targetCoordinates =
+                            result.get(ExtensionCaptureResult.EFV_TARGET_COORDINATES);
+                    mCollector.expectTrue("Expected EFV_TARGET_COORDINATES when "
+                            + " stabilization is in locked mode ", targetCoordinates != null);
+
+                    if (enableAutoZoomRequest != null && enableAutoZoomRequest) {
+                        int[] autoZoomPaddingRegion =
+                                result.get(ExtensionCaptureResult.EFV_AUTO_ZOOM_PADDING_REGION);
+                        mCollector.expectTrue("Expected EFV_AUTO_ZOOM_PADDING_REGION when "
+                                + "auto zoom is enabled and stabilization is in locked mode ",
+                                autoZoomPaddingRegion != null);
+                    }
+                }
+            }
+
+            Float paddingZoomFactor = result.get(ExtensionCaptureResult.EFV_PADDING_ZOOM_FACTOR);
+            if (paddingZoomFactor != null) {
+                mCollector.expectTrue("Expected EFV_PADDING_ZOOM_FACTOR > 1 ",
+                        paddingZoomFactor > 1);
+            }
+
+            if (mStaticInfo == null) {
+                return;
+            }
+
+            Rect activeArraySize = mStaticInfo.getActiveArraySizeChecked();
+            PointF[] targetCoordinates = result.get(ExtensionCaptureResult.EFV_TARGET_COORDINATES);
+            if (targetCoordinates != null) {
+                for (PointF point: targetCoordinates) {
+                    mCollector.expectTrue("Target coordinate not within active array region",
+                            activeArraySize.contains((int) Math.ceil(point.x),
+                            (int) Math.ceil(point.y)));
+                }
+            }
         }
     }
 
@@ -1694,11 +2010,6 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
     // lock the AF state and not to do an exhaustive check of the AF state transitions or manual AF.
     @Test
     public void testAFMetering() throws Exception {
-        final CaptureRequest.Key[] FOCUS_CAPTURE_REQUEST_SET = {CaptureRequest.CONTROL_AF_MODE,
-                CaptureRequest.CONTROL_AF_REGIONS, CaptureRequest.CONTROL_AF_TRIGGER};
-        final CaptureResult.Key[] FOCUS_CAPTURE_RESULT_SET = {CaptureResult.CONTROL_AF_MODE,
-                CaptureResult.CONTROL_AF_REGIONS, CaptureResult.CONTROL_AF_TRIGGER,
-                CaptureResult.CONTROL_AF_STATE};
         final int METERING_REGION_SCALE_RATIO = 8;
         final int WAIT_FOR_FOCUS_DONE_TIMEOUT_MS = 6000;
         for (String id : getCameraIdsUnderTest()) {
@@ -1880,8 +2191,6 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
     // Verify that camera extension sessions can support the zoom ratio control.
     @Test
     public void testZoomRatio() throws Exception {
-        final CaptureRequest.Key[] ZOOM_CAPTURE_REQUEST_SET = {CaptureRequest.CONTROL_ZOOM_RATIO};
-        final CaptureResult.Key[] ZOOM_CAPTURE_RESULT_SET = {CaptureResult.CONTROL_ZOOM_RATIO};
         final int ZOOM_RATIO_STEPS = 10;
         for (String id : getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =

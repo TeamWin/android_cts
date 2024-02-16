@@ -23,80 +23,108 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Rect;
+import android.graphics.pdf.LoadParams;
 import android.graphics.pdf.PdfRenderer;
+import android.graphics.pdf.PdfRendererPreV;
+import android.graphics.pdf.RenderParams;
+import android.graphics.pdf.models.PageMatchBounds;
 import android.os.ParcelFileDescriptor;
+import android.util.ArrayMap;
+import android.util.Log;
+
 import androidx.annotation.FloatRange;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RawRes;
-import android.util.ArrayMap;
-import android.util.Log;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Utilities for this package
  */
 class Utils {
-    private static final String LOG_TAG = "Utils";
-
-    private static Map<Integer, File> sFiles = new ArrayMap<>();
-    private static Map<Integer, Bitmap> sRenderedBitmaps = new ArrayMap<>();
-
     static final int A4_WIDTH_PTS = 595;
     static final int A4_HEIGHT_PTS = 841;
     static final int A4_PORTRAIT = android.graphics.pdf.cts.R.raw.a4_portrait_rgbb;
     static final int A5_PORTRAIT = android.graphics.pdf.cts.R.raw.a5_portrait_rgbb;
+    private static final String LOG_TAG = "Utils";
+    private static final Map<Integer, File> sFiles = new ArrayMap<>();
+    private static final Map<Integer, Bitmap> sRenderedBitmaps = new ArrayMap<>();
 
     /**
      * Create a {@link PdfRenderer} pointing to a file copied from a resource.
      *
      * @param docRes  The resource to load
      * @param context The context to use for creating the renderer
-     *
      * @return the renderer
-     *
      * @throws IOException If anything went wrong
      */
-    static @NonNull PdfRenderer createRenderer(@RawRes int docRes, @NonNull Context context)
+    @NonNull
+    static PdfRenderer createRenderer(@RawRes int docRes, @NonNull Context context)
             throws IOException {
-        File pdfFile = sFiles.get(docRes);
+        return new PdfRenderer(getParcelFileDescriptorFromResourceId(docRes, context));
+    }
 
+    /**
+     * Create a {@link PdfRendererPreV} pointing to a file copied from a resource.
+     *
+     * @param docRes        The resource to load
+     * @param context       The context to use for creating the renderer
+     * @param loadPdfParams LoadPdfParams for the protected pdf, will be null in case not
+     *                      protected
+     * @return the renderer
+     * @throws IOException If anything went wrong
+     */
+    @NonNull
+    static PdfRendererPreV createPreVRenderer(@RawRes int docRes, @NonNull Context context,
+            @Nullable LoadParams loadPdfParams) throws IOException {
+        if (Objects.equals(loadPdfParams, null)) {
+            return new PdfRendererPreV(getParcelFileDescriptorFromResourceId(docRes, context));
+        }
+        return new PdfRendererPreV(getParcelFileDescriptorFromResourceId(docRes, context),
+                loadPdfParams);
+    }
+
+    /**
+     * Create a {@link ParcelFileDescriptor} pointing to a file copied from a resource.
+     *
+     * @param docRes  The resource to load
+     * @param context The context to use for creating the parcel file descriptor
+     * @return the ParcelFileDescriptor
+     * @throws IOException If anything went wrong
+     */
+    @NonNull
+    static ParcelFileDescriptor getParcelFileDescriptorFromResourceId(@RawRes int docRes,
+            @NonNull Context context) throws IOException {
+        File pdfFile = sFiles.get(docRes);
         if (pdfFile == null) {
             pdfFile = File.createTempFile("pdf", null, context.getCacheDir());
-
             // Copy resource to file so that we can open it as a ParcelFileDescriptor
-            try (OutputStream os = new BufferedOutputStream(new FileOutputStream(pdfFile))) {
-                try (InputStream is = new BufferedInputStream(
-                        context.getResources().openRawResource(docRes))) {
-                    byte buffer[] = new byte[1024];
 
-                    while (true) {
-                        int numRead = is.read(buffer, 0, buffer.length);
+            InputStream inputStream = context.getResources().openRawResource(docRes);
+            // Create a FileOutputStream to write the resource content to the target file.
+            FileOutputStream outputStream = new FileOutputStream(pdfFile);
 
-                        if (numRead == -1) {
-                            break;
-                        }
-
-                        os.write(Arrays.copyOf(buffer, numRead));
-                    }
-
-                    os.flush();
-                }
+            // Copy the content of the resource file to the target file.
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = inputStream.read(buffer)) > 0) {
+                outputStream.write(buffer, 0, length);
             }
 
+            // Close streams.
+            inputStream.close();
+            outputStream.close();
             sFiles.put(docRes, pdfFile);
         }
 
-        return new PdfRenderer(
+        return Objects.requireNonNull(
                 ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY));
     }
 
@@ -111,13 +139,12 @@ class Utils {
      * @param transformation The transformation of the PDF
      * @param renderMode     The render mode to use to render the PDF
      * @param context        The context to use for creating the renderer
-     *
      * @return The rendered bitmap
      */
-    static @NonNull Bitmap renderWithTransform(int bmWidth, int bmHeight, @RawRes int docRes,
+    @NonNull
+    static Bitmap renderWithTransform(int bmWidth, int bmHeight, @RawRes int docRes,
             @Nullable Rect clipping, @Nullable Matrix transformation, int renderMode,
-            @NonNull Context context)
-            throws IOException {
+            @NonNull Context context) throws IOException {
         try (PdfRenderer renderer = createRenderer(docRes, context)) {
             try (PdfRenderer.Page page = renderer.openPage(0)) {
                 Bitmap bm = Bitmap.createBitmap(bmWidth, bmHeight, Bitmap.Config.ARGB_8888);
@@ -141,12 +168,12 @@ class Utils {
      * @param transformation The transformation of the PDF
      * @param renderMode     The render mode to use to render the PDF
      * @param context        The context to use for creating the renderer
-     *
      * @return The rendered bitmap
      */
-    private static @NonNull Bitmap renderAndThenTransform(int bmWidth, int bmHeight,
-            @RawRes int docRes, @Nullable Rect clipping, @Nullable Matrix transformation,
-            int renderMode, @NonNull Context context) throws IOException {
+    @NonNull
+    private static Bitmap renderAndThenTransform(int bmWidth, int bmHeight, @RawRes int docRes,
+            @Nullable Rect clipping, @Nullable Matrix transformation, int renderMode,
+            @NonNull Context context) throws IOException {
         Bitmap renderedBm;
 
         renderedBm = sRenderedBitmaps.get(docRes);
@@ -200,11 +227,10 @@ class Utils {
      *
      * @param a The first bitmap
      * @param b The second bitmap
-     *
      * @return The fraction of non-matching pixels.
      */
-    private static @FloatRange(from = 0, to = 1) float getNonMatching(@NonNull Bitmap a,
-            @NonNull Bitmap b) {
+    @FloatRange(from = 0, to = 1)
+    private static float getNonMatching(@NonNull Bitmap a, @NonNull Bitmap b) {
         if (a.getWidth() != b.getWidth() || a.getHeight() != b.getHeight()) {
             return 1;
         }
@@ -237,17 +263,14 @@ class Utils {
      * @param transformation The transformation to apply
      * @param renderMode     The render mode to use
      * @param context        The context to use for creating the renderer
-     *
-     * @throws IOException
      */
-    static void renderAndCompare(int width, int height, @RawRes int docRes,
-            @Nullable Rect clipping, @Nullable Matrix transformation, int renderMode,
-            @NonNull Context context) throws IOException {
-        Bitmap a = renderWithTransform(width, height, docRes, clipping, transformation,
-                renderMode, context);
+    static void renderAndCompare(int width, int height, @RawRes int docRes, @Nullable Rect clipping,
+            @Nullable Matrix transformation, int renderMode, @NonNull Context context)
+            throws IOException {
+        Bitmap a = renderWithTransform(width, height, docRes, clipping, transformation, renderMode,
+                context);
         Bitmap b = renderAndThenTransform(width, height, docRes, clipping, transformation,
                 renderMode, context);
-
         try {
             // We allow 1% aliasing error
             float nonMatching = getNonMatching(a, b);
@@ -255,10 +278,10 @@ class Utils {
             if (nonMatching == 0) {
                 Log.d(LOG_TAG, "bitmaps match");
             } else if (nonMatching > 0.01) {
-                fail("Testing width:" + width + ", height:" + height + ", docRes:" + docRes +
-                        ", clipping:" + clipping + ", transform:" + transformation + ". Bitmaps " +
-                        "differ by " + Math.ceil(nonMatching * 10000) / 100 +
-                        "%. That is too much.");
+                fail("Testing width:" + width + ", height:" + height + ", docRes:" + docRes
+                        + ", clipping:" + clipping + ", transform:" + transformation + ". Bitmaps "
+                        + "differ by " + Math.ceil(nonMatching * 10000) / 100
+                        + "%. That is too much.");
             } else {
                 Log.d(LOG_TAG, "bitmaps differ by " + Math.ceil(nonMatching * 10000) / 100 + "%");
             }
@@ -269,7 +292,7 @@ class Utils {
     }
 
     /**
-     * Run a runnable and expect an exception of a certain type.
+     * Run a runnable and expect an exception to a certain type.
      *
      * @param r             The {@link Invokable} to run
      * @param expectedClass The expected exception type
@@ -288,6 +311,104 @@ class Utils {
         }
 
         fail("Expected to have " + expectedClass.getName() + " exception thrown");
+    }
+
+    /**
+     * Calculate the area associated by the bounds of {@link Rect} present inside the match Rects
+     *
+     * @param matchRectList List of {@link  android.graphics.pdf.models.PageMatchBounds}
+     * @return area
+     */
+    static int calculateArea(List<PageMatchBounds> matchRectList) {
+        int area = 0;
+        for (PageMatchBounds matchRect : matchRectList) {
+            for (Rect rect : matchRect.getBounds()) {
+                int rectArea = rect.height() * rect.width();
+                // as rect can return negative height and width as well
+                if (rectArea < 0) {
+                    rectArea *= -1;
+                }
+                area += rectArea;
+            }
+        }
+        return area;
+    }
+
+    /**
+     * Creates a file in CTS apk internal storage
+     *
+     * @param context  The context use for creating the file
+     * @param fileName Name use for creating the file
+     * @return File in apps internal storage
+     */
+    @NonNull
+    static File getFile(Context context, String fileName) throws IOException {
+        // Create or access the internal storage directory for the CTS test app.
+        File internalStorageDir = context.getFilesDir();
+        // Create a new file in the internal storage directory.
+        File file = new File(internalStorageDir, fileName);
+        file.createNewFile();
+        return file;
+    }
+
+    /**
+     * Render a pdf onto a bitmap.
+     *
+     * @param bmWidth    The width of the destination bitmap (tileWidth)
+     * @param bmHeight   The height of the destination bitmap (tileHeight)
+     * @param docRes     The resource to load PDF from
+     * @param destClip   The dest clip to render the bitmap (Coordinates)
+     *                   the x-axis position on the page of the tile (i.e. the bitmap left
+     *                   edge)
+     *                   the y-axis position on the page of the tile (i.e. the bitmap
+     *                   top edge)
+     * @param renderMode The render mode use to render the PDF
+     * @param renderFlag The render flag use to render the PDF
+     * @param context    The context to use for creating the renderer
+     * @return The rendered bitmap
+     */
+    @NonNull
+    static Bitmap renderPreV(int bmWidth, int bmHeight, @RawRes int docRes, @Nullable Rect destClip,
+            int renderMode, int renderFlag, @NonNull Context context) throws IOException {
+        try (PdfRendererPreV renderer = createPreVRenderer(docRes, context, null)) {
+            try (PdfRendererPreV.Page page = renderer.openPage(0)) {
+                Bitmap bm = Bitmap.createBitmap(bmWidth, bmHeight, Bitmap.Config.ARGB_8888);
+                page.render(bm, destClip, null, new RenderParams.Builder(renderMode).setRenderFlags(
+                        renderFlag).build());
+                return bm;
+            }
+        }
+    }
+
+    /**
+     * Take 16 color probes in the middle of the 16 segments of the page in the following pattern:
+     * <pre>
+     * +----+----+----+----+
+     * |  0 :  1 :  2 :  3 |
+     * +....:....:....:....+
+     * |  4 :  5 :  6 :  7 |
+     * +....:....:....:....+
+     * |  8 :  9 : 10 : 11 |
+     * +....:....:....:....+
+     * | 12 : 13 : 14 : 15 |
+     * +----+----+----+----+
+     * </pre>
+     *
+     * @param bm The bitmap to probe
+     * @return The color at the probes
+     */
+    @NonNull
+    static int[] getColorProbes(@NonNull Bitmap bm) {
+        int[] probes = new int[16];
+
+        for (int row = 0; row < 4; row++) {
+            for (int column = 0; column < 4; column++) {
+                probes[row * 4 + column] = bm.getPixel((int) (bm.getWidth() * (column + 0.5) / 4),
+                        (int) (bm.getHeight() * (row + 0.5) / 4));
+            }
+        }
+
+        return probes;
     }
 
     /**

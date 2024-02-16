@@ -40,6 +40,7 @@ android_test {
         "cts_window-extensions",
         "cts_window_jetpack_utils",
         "com.android.window.flags.window-aconfig-java",
+        "android.security.flags-aconfig-java",
     ],
 
     test_suites: [
@@ -53,6 +54,7 @@ android_test {
         ":CtsBackgroundActivityAppB33",
         ":CtsBackgroundActivityAppC",
         ":CtsBackgroundActivityAppC33",
+        ":CtsBackgroundActivityAppAllowCrossUidFlagDefault",
     ],
     per_testcase_directory: true,
 }

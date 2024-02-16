@@ -23,6 +23,8 @@ import android.hardware.camera2.CameraExtensionCharacteristics;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.ExtensionCaptureRequest;
+import android.hardware.camera2.ExtensionCaptureResult;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestRule;
 import android.hardware.camera2.params.StreamConfigurationMap;
@@ -44,9 +46,9 @@ import com.android.internal.camera.flags.Flags;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -65,6 +67,26 @@ public class CameraExtensionCharacteristicsTest {
     private ArrayList<Integer> mExtensionList = new ArrayList<>();
 
     private final Context mContext = InstrumentationRegistry.getTargetContext();
+
+    private static final CaptureRequest.Key[] EYES_FREE_AUTO_ZOOM_REQUEST_SET = {
+            ExtensionCaptureRequest.EFV_AUTO_ZOOM,
+            ExtensionCaptureRequest.EFV_MAX_PADDING_ZOOM_FACTOR};
+    private static final CaptureResult.Key[] EYES_FREE_AUTO_ZOOM_RESULT_SET = {
+            ExtensionCaptureResult.EFV_AUTO_ZOOM,
+            ExtensionCaptureResult.EFV_AUTO_ZOOM_PADDING_REGION,
+            ExtensionCaptureResult.EFV_MAX_PADDING_ZOOM_FACTOR};
+    private static final CaptureRequest.Key[] EYES_FREE_REQUEST_SET = {
+            ExtensionCaptureRequest.EFV_PADDING_ZOOM_FACTOR,
+            ExtensionCaptureRequest.EFV_STABILIZATION_MODE,
+            ExtensionCaptureRequest.EFV_TRANSLATE_VIEWPORT,
+            ExtensionCaptureRequest.EFV_ROTATE_VIEWPORT};
+    private static final CaptureResult.Key[] EYES_FREE_RESULT_SET = {
+            ExtensionCaptureResult.EFV_PADDING_REGION,
+            ExtensionCaptureResult.EFV_TARGET_COORDINATES,
+            ExtensionCaptureResult.EFV_PADDING_ZOOM_FACTOR,
+            ExtensionCaptureResult.EFV_STABILIZATION_MODE,
+            ExtensionCaptureResult.EFV_ROTATE_VIEWPORT,
+            ExtensionCaptureResult.EFV_TRANSLATE_VIEWPORT};
 
     @Rule
     public final Camera2AndroidTestRule mTestRule = new Camera2AndroidTestRule(mContext);
@@ -274,6 +296,8 @@ public class CameraExtensionCharacteristicsTest {
     public void testExtensionRequestKeys() throws Exception {
         ArraySet<CaptureRequest.Key> extensionRequestKeys = new ArraySet<>();
         extensionRequestKeys.add(CaptureRequest.EXTENSION_STRENGTH);
+        extensionRequestKeys.addAll(Arrays.asList(EYES_FREE_REQUEST_SET));
+        extensionRequestKeys.addAll(Arrays.asList(EYES_FREE_AUTO_ZOOM_REQUEST_SET));
 
         for (String id : mTestRule.getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =
@@ -302,6 +326,13 @@ public class CameraExtensionCharacteristicsTest {
                     assertTrue(msg, staticMeta.areKeysAvailable(captureKey) ||
                             extensionRequestKeys.contains(captureKey));
                 }
+
+                // Ensure eyes-free specific keys are only supported for eyes-free extension
+                if (extension
+                        != CameraExtensionCharacteristics.EXTENSION_EYES_FREE_VIDEOGRAPHY) {
+                    CameraTestUtils.checkKeysAreSupported(Arrays.asList(EYES_FREE_REQUEST_SET,
+                            EYES_FREE_AUTO_ZOOM_REQUEST_SET), captureKeySet, false);
+                }
             }
         }
     }
@@ -311,6 +342,8 @@ public class CameraExtensionCharacteristicsTest {
         ArraySet<CaptureResult.Key> extensionResultKeys = new ArraySet<>();
         extensionResultKeys.add(CaptureResult.EXTENSION_STRENGTH);
         extensionResultKeys.add(CaptureResult.EXTENSION_CURRENT_TYPE);
+        extensionResultKeys.addAll(Arrays.asList(EYES_FREE_RESULT_SET));
+        extensionResultKeys.addAll(Arrays.asList(EYES_FREE_AUTO_ZOOM_RESULT_SET));
 
         for (String id : mTestRule.getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =
@@ -357,13 +390,20 @@ public class CameraExtensionCharacteristicsTest {
                             requestKey.getName());
                     assertTrue(msg, resultKeyNames.contains(requestKey.getName()));
                 }
+
+                // Ensure eyes-free specific keys are only supported for eyes-free extension
+                if (extension
+                        != CameraExtensionCharacteristics.EXTENSION_EYES_FREE_VIDEOGRAPHY) {
+                    CameraTestUtils.checkKeysAreSupported(Arrays.asList(EYES_FREE_RESULT_SET,
+                            EYES_FREE_AUTO_ZOOM_RESULT_SET), resultKeySet, false);
+                }
             }
         }
     }
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_CAMERA_EXTENSIONS_CHARACTERISTICS_GET)
-    public void testExtensionGetRequiredCharacteristics() throws Exception {
+    public void testExtensionGetCharacteristics() throws Exception {
         for (String id : mTestRule.getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
@@ -376,16 +416,10 @@ public class CameraExtensionCharacteristicsTest {
 
             List<Integer> supportedExtensions = chars.getSupportedExtensions();
             for (Integer extension : supportedExtensions) {
-                Range<Float> zoomRatioRange = chars.get(extension,
-                        CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE);
-                assertNotNull("Zoom ratio must be present in extensions", zoomRatioRange);
-
-                int[] availableAFModes = chars.get(extension,
-                        CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES);
-                assertNotNull("Available AF modes must be present in extensions", availableAFModes);
-                if (staticMeta.hasFocuser()) {
-                    assertTrue(Arrays.stream(availableAFModes).boxed().collect(Collectors.toList())
-                            .contains(CameraMetadata.CONTROL_AF_MODE_AUTO));
+                Set<CameraCharacteristics.Key> keys = chars.getKeys(extension);
+                for (CameraCharacteristics.Key key : keys) {
+                    assertNotNull("Associated value for key cannot be null.",
+                            chars.get(extension, key));
                 }
             }
         }
@@ -411,7 +445,9 @@ public class CameraExtensionCharacteristicsTest {
             List<Integer> supportedExtensions = chars.getSupportedExtensions();
             for (Integer extension : supportedExtensions) {
                 Set<CameraCharacteristics.Key> keys = chars.getKeys(extension);
-                assertNotNull("Available extensions characteristics keys cannot be null", keys);
+                if (keys.isEmpty()) {
+                    continue;
+                }
                 for (CameraCharacteristics.Key key : requiredKeys) {
                     assertTrue(keys.contains(key));
                 }

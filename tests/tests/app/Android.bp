@@ -34,6 +34,7 @@ android_test {
         "android.security.flags-aconfig-java",
         "flag-junit",
         "TestParameterInjector",
+        "cts-wm-util",
     ],
     srcs: [
         "src/**/*.java",

@@ -21,6 +21,7 @@ import static android.graphics.pdf.cts.Utils.A4_PORTRAIT;
 import static android.graphics.pdf.cts.Utils.A4_WIDTH_PTS;
 import static android.graphics.pdf.cts.Utils.A5_PORTRAIT;
 import static android.graphics.pdf.cts.Utils.createRenderer;
+import static android.graphics.pdf.cts.Utils.getColorProbes;
 import static android.graphics.pdf.cts.Utils.renderAndCompare;
 import static android.graphics.pdf.cts.Utils.renderWithTransform;
 import static android.graphics.pdf.cts.Utils.verifyException;
@@ -38,7 +39,6 @@ import android.graphics.pdf.PdfRenderer;
 import android.graphics.pdf.PdfRenderer.Page;
 import android.graphics.pdf.cts.R;
 
-import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -204,42 +204,10 @@ public class PdfRendererTest {
     }
 
     /**
-     * Take 16 color probes in the middle of the 16 segments of the page in the following pattern:
-     * <pre>
-     * +----+----+----+----+
-     * |  0 :  1 :  2 :  3 |
-     * +....:....:....:....+
-     * |  4 :  5 :  6 :  7 |
-     * +....:....:....:....+
-     * |  8 :  9 : 10 : 11 |
-     * +....:....:....:....+
-     * | 12 : 13 : 14 : 15 |
-     * +----+----+----+----+
-     * </pre>
-     *
-     * @param bm The bitmap to probe
-     *
-     * @return The color at the probes
-     */
-    private @NonNull int[] getColorProbes(@NonNull Bitmap bm) {
-        int[] probes = new int[16];
-
-        for (int row = 0; row < 4; row++) {
-            for (int column = 0; column < 4; column++) {
-                probes[row * 4 + column] = bm.getPixel((int) (bm.getWidth() * (column + 0.5) / 4),
-                        (int) (bm.getHeight() * (row + 0.5) / 4));
-            }
-        }
-
-        return probes;
-    }
-
-    /**
      * Implementation for {@link #renderNoTransformationAndComparePointsForScreen} and {@link
      * #renderNoTransformationAndComparePointsForPrint}.
      *
      * @param renderMode The render mode to use
-     *
      * @throws Exception If anything was unexpected
      */
     private void renderNoTransformationAndComparePoints(int renderMode) throws Exception {
@@ -281,7 +249,7 @@ public class PdfRendererTest {
     public void renderPerspective() throws Exception {
         Matrix transform = new Matrix();
 
-        transform.setValues(new float[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 });
+        transform.setValues(new float[]{1, 1, 1, 1, 1, 1, 1, 1, 1});
 
         verifyException(
                 () -> renderWithTransform(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, null, transform,

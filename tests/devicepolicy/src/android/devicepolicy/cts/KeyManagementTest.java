@@ -631,6 +631,27 @@ public final class KeyManagementTest {
 
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = KeySelection.class)
+    public void grantKeyPair_validCertificate() throws Exception {
+        try {
+            sDeviceState.dpcOnly().devicePolicyManager().installKeyPair(
+                    sDeviceState.dpcOnly().componentName(), PRIVATE_KEY, CERTIFICATES,
+                    RSA_ALIAS, /* requestAccess= */ false);
+            sDeviceState.dpc().devicePolicyManager().grantKeyPairToApp(
+                    sDeviceState.dpc().componentName(), RSA_ALIAS, sContext.getPackageName()
+            );
+
+            Certificate[] certificates = KeyChain.getCertificateChain(sContext, RSA_ALIAS);
+
+            assertThat(certificates).asList().containsExactly(CERTIFICATE);
+        } finally {
+            // Remove keypair
+            sDeviceState.dpcOnly().devicePolicyManager()
+                    .removeKeyPair(sDeviceState.dpcOnly().componentName(), RSA_ALIAS);
+        }
+    }
+
+    @Postsubmit(reason = "new test")
+    @PolicyAppliesTest(policy = KeySelection.class)
     public void revokeKeyPairFromApp_keyNotUsable() throws Exception {
         try {
             sDeviceState.dpcOnly().devicePolicyManager().installKeyPair(

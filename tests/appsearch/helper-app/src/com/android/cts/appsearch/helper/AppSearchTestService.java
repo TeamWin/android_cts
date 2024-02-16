@@ -31,10 +31,10 @@ import android.app.appsearch.GetSchemaResponse;
 import android.app.appsearch.GlobalSearchSessionShim;
 import android.app.appsearch.PackageIdentifier;
 import android.app.appsearch.PutDocumentsRequest;
+import android.app.appsearch.SchemaVisibilityConfig;
 import android.app.appsearch.SearchResultsShim;
 import android.app.appsearch.SearchSpec;
 import android.app.appsearch.SetSchemaRequest;
-import android.app.appsearch.VisibilityConfig;
 import android.app.appsearch.testutil.AppSearchEmail;
 import android.app.appsearch.testutil.AppSearchSessionShimImpl;
 import android.app.appsearch.testutil.GlobalSearchSessionShimImpl;
@@ -212,15 +212,15 @@ public class AppSearchTestService extends Service {
 
                 // By default, schemas/documents are globally searchable. We don't purposely set
                 // setSchemaTypeDisplayedBySystem(false) for this schema
-                VisibilityConfig.Builder configBuilder = new VisibilityConfig.Builder();
+                SchemaVisibilityConfig.Builder configBuilder = new SchemaVisibilityConfig.Builder();
                 for (int i = 0; i < packageBundles.size(); i++) {
-                    configBuilder.addVisibleToPackage(
+                    configBuilder.addAllowedPackage(
                             new PackageIdentifier(
                                     packageBundles.get(i).getString("packageName"),
                                     packageBundles.get(i).getByteArray("sha256Cert")));
                 }
                 for (int i = 0; i < permissionBundles.size(); i++) {
-                    configBuilder.addVisibleToPermissions(
+                    configBuilder.addRequiredPermissions(
                             new ArraySet<>(permissionBundles.get(i)
                                     .getIntegerArrayList("permission")));
                 }

@@ -31,9 +31,8 @@ import android.app.admin.flags.Flags;
 import android.app.backup.BackupManager;
 import android.content.ComponentName;
 import android.content.Context;
-import android.platform.test.annotations.RequiresFlagsEnabled;
-import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
+import com.android.bedstead.flags.annotations.RequireFlagsEnabled;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
@@ -53,8 +52,6 @@ import com.android.compatibility.common.util.ApiTest;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
-import org.junit.rules.RuleChain;
-import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
 import java.util.List;
@@ -62,13 +59,9 @@ import java.util.List;
 @RunWith(BedsteadJUnit4.class)
 @RequireFeature(FEATURE_BACKUP)
 public final class BackupTest {
-    @ClassRule
+    @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    @Rule
-    public final TestRule mCheckFlagsRule = RuleChain
-            .outerRule(DeviceFlagsValueProvider.createCheckFlagsRule())
-            .around(sDeviceState);
     private static final Context sContext = TestApis.context().instrumentedContext();
     private static final BackupManager sLocalBackupManager = new BackupManager(sContext);
 
@@ -179,7 +172,7 @@ public final class BackupTest {
 
     /** Positive test for SecurityLog#TAG_BACKUP_SERVICE_TOGGLED */
     @CanSetPolicyTest(policy = {BackupAndSecurityLogging.class})
-    @RequiresFlagsEnabled(Flags.FLAG_BACKUP_SERVICE_SECURITY_LOG_EVENT_ENABLED)
+    @RequireFlagsEnabled(Flags.FLAG_BACKUP_SERVICE_SECURITY_LOG_EVENT_ENABLED)
     @ApiTest(apis = {"android.app.admin.SecurityLog#TAG_BACKUP_SERVICE_TOGGLED"})
     @Postsubmit(reason = "new test")
     public void setBackupServiceEnabled_enableBackup_SecurityLogEventsEmitted()
@@ -215,7 +208,7 @@ public final class BackupTest {
 
     /** Positive test for SecurityLog#TAG_BACKUP_SERVICE_TOGGLED */
     @CanSetPolicyTest(policy = {BackupAndSecurityLogging.class})
-    @RequiresFlagsEnabled(Flags.FLAG_BACKUP_SERVICE_SECURITY_LOG_EVENT_ENABLED)
+    @RequireFlagsEnabled(Flags.FLAG_BACKUP_SERVICE_SECURITY_LOG_EVENT_ENABLED)
     @ApiTest(apis = {"android.app.admin.SecurityLog#TAG_BACKUP_SERVICE_TOGGLED"})
     @Postsubmit(reason = "new test")
     public void setBackupServiceEnabled_disableBackup_SecurityLogEventsEmitted()

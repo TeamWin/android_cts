@@ -66,6 +66,8 @@ public class ImeSettings {
     private static final String VERIFY_CONTEXT_APIS_IN_ON_CREATE = "VerifyContextApisInOnCreate";
     private static final String WINDOW_LAYOUT_INFO_CALLBACK_ENABLED =
             "WindowLayoutInfoCallbackEnabled";
+    private static final String CONNECTIONLESS_HANDWRITING_ENABLED =
+            "ConnectionlessHandwritingEnabled";
 
     /**
      * Simulate the manifest flag enableOnBackInvokedCallback being true for the IME.
@@ -200,6 +202,10 @@ public class ImeSettings {
 
     public boolean isWindowLayoutInfoCallbackEnabled() {
         return mBundle.getBoolean(WINDOW_LAYOUT_INFO_CALLBACK_ENABLED, false);
+    }
+
+    public boolean isConnectionlessHandwritingEnabled() {
+        return mBundle.getBoolean(CONNECTIONLESS_HANDWRITING_ENABLED, false);
     }
 
     public boolean isOnBackCallbackEnabled() {
@@ -453,6 +459,15 @@ public class ImeSettings {
          */
         public Builder setWindowLayoutInfoCallbackEnabled(boolean enabled) {
             mBundle.putBoolean(WINDOW_LAYOUT_INFO_CALLBACK_ENABLED, enabled);
+            return this;
+        }
+
+        /**
+         * Sets whether to enable {@link
+         * android.inputmethodservice.InputMethodService#onStartConnectionlessStylusHandwriting}.
+         */
+        public Builder setConnectionlessHandwritingEnabled(boolean enabled) {
+            mBundle.putBoolean(CONNECTIONLESS_HANDWRITING_ENABLED, enabled);
             return this;
         }
 

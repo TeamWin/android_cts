@@ -120,33 +120,6 @@ android_test {
     test_config: "InteractiveAndroidTest.xml",
 }
 
-android_test {
-    name: "NeneBenchmarks",
-    srcs: [
-        "src/benchmarks/java/**/benchmarks/*.java",
-        "src/benchmarks/java/**/benchmarks/*.kt",
-        "src/benchmarks/java/**/benchmarks/*.proto",
-    ],
-    test_suites: [
-        "general-tests",
-    ],
-    static_libs: [
-        "TestApp",
-        "Nene",
-        "EventLib",
-        "Harrier",
-        "androidx.benchmark_benchmark-common",
-        "androidx.benchmark_benchmark-junit4",
-        "androidx.test.ext.junit",
-        "ctstestrunner-axt",
-        "compatibility-device-util-axt",
-        "collector-device-lib",
-    ],
-    manifest: "src/benchmarks/AndroidManifest.xml",
-    test_config: "src/benchmarks/AndroidTest.xml",
-    min_sdk_version: "29",
-}
-
 android_test_helper_app {
     name: "NeneTestApp1",
     static_libs: [

@@ -35,7 +35,7 @@ android_test {
         "MetricsRecorder",
         "statsdprotolite",
         "Interactive",
-        "flag-junit",
+        "bedstead-flags",
     ],
     libs: [
         "device_policy_aconfig_flags_lib",

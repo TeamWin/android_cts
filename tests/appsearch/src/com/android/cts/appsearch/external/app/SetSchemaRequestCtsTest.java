@@ -26,8 +26,8 @@ import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.GenericDocument;
 import android.app.appsearch.Migrator;
 import android.app.appsearch.PackageIdentifier;
+import android.app.appsearch.SchemaVisibilityConfig;
 import android.app.appsearch.SetSchemaRequest;
-import android.app.appsearch.VisibilityConfig;
 import android.app.appsearch.testutil.AppSearchEmail;
 import android.util.ArrayMap;
 
@@ -238,10 +238,10 @@ public class SetSchemaRequestCtsTest {
     public void testInvalidSchemaReferences_fromVisibleToConfigs() {
         byte[] sha256cert1 = new byte[32];
         PackageIdentifier packageIdentifier1 = new PackageIdentifier("Email", sha256cert1);
-        VisibilityConfig config =
-                new VisibilityConfig.Builder()
-                        .addVisibleToPackage(packageIdentifier1)
-                        .addVisibleToPermissions(
+        SchemaVisibilityConfig config =
+                new SchemaVisibilityConfig.Builder()
+                        .addAllowedPackage(packageIdentifier1)
+                        .addRequiredPermissions(
                                 ImmutableSet.of(SetSchemaRequest.READ_HOME_APP_SEARCH_DATA))
                         .build();
 
@@ -526,16 +526,16 @@ public class SetSchemaRequestCtsTest {
         PackageIdentifier packageIdentifier2 =
                 new PackageIdentifier("com.package.bar", new byte[] {100});
 
-        VisibilityConfig config1 =
-                new VisibilityConfig.Builder()
-                        .addVisibleToPackage(packageIdentifier1)
-                        .addVisibleToPermissions(
+        SchemaVisibilityConfig config1 =
+                new SchemaVisibilityConfig.Builder()
+                        .addAllowedPackage(packageIdentifier1)
+                        .addRequiredPermissions(
                                 ImmutableSet.of(SetSchemaRequest.READ_HOME_APP_SEARCH_DATA))
                         .build();
-        VisibilityConfig config2 =
-                new VisibilityConfig.Builder()
-                        .addVisibleToPackage(packageIdentifier2)
-                        .addVisibleToPermissions(
+        SchemaVisibilityConfig config2 =
+                new SchemaVisibilityConfig.Builder()
+                        .addAllowedPackage(packageIdentifier2)
+                        .addRequiredPermissions(
                                 ImmutableSet.of(
                                         SetSchemaRequest.READ_HOME_APP_SEARCH_DATA,
                                         SetSchemaRequest.READ_CALENDAR))
@@ -561,16 +561,16 @@ public class SetSchemaRequestCtsTest {
         PackageIdentifier packageIdentifier2 =
                 new PackageIdentifier("com.package.bar", new byte[] {100});
 
-        VisibilityConfig config1 =
-                new VisibilityConfig.Builder()
-                        .addVisibleToPackage(packageIdentifier1)
-                        .addVisibleToPermissions(
+        SchemaVisibilityConfig config1 =
+                new SchemaVisibilityConfig.Builder()
+                        .addAllowedPackage(packageIdentifier1)
+                        .addRequiredPermissions(
                                 ImmutableSet.of(SetSchemaRequest.READ_HOME_APP_SEARCH_DATA))
                         .build();
-        VisibilityConfig config2 =
-                new VisibilityConfig.Builder()
-                        .addVisibleToPackage(packageIdentifier2)
-                        .addVisibleToPermissions(
+        SchemaVisibilityConfig config2 =
+                new SchemaVisibilityConfig.Builder()
+                        .addAllowedPackage(packageIdentifier2)
+                        .addRequiredPermissions(
                                 ImmutableSet.of(
                                         SetSchemaRequest.READ_HOME_APP_SEARCH_DATA,
                                         SetSchemaRequest.READ_CALENDAR))
@@ -739,16 +739,16 @@ public class SetSchemaRequestCtsTest {
         PackageIdentifier packageIdentifier1 = new PackageIdentifier("Email", sha256cert1);
         PackageIdentifier packageIdentifier2 = new PackageIdentifier("Email", sha256cert2);
 
-        VisibilityConfig config1 =
-                new VisibilityConfig.Builder()
-                        .addVisibleToPackage(packageIdentifier1)
-                        .addVisibleToPermissions(
+        SchemaVisibilityConfig config1 =
+                new SchemaVisibilityConfig.Builder()
+                        .addAllowedPackage(packageIdentifier1)
+                        .addRequiredPermissions(
                                 ImmutableSet.of(SetSchemaRequest.READ_HOME_APP_SEARCH_DATA))
                         .build();
-        VisibilityConfig config2 =
-                new VisibilityConfig.Builder()
-                        .addVisibleToPackage(packageIdentifier2)
-                        .addVisibleToPermissions(
+        SchemaVisibilityConfig config2 =
+                new SchemaVisibilityConfig.Builder()
+                        .addAllowedPackage(packageIdentifier2)
+                        .addRequiredPermissions(
                                 ImmutableSet.of(
                                         SetSchemaRequest.READ_HOME_APP_SEARCH_DATA,
                                         SetSchemaRequest.READ_CALENDAR))

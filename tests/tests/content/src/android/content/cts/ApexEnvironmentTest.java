@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import android.content.ApexEnvironment;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeNonSdkSandbox;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -32,6 +33,7 @@ import org.junit.runner.RunWith;
  * Copied from frameworks/base/core/tests/coretests/src/android/content/ApexEnvironmentTest.java
  */
 @AppModeFull(reason = "Doesn't interact with system server")
+@AppModeNonSdkSandbox(reason = "SDK sandboxes cannot use this API")
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class ApexEnvironmentTest {

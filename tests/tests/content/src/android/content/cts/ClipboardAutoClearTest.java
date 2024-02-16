@@ -30,7 +30,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.platform.test.annotations.AppModeSdkSandbox;
+import android.platform.test.annotations.AppModeNonSdkSandbox;
 import android.provider.DeviceConfig;
 import android.util.Log;
 
@@ -47,7 +47,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
+@AppModeNonSdkSandbox(reason = "SDK sandboxes cannot access ClipboardManager.")
 @RunWith(AndroidJUnit4.class)
 public class ClipboardAutoClearTest {
     private final Context mContext = InstrumentationRegistry.getTargetContext();

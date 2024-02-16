@@ -174,3 +174,30 @@ android_test_helper_app {
         "--rename-manifest-package android.server.wm.backgroundactivity.appc33",
     ],
 }
+
+android_test_helper_app {
+    name: "CtsBackgroundActivityAppAllowCrossUidFlagDefault",
+    defaults: ["cts_support_defaults"],
+
+    static_libs: [
+        "bal-testapp",
+        "cts-wm-app-base",
+        "cts-background-activity-common",
+        "cts_window-sidecar",
+        "cts_window-extensions",
+        "cts_window_jetpack_utils",
+    ],
+
+    target_sdk_version: "current",
+
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+
+    manifest: "AndroidManifestAllowCrossUidFlagDefault.xml",
+
+    aaptflags: [
+        "--rename-manifest-package android.server.wm.backgroundactivity.appasmoptout",
+    ],
+}

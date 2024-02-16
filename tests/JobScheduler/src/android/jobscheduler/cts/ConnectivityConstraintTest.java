@@ -36,7 +36,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.wifi.WifiManager;
-import android.os.Build;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
 
@@ -620,7 +619,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
             // Deadline passed with no network satisfied.
             mNetworkingHelper.setAllNetworksEnabled(false);
 
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            if (CompatChanges.isChangeEnabled(TestAppInterface.ENFORCE_MINIMUM_TIME_WINDOWS)) {
                 SystemUtil.runWithShellPermissionIdentity(
                         () -> CompatChanges.putPackageOverrides(
                                 TestAppInterface.TEST_APP_PACKAGE,

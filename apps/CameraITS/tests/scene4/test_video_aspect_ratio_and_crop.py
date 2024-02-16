@@ -154,7 +154,6 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
       logging.debug('Supported video qualities: %s', supported_video_qualities)
       full_or_better = camera_properties_utils.full_or_better(props)
       raw_avlb = camera_properties_utils.raw16(props)
-      debug = self.debug_mode
 
       # Converge 3A.
       cam.do_3a()
@@ -245,9 +244,8 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
                 last_key_frame, ref_img_name, image_fov_utils.CIRCLE_MIN_AREA,
                 image_fov_utils.CIRCLE_COLOR)
 
-            if debug:
-              opencv_processing_utils.append_circle_center_to_img(
-                  circle, last_key_frame, ref_img_name)
+            opencv_processing_utils.append_circle_center_to_img(
+                circle, last_key_frame, ref_img_name)
 
             max_img_value = _MAX_8BIT_IMGS
             if hlg10_param:

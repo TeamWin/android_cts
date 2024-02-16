@@ -21,6 +21,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.platform.test.annotations.AppModeNonSdkSandbox;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -39,6 +40,7 @@ import java.util.concurrent.TimeUnit;
  * Tests whether non-exported components match internal implicit intents.
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeNonSdkSandbox(reason = "Sandboxed SDKs cannot declare components")
 public class NonExportedComponentsTest {
 
     private static final String ACTIVITY_ACTION_NAME =

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // TODO(b/176993670): hacky DevicePolicyManager implementation that uses ordered broadcasts and a
 // Mockito spy to implement the IPC between users (so tests running on current user can call the
 // device owner running on system user), but before S is shipped it should be replaced by using the
@@ -25,7 +24,7 @@ java_library {
     name: "DpmWrapper",
     platform_apis: true,
     srcs: [
-        "src/main/java/**/*.java"
+        "src/main/java/**/*.java",
     ],
     static_libs: [
         "androidx.localbroadcastmanager_localbroadcastmanager",

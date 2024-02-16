@@ -20,6 +20,7 @@ import android.database.Cursor;
 import android.database.CursorWindowAllocationException;
 import android.database.sqlite.SQLiteException;
 import android.net.Uri;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.test.AndroidTestCase;
 import android.util.Log;
@@ -27,6 +28,7 @@ import android.util.Log;
 /**
  * Test {@link CursorWindowContentProvider} .
  */
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ContentProviderCursorWindowTest extends AndroidTestCase {
     private static final String TAG = "ContentProviderCursorWindowTest";
 
