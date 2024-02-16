@@ -70,7 +70,6 @@ import android.hardware.DataSpace;
 import android.os.SystemClock;
 import android.os.Trace;
 import android.platform.test.annotations.RequiresDevice;
-import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 import android.view.Display;
 import android.view.Surface;
@@ -85,6 +84,7 @@ import android.view.cts.util.FrameCallbackData.FrameTimeline;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.WidgetTestUtils;

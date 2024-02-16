@@ -45,7 +45,6 @@ import android.media.ImageWriter;
 import android.os.SystemClock;
 import android.platform.test.annotations.RequiresDevice;
 import android.platform.test.annotations.RequiresFlagsEnabled;
-import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 import android.view.Choreographer;
 import android.view.Display;
@@ -59,10 +58,14 @@ import android.view.cts.surfacevalidator.PixelColor;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.WidgetTestUtils;
 import com.android.cts.hardware.SyncFenceUtil;
 import com.android.window.flags.Flags;
+
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -81,9 +84,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 
 @LargeTest
 @RunWith(JUnitParamsRunner.class)
