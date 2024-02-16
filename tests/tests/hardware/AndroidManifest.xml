@@ -77,11 +77,14 @@
             android:process=":camera2ActivityProcess">
         </activity>
 
+        <!-- Disable onBackInvokedCallback to allow us to make assertions about
+          the app receiving KEYCODE_BACK. -->
         <activity android:name="android.hardware.input.cts.InputCtsActivity"
             android:label="InputCtsActivity"
             android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation
                     |screenLayout|fontScale|uiMode|orientation|density|screenSize
-                    |smallestScreenSize|layoutDirection">
+                    |smallestScreenSize|layoutDirection"
+            android:enableOnBackInvokedCallback="false">
         </activity>
 
         <activity android:name="android.hardware.input.cts.InputAssistantActivity"
