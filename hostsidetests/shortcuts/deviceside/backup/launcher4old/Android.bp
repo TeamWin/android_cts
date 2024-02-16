@@ -42,4 +42,5 @@ android_library {
         "hostsidetests-shortcuts-deviceside-defaults",
     ],
     srcs: ["src/**/*.java"],
+    static_libs: ["androidx.test.rules"],
 }
