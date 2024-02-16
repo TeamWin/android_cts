@@ -73,7 +73,7 @@ public class WifiUriParserTest extends WifiJUnit4TestBase {
     /**
      * Tests {@link WifiUriParser#parseUri(String)}.
      */
-    @RequiresFlagsEnabled(Flags.FLAG_URI_PARSER)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @Test
     public void testUriParser() throws Exception {
         // Test zxing open network

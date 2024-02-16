@@ -2787,7 +2787,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
                 assertEquals(currentConfig.getMaxChannelBandwidth(),
                         testSoftApConfig.getMaxChannelBandwidth());
             }
-            if (Flags.vendorParcelableParameters()
+            if (Flags.androidVWifiApi()
                     && (ApiLevelUtil.codenameEquals("VanillaIceCream")
                     || ApiLevelUtil.isAtLeast(Build.VERSION_CODES.VANILLA_ICE_CREAM))) {
                 assertTrue(Objects.equals(
@@ -3289,7 +3289,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
                 assertNotEquals(callback.getCurrentSoftApInfo().getWifiStandard(),
                         ScanResult.WIFI_STANDARD_UNKNOWN);
             }
-            if (Flags.vendorParcelableParameters()
+            if (Flags.androidVWifiApi()
                     && (ApiLevelUtil.codenameEquals("VanillaIceCream")
                     || ApiLevelUtil.isAtLeast(Build.VERSION_CODES.VANILLA_ICE_CREAM))
                     && callback.getOnSoftapInfoChangedCalledCount() > 1) {
@@ -5102,7 +5102,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
      * Verify the invalid and valid usages of {@code WifiManager#setPnoScanState}.
      */
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_RUNTIME_DISABLE_PNO_SCAN)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     public void testSetPnoScanState() throws Exception {
         // Test caller with no permission triggers SecurityException.
         assertThrows("No permission should trigger SecurityException", SecurityException.class,
@@ -6227,7 +6227,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     }
 
     private boolean qosR3Supported() {
-        return SdkLevel.isAtLeastV() && Flags.qosR3Support();
+        return SdkLevel.isAtLeastV() && Flags.androidVWifiApi();
     }
 
     /**
@@ -6383,7 +6383,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
      * {@link WifiManager#getMaxMloStrLinkCount(Executor, Consumer)}.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-    @RequiresFlagsEnabled(Flags.FLAG_MLO_LINK_CAPABILITIES_INFO)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @Test
     public void testMloCapabilities() throws Exception {
         AtomicInteger linkCount = new AtomicInteger();
@@ -6509,7 +6509,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     }
 
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-    @RequiresFlagsEnabled(Flags.FLAG_MLO_LINK_CAPABILITIES_INFO)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @Test
     public void testGetSupportedSimultaneousBandCombinations() {
         AtomicInteger nEntries = new AtomicInteger();
@@ -6627,7 +6627,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     }
 
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
-    @RequiresFlagsEnabled(Flags.FLAG_LOW_LATENCY_LOCK_LISTENER)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @Test
     public void testWifiLowLatencyLockListener() throws Exception {
         TestWifiLowLatencyLockListener testListener = new TestWifiLowLatencyLockListener();
@@ -6687,7 +6687,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     /**
      * Tests the builder and get methods for {@link OuiKeyedData}.
      */
-    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
                  codeName = "VanillaIceCream")
     @Test
@@ -6713,7 +6713,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     /**
      * Tests {@link WifiManager#isWepSupported()} does not crash.
      */
-    @RequiresFlagsEnabled(Flags.FLAG_WEP_USAGE)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @Test
     public void testIsWepSupported() throws Exception {
         sWifiManager.isWepSupported();
@@ -6722,7 +6722,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     /**
      * Tests {@link WifiManager#isWpaPersonalSupported()} does not crash.
      */
-    @RequiresFlagsEnabled(Flags.FLAG_WPA_PERSONAL_USAGE)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @Test
     public void testIsWpaPersonalSupported() throws Exception {
         sWifiManager.isWpaPersonalSupported();
@@ -6732,7 +6732,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
      * Tests {@link WifiManager#setWepAllowed()} and
      * {@link WifiManager#queryWepAllowed()}.
      */
-    @RequiresFlagsEnabled(Flags.FLAG_WEP_USAGE)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @Test
     public void testSetAndQueryWepAllowed() throws Exception {
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
@@ -6800,7 +6800,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
      * Tests {@link WifiManager#enableMscs(MscsParams)}, {@link WifiManager#disableMscs()},
      * and all get/set methods in {@link MscsParams}.
      */
-    @RequiresFlagsEnabled(Flags.FLAG_MSCS_CONFIGURATION)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
             codeName = "VanillaIceCream")
     @Test
@@ -6839,7 +6839,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     /**
      * Tests the result from {@link WifiUriParser#parseUri(String)} can be added.
      */
-    @RequiresFlagsEnabled(Flags.FLAG_URI_PARSER)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @Test
     public void testZxingNetworkFromUriParserCanBeAdded() throws Exception {
         String testUriZx = "WIFI:S:testAbC;T:nopass";
@@ -6870,7 +6870,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     /*
      * Tests the builder and get methods for {@link QosCharacteristics}.
      */
-    @RequiresFlagsEnabled(Flags.FLAG_QOS_R3_SUPPORT)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @Test
     public void testQosCharacteristicsBuilder() {
         int minServiceIntervalMicros = 2000;
