@@ -50,10 +50,10 @@ import android.os.SystemClock;
 import android.os.UserHandle;
 import android.platform.test.annotations.Presubmit;
 import android.provider.DeviceConfig;
-import android.test.suitebuilder.annotation.Suppress;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.Suppress;
 
 import com.android.compatibility.common.util.AnrMonitor;
 import com.android.compatibility.common.util.DeviceConfigStateHelper;
