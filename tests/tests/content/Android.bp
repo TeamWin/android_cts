@@ -164,6 +164,7 @@ android_test {
         "android.security.flags-aconfig-java",
         "android.multiuser.flags-aconfig-java",
         "flag-junit",
+        "androidx.test.rules",
     ],
     srcs: [
         "src/android/content/pm/**/*.java",

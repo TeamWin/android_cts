@@ -21,8 +21,9 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Log;
+
+import androidx.test.filters.SmallTest;
 
 import junit.framework.Assert;
 

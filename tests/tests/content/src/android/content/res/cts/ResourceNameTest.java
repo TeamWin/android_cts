@@ -20,7 +20,8 @@ import android.content.cts.R;
 import android.content.res.Resources;
 import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.filters.SmallTest;
 
 @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ResourceNameTest extends AndroidTestCase {
