@@ -33,7 +33,7 @@
     <instrumentation
         android:name="androidx.test.runner.AndroidJUnitRunner"
         android:targetPackage="android.provider.cts.contactkeys"
-        android:label="ContactKeysManager Tests">
+        android:label="E2eeContactKeysManager Tests">
     </instrumentation>
 
 </manifest>

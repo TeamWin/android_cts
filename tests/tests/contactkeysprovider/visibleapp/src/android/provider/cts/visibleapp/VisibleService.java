@@ -20,7 +20,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
-import android.provider.ContactKeysManager;
+import android.provider.E2eeContactKeysManager;
 import android.util.Log;
 
 import java.util.List;
@@ -37,7 +37,7 @@ public class VisibleService extends Service {
     private static final String ACCOUNT_ID = "someAccountId";
     private static final byte[] KEY_VALUE = new byte[] {(byte) 10};
 
-    private ContactKeysManager mContactKeysManager;
+    private E2eeContactKeysManager mContactKeysManager;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -47,18 +47,19 @@ public class VisibleService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Context context = this.getApplicationContext();
-        mContactKeysManager = context.getSystemService(ContactKeysManager.class);
-        mContactKeysManager.updateOrInsertContactKey(LOOKUP_KEY, DEVICE_ID, ACCOUNT_ID, KEY_VALUE);
-        mContactKeysManager.updateOrInsertSelfKey(DEVICE_ID, ACCOUNT_ID, KEY_VALUE);
-        List<ContactKeysManager.SelfKey> list = mContactKeysManager.getAllSelfKeys();
+        mContactKeysManager = context.getSystemService(E2eeContactKeysManager.class);
+        mContactKeysManager.updateOrInsertE2eeContactKey(LOOKUP_KEY, DEVICE_ID, ACCOUNT_ID,
+                KEY_VALUE);
+        mContactKeysManager.updateOrInsertE2eeSelfKey(DEVICE_ID, ACCOUNT_ID, KEY_VALUE);
+        List<E2eeContactKeysManager.E2eeSelfKey> list = mContactKeysManager.getAllE2eeSelfKeys();
         Log.w("MainService", "Test CP3: " + list.size());
         return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
-        mContactKeysManager.removeContactKey(LOOKUP_KEY, DEVICE_ID, ACCOUNT_ID);
-        mContactKeysManager.removeSelfKey(DEVICE_ID, ACCOUNT_ID);
+        mContactKeysManager.removeE2eeContactKey(LOOKUP_KEY, DEVICE_ID, ACCOUNT_ID);
+        mContactKeysManager.removeE2eeSelfKey(DEVICE_ID, ACCOUNT_ID);
         super.onDestroy();
     }
 }
