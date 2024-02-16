@@ -17,10 +17,9 @@ package android.sharesheet.cts;
 
 import static android.Manifest.permission.START_ACTIVITIES_FROM_BACKGROUND;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
@@ -28,7 +27,6 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.app.PendingIntent;
-import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.ComponentName;
@@ -53,7 +51,7 @@ import android.service.chooser.ChooserTarget;
 import android.service.chooser.Flags;
 import android.util.Log;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.BySelector;
@@ -83,7 +81,10 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * TODO: Add JavaDoc
+ * CtsSharesheetDeviceTest performs automated testing of the sharesheet/chooser API correctness.
+ *
+ * Some functionality cannot be tested in a fully automated way and is validated through CTS
+ * Verifier tests in cts/apps/CtsVerifier/src/com/android/cts/verifier/sharesheet.
  */
 @RunWith(AndroidJUnit4.class)
 public class CtsSharesheetDeviceTest {
@@ -117,19 +118,19 @@ public class CtsSharesheetDeviceTest {
 
     private Context mContext;
     private Instrumentation mInstrumentation;
-    private UiAutomation mAutomation;
     public UiDevice mDevice;
     private UiObject2 mSharesheet;
 
-    private String mPkg, mExcludePkg, mActivityLabelTesterPkg, mIntentFilterLabelTesterPkg;
+    private String mPkg, mActivityLabelTesterPkg, mIntentFilterLabelTesterPkg;
     private String mSharesheetPkg;
 
     private ActivityManager mActivityManager;
     private ShortcutManager mShortcutManager;
+    private PackageManager mPackageManager;
 
     private String mAppLabel,
             mActivityTesterAppLabel, mActivityTesterActivityLabel,
-            mIntentFilterTesterAppLabel, mIntentFilterTesterActivityLabel,
+            mIntentFilterTesterAppLabel,
             mIntentFilterTesterIntentFilterLabel,
             mBlacklistLabel,
             mChooserTargetServiceLabel, mSharingShortcutLabel, mExtraChooserTargetsLabelBase,
@@ -165,16 +166,11 @@ public class CtsSharesheetDeviceTest {
                 mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
 
         mPkg = mContext.getPackageName();
-        mExcludePkg = mPkg + ".packages.excludetester";
         mActivityLabelTesterPkg = mPkg + ".packages.activitylabeltester";
         mIntentFilterLabelTesterPkg = mPkg + ".packages.intentfilterlabeltester";
-        mAutomation = mInstrumentation.getUiAutomation();
         mActivityManager = mContext.getSystemService(ActivityManager.class);
         mShortcutManager = mContext.getSystemService(ShortcutManager.class);
-        PackageManager pm = mContext.getPackageManager();
-        assertNotNull(mActivityManager);
-        assertNotNull(mShortcutManager);
-        assertNotNull(pm);
+        mPackageManager = mContext.getPackageManager();
 
         // Load in string to match against
         mBlacklistLabel = mContext.getString(R.string.test_blacklist_label);
@@ -182,14 +178,14 @@ public class CtsSharesheetDeviceTest {
         mActivityTesterAppLabel = mContext.getString(R.string.test_activity_label_app);
         mActivityTesterActivityLabel = mContext.getString(R.string.test_activity_label_activity);
         mIntentFilterTesterAppLabel = mContext.getString(R.string.test_intent_filter_label_app);
-        mIntentFilterTesterActivityLabel =
-                mContext.getString(R.string.test_intent_filter_label_activity);
         mIntentFilterTesterIntentFilterLabel =
                 mContext.getString(R.string.test_intent_filter_label_intentfilter);
         mChooserTargetServiceLabel = mContext.getString(R.string.test_chooser_target_service_label);
         mSharingShortcutLabel = mContext.getString(R.string.test_sharing_shortcut_label);
-        mExtraChooserTargetsLabelBase = mContext.getString(R.string.test_extra_chooser_targets_label);
-        mExtraInitialIntentsLabelBase = mContext.getString(R.string.test_extra_initial_intents_label);
+        mExtraChooserTargetsLabelBase = mContext.getString(
+                R.string.test_extra_chooser_targets_label);
+        mExtraInitialIntentsLabelBase = mContext.getString(
+                R.string.test_extra_initial_intents_label);
         mPreviewTitle = mContext.getString(R.string.test_preview_title);
         mPreviewText = mContext.getString(R.string.test_preview_text);
         // We want to only show targets in the sheet put forth by the CTS test. In order to do that
@@ -202,15 +198,13 @@ public class CtsSharesheetDeviceTest {
         );
 
         mTargetsToExclude = matchingTargets.stream()
-                .map(ri -> {
-                    return new ComponentName(ri.activityInfo.packageName, ri.activityInfo.name);
-                })
+                .map(ri -> new ComponentName(ri.activityInfo.packageName, ri.activityInfo.name))
                 .filter(cn -> {
                     // Exclude our own test targets
                     String pkg = cn.getPackageName();
-                    boolean isInternalPkg  = pkg.equals(mPkg) ||
-                            pkg.equals(mActivityLabelTesterPkg) ||
-                            pkg.equals(mIntentFilterLabelTesterPkg);
+                    boolean isInternalPkg = pkg.equals(mPkg)
+                            || pkg.equals(mActivityLabelTesterPkg)
+                            || pkg.equals(mIntentFilterLabelTesterPkg);
 
                     return !isInternalPkg;
                 })
@@ -220,13 +214,14 @@ public class CtsSharesheetDeviceTest {
         // wait for the UI to load. Do this by resolving which activity consumes the share intent.
         // There must be a system Sharesheet or fail, otherwise fetch its the package.
         Intent shareIntent = createShareIntent(false, 0, 0);
-        ResolveInfo shareRi = pm.resolveActivity(shareIntent, PackageManager.MATCH_DEFAULT_ONLY);
+        ResolveInfo shareRi =
+                mPackageManager.resolveActivity(shareIntent, PackageManager.MATCH_DEFAULT_ONLY);
 
-        assertNotNull(shareRi);
-        assertNotNull(shareRi.activityInfo);
+        assertThat(shareRi).isNotNull();
+        assertThat(shareRi.activityInfo).isNotNull();
 
         mSharesheetPkg = shareRi.activityInfo.packageName;
-        assertNotNull(mSharesheetPkg);
+        assertThat(mSharesheetPkg).isNotNull();
 
         // Finally ensure the device is awake
         mDevice.wakeUp();
@@ -260,12 +255,12 @@ public class CtsSharesheetDeviceTest {
             firesIntentSenderWithExtraChosenComponent();
 
             appStarted.await(1000, TimeUnit.MILLISECONDS);
-            assertEquals(CTS_DATA_TYPE, targetLaunchIntent.get().getType());
-            assertEquals(Intent.ACTION_SEND, targetLaunchIntent.get().getAction());
+            assertThat(targetLaunchIntent.get().getType()).isEqualTo(CTS_DATA_TYPE);
+            assertThat(targetLaunchIntent.get().getAction()).isEqualTo(Intent.ACTION_SEND);
         }, () -> {
             // The Sharesheet may or may not be open depending on test success, close it if it is.
             closeSharesheetIfNeeded();
-            });
+        });
     }
 
     @Test
@@ -286,7 +281,7 @@ public class CtsSharesheetDeviceTest {
         }, () -> {
             closeSharesheet();
             clearShortcuts();
-            });
+        });
     }
 
     /**
@@ -373,28 +368,31 @@ public class CtsSharesheetDeviceTest {
                     refinement.getIntentSender());
             Intent alternateIntent = new Intent(Intent.ACTION_SEND);
             alternateIntent.setType(CTS_ALTERNATE_DATA_TYPE);
-            shareIntent.putExtra(Intent.EXTRA_ALTERNATE_INTENTS, new Intent[] {alternateIntent});
+            shareIntent.putExtra(Intent.EXTRA_ALTERNATE_INTENTS, new Intent[]{alternateIntent});
             launchSharesheet(shareIntent);
             findTextContains(mAppLabel).click();
-            assertTrue(broadcastInvoked.await(1000, TimeUnit.MILLISECONDS));
-            assertTrue(chooserCallbackInvoked.await(1000, TimeUnit.MILLISECONDS));
-            assertTrue(appStarted.await(1000, TimeUnit.MILLISECONDS));
+            assertWithMessage("Refinement broadcast not received").that(
+                    broadcastInvoked.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+            assertWithMessage("Chosen target callback not received").that(
+                    chooserCallbackInvoked.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+            assertWithMessage("Share target didn't start").that(
+                    appStarted.await(1000, TimeUnit.MILLISECONDS)).isTrue();
 
-            assertEquals(1, chooserCallbackCountdownAtRefinementStart.get());
+            assertThat(chooserCallbackCountdownAtRefinementStart.get()).isEqualTo(1);
             Intent mainIntentForRefinement =
                     refinementRequest.get().getParcelableExtra(Intent.EXTRA_INTENT, Intent.class);
-            assertEquals(CTS_DATA_TYPE, mainIntentForRefinement.getType());
+            assertThat(mainIntentForRefinement.getType()).isEqualTo(CTS_DATA_TYPE);
             Intent[] alternatesForRefinement =
                     refinementRequest.get().getParcelableArrayExtra(
                             Intent.EXTRA_ALTERNATE_INTENTS, Intent.class);
-            assertEquals(1, alternatesForRefinement.length);
-            assertEquals(CTS_ALTERNATE_DATA_TYPE, alternatesForRefinement[0].getType());
-            assertEquals(CTS_ALTERNATE_DATA_TYPE, dataTypeTargetLaunchedWith.get());
+            assertThat(alternatesForRefinement).hasLength(1);
+            assertThat(alternatesForRefinement[0].getType()).isEqualTo(CTS_ALTERNATE_DATA_TYPE);
+            assertThat(dataTypeTargetLaunchedWith.get()).isEqualTo(CTS_ALTERNATE_DATA_TYPE);
         }, () -> {
             mContext.unregisterReceiver(refinementReceiver);
             mContext.unregisterReceiver(chooserCallbackReceiver);
             closeSharesheet();
-            });
+        });
     }
 
     @Test
@@ -424,7 +422,7 @@ public class CtsSharesheetDeviceTest {
                 refinedTargetIntent.putExtra(Intent.EXTRA_STREAM, refinedMediaPayload);
                 ClipData refinedClipData = new ClipData(
                         null,
-                        new String[] { originalTargetIntent.getType() },
+                        new String[]{originalTargetIntent.getType()},
                         new ClipData.Item(refinedTextPayload, null, null, refinedMediaPayload));
                 refinedTargetIntent.setClipData(refinedClipData);
 
@@ -469,35 +467,34 @@ public class CtsSharesheetDeviceTest {
             launchSharesheet(wrappedShareIntent);
 
             findTextContains(mAppLabel).click();
-            assertTrue(broadcastInvoked.await(1000, TimeUnit.MILLISECONDS));
-            assertTrue(appStarted.await(1000, TimeUnit.MILLISECONDS));
+            assertThat(broadcastInvoked.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(appStarted.await(1000, TimeUnit.MILLISECONDS)).isTrue();
 
             Intent originalTargetForRefinement =
                     refinementRequest.get().getParcelableExtra(Intent.EXTRA_INTENT, Intent.class);
-            assertEquals(
-                    originalTextPayload,
-                    originalTargetForRefinement.getCharSequenceExtra(Intent.EXTRA_TEXT));
-            assertEquals(
-                    originalMediaPayload,
-                    originalTargetForRefinement.getParcelableExtra(Intent.EXTRA_STREAM, Uri.class));
+            assertThat(
+                    originalTargetForRefinement.getCharSequenceExtra(Intent.EXTRA_TEXT)).isEqualTo(
+                    originalTextPayload);
+            assertThat(originalTargetForRefinement.getParcelableExtra(Intent.EXTRA_STREAM,
+                    Uri.class)).isEqualTo(originalMediaPayload);
             ClipData.Item originalClipItem = originalTargetForRefinement.getClipData().getItemAt(0);
-            assertEquals(originalTextPayload, originalClipItem.getText());
-            assertEquals(originalMediaPayload, originalClipItem.getUri());
+            assertThat(originalClipItem.getText()).isEqualTo(originalTextPayload);
+            assertThat(originalClipItem.getUri()).isEqualTo(originalMediaPayload);
 
-            assertEquals(
-                    refinedTextPayload,
-                    targetLaunchIntent.get().getCharSequenceExtra(Intent.EXTRA_TEXT));
-            assertEquals(
-                    refinedMediaPayload,
-                    targetLaunchIntent.get().getParcelableExtra(Intent.EXTRA_STREAM, Uri.class));
-            assertEquals(1, targetLaunchIntent.get().getClipData().getItemCount());
+            assertThat(
+                    targetLaunchIntent.get().getCharSequenceExtra(Intent.EXTRA_TEXT)).isEqualTo(
+                    refinedTextPayload);
+            assertThat(
+                    targetLaunchIntent.get().getParcelableExtra(Intent.EXTRA_STREAM,
+                            Uri.class)).isEqualTo(refinedMediaPayload);
+            assertThat(targetLaunchIntent.get().getClipData().getItemCount()).isEqualTo(1);
             ClipData.Item refinedClipItem = targetLaunchIntent.get().getClipData().getItemAt(0);
-            assertEquals(refinedTextPayload, refinedClipItem.getText());
-            assertEquals(refinedMediaPayload, refinedClipItem.getUri());
+            assertThat(refinedClipItem.getText()).isEqualTo(refinedTextPayload);
+            assertThat(refinedClipItem.getUri()).isEqualTo(refinedMediaPayload);
         }, () -> {
-                mContext.unregisterReceiver(refinementReceiver);
-                closeSharesheet();
-            });
+            mContext.unregisterReceiver(refinementReceiver);
+            closeSharesheet();
+        });
     }
 
     @Test
@@ -520,9 +517,10 @@ public class CtsSharesheetDeviceTest {
             Intent shareIntent = createShareIntent(false, 0, 0);
             launchSharesheet(shareIntent);
             findTextContains(mSharingShortcutLabel).click();
-            assertTrue(appStarted.await(1000, TimeUnit.MILLISECONDS));
+            assertWithMessage("Shortcut app didn't start").that(
+                    appStarted.await(1000, TimeUnit.MILLISECONDS)).isTrue();
             // The intent carries the shortcut ID that was registered with ShortcutManager.
-            assertEquals(testShortcutId, shortcutIdTargetLaunchedWith.get());
+            assertThat(shortcutIdTargetLaunchedWith.get()).isEqualTo(testShortcutId);
         }, () -> closeSharesheet());
     }
 
@@ -599,30 +597,30 @@ public class CtsSharesheetDeviceTest {
                     refinement.getIntentSender());
             Intent alternateIntent = new Intent(Intent.ACTION_SEND);
             alternateIntent.setType(CTS_ALTERNATE_DATA_TYPE);
-            shareIntent.putExtra(Intent.EXTRA_ALTERNATE_INTENTS, new Intent[] {alternateIntent});
+            shareIntent.putExtra(Intent.EXTRA_ALTERNATE_INTENTS, new Intent[]{alternateIntent});
             launchSharesheet(shareIntent);
             findTextContains(mSharingShortcutLabel).click();
-            assertTrue(broadcastInvoked.await(1000, TimeUnit.MILLISECONDS));
-            assertTrue(chooserCallbackInvoked.await(1000, TimeUnit.MILLISECONDS));
-            assertTrue(appStarted.await(1000, TimeUnit.MILLISECONDS));
+            assertThat(broadcastInvoked.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(chooserCallbackInvoked.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(appStarted.await(1000, TimeUnit.MILLISECONDS)).isTrue();
 
             Intent mainIntentForRefinement =
                     refinementRequest.get().getParcelableExtra(Intent.EXTRA_INTENT, Intent.class);
-            assertEquals(CTS_DATA_TYPE, mainIntentForRefinement.getType());
+            assertThat(mainIntentForRefinement.getType()).isEqualTo(CTS_DATA_TYPE);
             Intent[] alternatesForRefinement =
                     refinementRequest.get().getParcelableArrayExtra(
                             Intent.EXTRA_ALTERNATE_INTENTS, Intent.class);
-            assertEquals(1, alternatesForRefinement.length);
-            assertEquals(CTS_ALTERNATE_DATA_TYPE, alternatesForRefinement[0].getType());
+            assertThat(alternatesForRefinement).hasLength(1);
+            assertThat(alternatesForRefinement[0].getType()).isEqualTo(CTS_ALTERNATE_DATA_TYPE);
             // The intent carries the shortcut ID that was registered with ShortcutManager.
-            assertEquals(testShortcutId, shortcutIdTargetLaunchedWith.get());
+            assertThat(shortcutIdTargetLaunchedWith.get()).isEqualTo(testShortcutId);
             // Ensure that the app was started with the alternate type chosen by refinement.
-            assertEquals(CTS_ALTERNATE_DATA_TYPE, dataTypeTargetLaunchedWith.get());
+            assertThat(dataTypeTargetLaunchedWith.get()).isEqualTo(CTS_ALTERNATE_DATA_TYPE);
         }, () -> {
             mContext.unregisterReceiver(refinementReceiver);
             mContext.unregisterReceiver(chooserCallbackReceiver);
             closeSharesheet();
-            });
+        });
     }
 
     // Launch the chooser with an EXTRA_INTENT of type "test/cts" and EXTRA_ALTERNATE_INTENTS with
@@ -651,18 +649,19 @@ public class CtsSharesheetDeviceTest {
             Intent shareIntent = createShareIntent(false, 0, 0);
             Intent alternateIntent = new Intent(Intent.ACTION_SEND);
             alternateIntent.setType(CTS_ALTERNATE_DATA_TYPE);
-            shareIntent.putExtra(Intent.EXTRA_ALTERNATE_INTENTS, new Intent[] {alternateIntent});
+            shareIntent.putExtra(Intent.EXTRA_ALTERNATE_INTENTS, new Intent[]{alternateIntent});
             launchSharesheet(shareIntent);
             findTextContains(mContext.getString(R.string.test_alternate_app_label)).click();
-            assertTrue(chooserCallbackInvoked.await(1000, TimeUnit.MILLISECONDS));
-            assertEquals("android.sharesheet.cts.packages.alternatetype",
-                    chosenComponent.get().getPackageName());
-            assertEquals("android.sharesheet.cts.packages.LabelTestActivity",
-                    chosenComponent.get().getClassName());
+            assertWithMessage("Chosen component callback not received").that(
+                    chooserCallbackInvoked.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(chosenComponent.get().getPackageName()).isEqualTo(
+                    "android.sharesheet.cts.packages.alternatetype");
+            assertThat(chosenComponent.get().getClassName()).isEqualTo(
+                    "android.sharesheet.cts.packages.LabelTestActivity");
         }, () -> {
             mContext.unregisterReceiver(chooserCallbackReceiver);
             closeSharesheet();
-            });
+        });
     }
 
     @Test
@@ -691,7 +690,7 @@ public class CtsSharesheetDeviceTest {
                 targetIntentExtras);
 
         Intent shareIntent = createShareIntent(false, 0, 0);
-        shareIntent.putExtra(Intent.EXTRA_CHOOSER_TARGETS, new ChooserTarget[] { chooserTarget });
+        shareIntent.putExtra(Intent.EXTRA_CHOOSER_TARGETS, new ChooserTarget[]{chooserTarget});
 
         runAndExecuteCleanupBeforeAnyThrow(() -> {
             launchSharesheet(shareIntent);
@@ -699,18 +698,21 @@ public class CtsSharesheetDeviceTest {
             UiObject2 chooserTargetButton = mSharesheet.wait(
                     Until.findObject(By.textContains("ChooserTarget")),
                     WAIT_AND_ASSERT_FOUND_TIMEOUT_MS);
-            assertNotNull(chooserTargetButton);
+            assertWithMessage("Couldn't find app-provided ChooserTarget").that(
+                    chooserTargetButton).isNotNull();
             Log.d(TAG, "clicking on the chooser target");
             chooserTargetButton.click();
 
-            assertTrue(appStarted.await(1000, TimeUnit.MILLISECONDS));
-            assertTrue(targetLaunchIntent.get().getBooleanExtra("FROM_CHOOSER_TARGET", false));
+            assertWithMessage("ChooserTarget app didn't start").that(
+                    appStarted.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(targetLaunchIntent.get().getBooleanExtra("FROM_CHOOSER_TARGET",
+                    false)).isTrue();
         }, this::closeSharesheet);
     }
 
     @Test
     @ApiTest(apis = "android.content.Intent#EXTRA_CHOOSER_TARGETS")
-    public void testChooserTargetsRefinement() throws Throwable {
+    public void testChooserTargetsRefinement() {
         assumeFalse(
                 "EXTRA_CHOOSER_TARGETS not required on low RAM devices",
                 mActivityManager.isLowRamDevice());
@@ -768,7 +770,7 @@ public class CtsSharesheetDeviceTest {
                 targetIntentExtras);
 
         Intent shareIntent = createShareIntent(false, 0, 0);
-        shareIntent.putExtra(Intent.EXTRA_CHOOSER_TARGETS, new ChooserTarget[] { chooserTarget });
+        shareIntent.putExtra(Intent.EXTRA_CHOOSER_TARGETS, new ChooserTarget[]{chooserTarget});
         shareIntent.putExtra(Intent.EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER,
                 refinement.getIntentSender());
 
@@ -778,19 +780,23 @@ public class CtsSharesheetDeviceTest {
             UiObject2 chooserTargetButton = mSharesheet.wait(
                     Until.findObject(By.textContains("ChooserTarget")),
                     WAIT_AND_ASSERT_FOUND_TIMEOUT_MS);
-            assertNotNull(chooserTargetButton);
+            assertThat(chooserTargetButton).isNotNull();
             Log.d(TAG, "clicking on the chooser target");
             chooserTargetButton.click();
 
-            assertTrue(broadcastInvoked.await(1000, TimeUnit.MILLISECONDS));
-            assertTrue(appStarted.await(1000, TimeUnit.MILLISECONDS));
-            assertTrue(targetLaunchIntent.get().getBooleanExtra("FROM_CHOOSER_TARGET", false));
-            assertTrue(targetLaunchIntent.get().getBooleanExtra("REFINED", false));
-            assertTrue(refinementInput.get().getBooleanExtra("FROM_CHOOSER_TARGET", false));
+            assertWithMessage("Didn't receive refinement callback").that(
+                    broadcastInvoked.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+            assertWithMessage("App didn't start after refinement").that(
+                    appStarted.await(1000, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(targetLaunchIntent.get().getBooleanExtra("FROM_CHOOSER_TARGET",
+                    false)).isTrue();
+            assertThat(targetLaunchIntent.get().getBooleanExtra("REFINED", false)).isTrue();
+            assertThat(
+                    refinementInput.get().getBooleanExtra("FROM_CHOOSER_TARGET", false)).isTrue();
         }, () -> {
-                mContext.unregisterReceiver(refinementReceiver);
-                closeSharesheet();
-            });
+            mContext.unregisterReceiver(refinementReceiver);
+            closeSharesheet();
+        });
     }
 
     @Test
@@ -823,7 +829,7 @@ public class CtsSharesheetDeviceTest {
         Intent shareIntent = createShareIntent(true /* test content preview */,
                 0 /* do not test EIIs */,
                 0 /* do not test ECTs */);
-        ChooserAction[] actions = new ChooserAction[] {
+        ChooserAction[] actions = new ChooserAction[]{
                 createChooserAction("act1", fakeCustomAction),
                 createChooserAction("act2", fakeCustomAction),
                 createChooserAction("act3", customAction),
@@ -841,11 +847,12 @@ public class CtsSharesheetDeviceTest {
             waitAndAssertTextContains(actions[1].getLabel().toString());
             clickText(actions[2].getLabel().toString());
 
-            assertTrue(broadcastInvoked.await(1000, TimeUnit.MILLISECONDS));
+            assertWithMessage("Custom action not invoked").that(
+                    broadcastInvoked.await(1000, TimeUnit.MILLISECONDS)).isTrue();
         }, () -> {
             mContext.unregisterReceiver(customActionReceiver);
             closeSharesheet();
-            });
+        });
     }
 
     @Test
@@ -874,7 +881,7 @@ public class CtsSharesheetDeviceTest {
                         R.drawable.black_64x64),
                 modifyShareLabel,
                 modifyShare
-            ).build();
+        ).build();
         shareIntent.putExtra(Intent.EXTRA_CHOOSER_MODIFY_SHARE_ACTION, modifyShareAction);
 
         runAndExecuteCleanupBeforeAnyThrow(
@@ -885,7 +892,8 @@ public class CtsSharesheetDeviceTest {
                             Context.RECEIVER_EXPORTED);
                     launchSharesheet(shareIntent);
                     clickText(modifyShareLabel);
-                    assertTrue(broadcastInvoked.await(1000, TimeUnit.MILLISECONDS));
+                    assertWithMessage("Modify share action not invoked").that(
+                            broadcastInvoked.await(1000, TimeUnit.MILLISECONDS)).isTrue();
                 },
                 () -> {
                     mContext.unregisterReceiver(modifyShareActionReceiver);
@@ -906,14 +914,15 @@ public class CtsSharesheetDeviceTest {
         runAndExecuteCleanupBeforeAnyThrow(
                 () -> {
                     launchSharesheet(shareIntent);
-                    waitAndAssertTextContains(testMetadataText.toString());
+                    waitAndAssertTextContains(
+                            testMetadataText.toString());
                 },
                 this::closeSharesheetIfNeeded
         );
     }
 
     /*
-    Test methods
+     * Test methods
      */
 
     /**
@@ -997,7 +1006,7 @@ public class CtsSharesheetDeviceTest {
 
         // First find the target to click. This will fail if the showsApplicationLabel() test fails.
         UiObject2 shareTarget = findTextContains(mAppLabel);
-        assertNotNull(shareTarget);
+        assertThat(shareTarget).isNotNull();
 
         ComponentName clickedComponent = new ComponentName(mContext,
                 CtsSharesheetDeviceActivity.class);
@@ -1035,22 +1044,23 @@ public class CtsSharesheetDeviceTest {
         UiObject2 customAction = mSharesheet.wait(
                 Until.findObject(By.text(textContainsPattern(label, caseSensitive))),
                 WAIT_AND_ASSERT_FOUND_TIMEOUT_MS);
-        assertNotNull(customAction);
+        assertWithMessage("Couldn't find text '" + label + "'").that(customAction).isNotNull();
         Log.d(TAG, "clicking on the custom action");
         customAction.click();
     }
 
     private void validateChosenComponentIntent(Intent intent, ComponentName matchingComponent) {
-        assertNotNull(intent);
+        assertThat(intent).isNotNull();
 
-        assertTrue(intent.hasExtra(Intent.EXTRA_CHOSEN_COMPONENT));
+        assertWithMessage("EXTRA_CHOSEN_COMPONENT not found in callback").that(
+                intent.hasExtra(Intent.EXTRA_CHOSEN_COMPONENT)).isTrue();
         Object extra = intent.getParcelableExtra(Intent.EXTRA_CHOSEN_COMPONENT);
-        assertNotNull(extra);
+        assertThat(extra).isNotNull();
 
-        assertTrue(extra instanceof ComponentName);
+        assertThat(extra instanceof ComponentName).isTrue();
         ComponentName component = (ComponentName) extra;
 
-        assertEquals(component, matchingComponent);
+        assertThat(component).isEqualTo(matchingComponent);
     }
 
     /**
@@ -1119,8 +1129,8 @@ public class CtsSharesheetDeviceTest {
 
     private List<ShortcutInfo> createShortcuts(int size) {
         List<ShortcutInfo> ret = new ArrayList<>();
-        for (int i=0; i<size; i++) {
-            ret.add(createShortcut(""+i));
+        for (int i = 0; i < size; i++) {
+            ret.add(createShortcut("" + i));
         }
         return ret;
     }
@@ -1133,13 +1143,13 @@ public class CtsSharesheetDeviceTest {
                 .setShortLabel(mSharingShortcutLabel)
                 .setIcon(Icon.createWithResource(mContext, R.drawable.black_64x64))
                 .setCategories(categories)
-                .setIntent(new Intent(Intent.ACTION_DEFAULT)) /* an Intent with an action must be set */
+                .setIntent(new Intent(Intent.ACTION_DEFAULT)) // must include an Intent w/ action
                 .build();
     }
 
     private void launchSharesheet(Intent shareIntent) {
         mContext.startActivity(shareIntent);
-        waitAndAssertPkgVisible(mSharesheetPkg);
+        waitAndAssertPkgVisible(mSharesheetPkg, "Failed to find sharesheet on screen");
         mSharesheet = mDevice.findObject(By.pkg(mSharesheetPkg).depth(0));
         waitForIdle();
     }
@@ -1184,7 +1194,7 @@ public class CtsSharesheetDeviceTest {
 
         PendingIntent pi = PendingIntent.getBroadcast(
                 mContext,
-                9384 /* number not relevant */ ,
+                9384 /* number not relevant */,
                 new Intent(ACTION_INTENT_SENDER_FIRED_ON_CLICK)
                         .setPackage(mContext.getPackageName()),
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
@@ -1253,15 +1263,15 @@ public class CtsSharesheetDeviceTest {
     }
 
     /*
-    UI testing methods
+     * UI testing methods
      */
 
     private void waitForIdle() {
         mDevice.waitForIdle(WAIT_FOR_IDLE_TIMEOUT_MS);
     }
 
-    private void waitAndAssertPkgVisible(String pkg) {
-        waitAndAssertFoundOnDevice(By.pkg(pkg).depth(0));
+    private void waitAndAssertPkgVisible(String pkg, String failureMessage) {
+        waitAndAssertFoundOnDevice(By.pkg(pkg).depth(0), failureMessage);
     }
 
     private void waitAndAssertPkgNotVisible(String pkg) {
@@ -1269,11 +1279,12 @@ public class CtsSharesheetDeviceTest {
     }
 
     private void waitAndAssertTextContains(String containsText) {
-        waitAndAssertTextContains(containsText, false);
-    }
-
-    private void waitAndAssertTextContains(String text, boolean caseSensitive) {
-        waitAndAssertFound(By.text(textContainsPattern(text, caseSensitive)));
+        BySelector selector = By.text(textContainsPattern(containsText, false));
+        String failureMessage = "Failed to find " + containsText + " on screen";
+        assertWithMessage(failureMessage).that(
+                        mSharesheet.wait(Until.findObject(selector),
+                                WAIT_AND_ASSERT_FOUND_TIMEOUT_MS))
+                .isNotNull();
     }
 
     private static Pattern textContainsPattern(String text, boolean caseSensitive) {
@@ -1284,36 +1295,25 @@ public class CtsSharesheetDeviceTest {
         return Pattern.compile(String.format("^.*%s.*$", Pattern.quote(text)), flags);
     }
 
-    private void waitAndAssertNoTextContains(String containsText) {
-        waitAndAssertNotFound(By.textContains(containsText));
-    }
-
     /**
-     * waitAndAssertFound will wait until UI within sharesheet defined by the selector is found. If
-     * it's never found, this will wait for the duration of the full timeout. Take care to call this
-     * method after reasonable steps are taken to ensure fast completion.
+     * waitAndAssertNoTextContains waits for UI containing the given text within sharesheet to be
+     * hidden, validates that it's indeed gone without waiting more and returns. This means if the
+     * UI wasn't visible to start with the method will return without no timeout. Take care to call
+     * this method only once there's reason to think the UI is in the right state for testing.
      */
-    private void waitAndAssertFound(BySelector selector) {
-        assertNotNull(mSharesheet.wait(Until.findObject(selector),
-                WAIT_AND_ASSERT_FOUND_TIMEOUT_MS));
+    private void waitAndAssertNoTextContains(String containsText) {
+        BySelector selector = By.textContains(containsText);
+        String failureMessage = "Found text '" + containsText + "' but did not expect to";
+        mSharesheet.wait(Until.gone(selector), WAIT_AND_ASSERT_NOT_FOUND_TIMEOUT_MS);
+        assertWithMessage(failureMessage).that(mSharesheet.findObject(selector)).isNull();
     }
 
     /**
      * Same as waitAndAssertFound but searching the entire device UI.
      */
-    private void waitAndAssertFoundOnDevice(BySelector selector) {
-        assertNotNull(mDevice.wait(Until.findObject(selector), WAIT_AND_ASSERT_FOUND_TIMEOUT_MS));
-    }
-
-    /**
-     * waitAndAssertNotFound waits for any visible UI within sharesheet to be hidden, validates that
-     * it's indeed gone without waiting more and returns. This means if the UI wasn't visible to
-     * start with the method will return without no timeout. Take care to call this method only once
-     * there's reason to think the UI is in the right state for testing.
-     */
-    private void waitAndAssertNotFound(BySelector selector) {
-        mSharesheet.wait(Until.gone(selector), WAIT_AND_ASSERT_NOT_FOUND_TIMEOUT_MS);
-        assertNull(mSharesheet.findObject(selector));
+    private void waitAndAssertFoundOnDevice(BySelector selector, String failureMessage) {
+        assertWithMessage(failureMessage).that(mDevice.wait(Until.findObject(selector),
+                WAIT_AND_ASSERT_FOUND_TIMEOUT_MS)).isNotNull();
     }
 
     /**
@@ -1321,12 +1321,13 @@ public class CtsSharesheetDeviceTest {
      */
     private void waitAndAssertNotFoundOnDevice(BySelector selector) {
         mDevice.wait(Until.gone(selector), WAIT_AND_ASSERT_NOT_FOUND_TIMEOUT_MS);
-        assertNull(mDevice.findObject(selector));
+        assertThat(mDevice.findObject(selector)).isNull();
     }
 
     /**
      * findTextContains uses logic similar to waitAndAssertFound to locate UI objects that contain
      * the provided String.
+     *
      * @param containsText the String to search for, note this is not an exact match only contains
      * @return UiObject2 that can be used, for example, to execute a click
      */
