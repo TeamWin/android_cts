@@ -19,11 +19,11 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 import android.app.stubs.MockActivity;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.view.ActionMode;
 import android.view.Window;
 
 import androidx.test.annotation.UiThreadTest;
+import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
