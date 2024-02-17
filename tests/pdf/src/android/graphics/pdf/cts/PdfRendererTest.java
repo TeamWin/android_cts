@@ -43,9 +43,11 @@ import static org.junit.Assert.assertTrue;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.graphics.pdf.PdfRenderer;
 import android.graphics.pdf.PdfRenderer.Page;
 import android.graphics.pdf.RenderParams;
+import android.graphics.pdf.content.PdfPageGotoLinkContent;
 import android.graphics.pdf.models.PageMatchBounds;
 import android.graphics.pdf.models.selection.PageSelection;
 import android.graphics.pdf.models.selection.SelectionBoundary;
@@ -104,7 +106,6 @@ public class PdfRendererTest {
     public void constructRendererNull() throws Exception {
         assertThrows(NullPointerException.class, () -> new PdfRenderer(null));
 
-        // assert using new constructor
         assertThrows(NullPointerException.class, () -> new PdfRenderer(null, null));
 
     }
@@ -163,7 +164,6 @@ public class PdfRendererTest {
 
         assertRendererAfterClose(renderer);
 
-        // create renderer with the new constructor
         PdfRenderer newRenderer = createRendererUsingNewConstructor(A4_PORTRAIT, mContext,
                 SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR);
         newRenderer.close();
@@ -175,7 +175,6 @@ public class PdfRendererTest {
     public void usePageAfterClose() throws Exception {
         assertPageAfterClose(createRenderer(A4_PORTRAIT, mContext), false);
 
-        // create renderer using new constructor
         assertPageAfterClose(createRendererUsingNewConstructor(SAMPLE_PDF, mContext,
                 SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR), true);
 
@@ -197,6 +196,7 @@ public class PdfRendererTest {
 
         assertThrows(IllegalStateException.class, page::close);
         assertThrows(IllegalStateException.class, page::getLinkContents);
+        assertThrows(IllegalStateException.class, page::getGotoLinks);
         assertThrows(IllegalStateException.class, page::getTextContents);
         assertThrows(IllegalStateException.class, page::getImageContents);
         assertThrows(IllegalStateException.class, () -> page.searchText("more"));
@@ -267,7 +267,7 @@ public class PdfRendererTest {
     @Test
     public void testOpenPage() throws Exception {
         assertOpenPage(createRenderer(TWO_PAGES, mContext));
-        // create renderer using new constructor
+
         assertOpenPage(createRendererUsingNewConstructor(TWO_PAGES, mContext,
                 SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR));
     }
@@ -275,7 +275,7 @@ public class PdfRendererTest {
     @Test
     public void testPageSize() throws Exception {
         assertPageSize(createRenderer(A4_PORTRAIT, mContext));
-        // create renderer using new constructor
+
         assertPageSize(createRendererUsingNewConstructor(A4_PORTRAIT, mContext,
                 SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR));
     }
@@ -286,7 +286,6 @@ public class PdfRendererTest {
             assertTrue(renderer.shouldScaleForPrinting());
         }
 
-        // create renderer using new constructor
         try (PdfRenderer renderer = createRendererUsingNewConstructor(A5_PORTRAIT, mContext,
                 SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR)) {
             assertTrue(renderer.shouldScaleForPrinting());
@@ -299,7 +298,6 @@ public class PdfRendererTest {
             assertTrue(renderer.shouldScaleForPrinting());
         }
 
-        // create renderer using new constructor
         try (PdfRenderer renderer = createRendererUsingNewConstructor(
                 A5_PORTRAIT_PRINTSCALING_DEFAULT, mContext,
                 SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR)) {
@@ -313,7 +311,6 @@ public class PdfRendererTest {
             assertFalse(renderer.shouldScaleForPrinting());
         }
 
-        // create renderer using new constructor
         try (PdfRenderer renderer = createRendererUsingNewConstructor(A5_PORTRAIT_PRINTSCALING_NONE,
                 mContext, SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR)) {
             assertFalse(renderer.shouldScaleForPrinting());
@@ -324,7 +321,6 @@ public class PdfRendererTest {
     public void getTextPdfContents_pdfWithText() throws Exception {
         assertTextPdfContents_pdfWithText(createRenderer(R.raw.sample_test, mContext));
 
-        // create renderer using new constructor
         assertTextPdfContents_pdfWithText(
                 createRendererUsingNewConstructor(R.raw.sample_test, mContext,
                         SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR));
@@ -345,7 +341,6 @@ public class PdfRendererTest {
     public void getTextPdfContents_pdfWithTextAndImages() throws Exception {
         assertTextPdfContents_pdfWithTextAndImages(createRenderer(R.raw.alt_text, mContext));
 
-        // create renderer using new constructor
         assertTextPdfContents_pdfWithTextAndImages(
                 createRendererUsingNewConstructor(R.raw.alt_text, mContext,
                         SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR));
@@ -370,7 +365,6 @@ public class PdfRendererTest {
     public void getImagePdfContents_pdfWithText() throws Exception {
         assertImagePdfContents_pdfWithText(createRenderer(SAMPLE_PDF, mContext));
 
-        // create renderer using new constructor
         assertImagePdfContents_pdfWithText(createRendererUsingNewConstructor(SAMPLE_PDF, mContext,
                 SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR));
     }
@@ -388,7 +382,6 @@ public class PdfRendererTest {
     public void getImagePdfContents_pdfWithAltText() throws Exception {
         assertImagePdfContents_pdfWithAltText(createRenderer(R.raw.alt_text, mContext));
 
-        // create renderer using enw constructor
         assertImagePdfContents_pdfWithAltText(
                 createRendererUsingNewConstructor(R.raw.alt_text, mContext,
                         SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR));
@@ -409,7 +402,6 @@ public class PdfRendererTest {
     public void getPageLinks_pdfWithoutLink() throws Exception {
         assertPageLinks_pdfWithoutLink(createRenderer(R.raw.sample_links, mContext));
 
-        // create renderer using new constructor
         assertPageLinks_pdfWithoutLink(
                 createRendererUsingNewConstructor(R.raw.sample_links, mContext,
                         SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR));
@@ -428,7 +420,6 @@ public class PdfRendererTest {
     public void getPageLinks_pdfWithLink() throws Exception {
         assertPageLinks_pdfWithLink(createRenderer(R.raw.sample_links, mContext));
 
-        // create renderer using new constructor
         assertPageLinks_pdfWithLink(createRendererUsingNewConstructor(R.raw.sample_links, mContext,
                 SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR));
     }
@@ -450,7 +441,6 @@ public class PdfRendererTest {
     public void searchPageText() throws Exception {
         assertSearchPageText(createRenderer(SAMPLE_PDF, mContext));
 
-        // create renderer using new constructor
         assertSearchPageText(createRendererUsingNewConstructor(SAMPLE_PDF, mContext,
                 SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR));
     }
@@ -507,7 +497,6 @@ public class PdfRendererTest {
     public void searchPageText_queryTextInMultipleLines() throws Exception {
         assertSearchPageText_queryTextInMultipleLines(createRenderer(SAMPLE_PDF, mContext));
 
-        // create renderer using new constructor
         assertSearchPageText_queryTextInMultipleLines(
                 createRendererUsingNewConstructor(SAMPLE_PDF, mContext,
                         SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR));
@@ -541,7 +530,6 @@ public class PdfRendererTest {
     public void searchPageText_returnsEmptySearchResult() throws Exception {
         assertSearchPageText_returnsEmptySearchResult(createRenderer(SAMPLE_PDF, mContext));
 
-        // create renderer using new constructor
         assertSearchPageText_returnsEmptySearchResult(
                 createRendererUsingNewConstructor(SAMPLE_PDF, mContext,
                         SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR));
@@ -560,7 +548,6 @@ public class PdfRendererTest {
     public void searchPageText_withNullQuery_throwsException() throws Exception {
         assertSearchPageText_withNullQuery_throwsException(createRenderer(SAMPLE_PDF, mContext));
 
-        // create renderer using new constructor
         assertSearchPageText_withNullQuery_throwsException(
                 createRendererUsingNewConstructor(SAMPLE_PDF, mContext,
                         SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR));
@@ -576,7 +563,6 @@ public class PdfRendererTest {
     public void write_withNullDest_throwsException() throws Exception {
         assertWrite_withNullDest(createRenderer(SAMPLE_PDF, mContext));
 
-        // create renderer using new constructor
         assertWrite_withNullDest(
                 createRendererUsingNewConstructor(PROTECTED_PDF, mContext, LOAD_PARAMS));
     }
@@ -615,7 +601,6 @@ public class PdfRendererTest {
     public void write_withUnprotected() throws Exception {
         assertWriteWithUnprotectedPdf(createRenderer(SAMPLE_PDF, mContext), "newPdf1.pdf");
 
-        // create renderer using new constructor
         assertWriteWithUnprotectedPdf(createRendererUsingNewConstructor(SAMPLE_PDF, mContext,
                 SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR), "newPdf.pdf");
     }
@@ -646,7 +631,6 @@ public class PdfRendererTest {
     public void selectPageText() throws Exception {
         assertSelectPageText(createRenderer(SAMPLE_PDF, mContext));
 
-        // create renderer using new constructor
         assertSelectPageText(
                 createRendererUsingNewConstructor(PROTECTED_PDF, mContext, LOAD_PARAMS));
     }
@@ -683,7 +667,6 @@ public class PdfRendererTest {
     public void selectPageText_textSpreadAcrossMultipleLines() throws Exception {
         assertSelectPageText_textSpreadAcrossMultipleLines(createRenderer(SAMPLE_PDF, mContext));
 
-        // create renderer using new constructor
         assertSelectPageText_textSpreadAcrossMultipleLines(
                 createRendererUsingNewConstructor(PROTECTED_PDF, mContext, LOAD_PARAMS));
 
@@ -715,7 +698,6 @@ public class PdfRendererTest {
     public void selectPageText_leftToRight() throws Exception {
         assertSelectPageText_leftToRight(createRenderer(SAMPLE_PDF, mContext));
 
-        // create renderer using new constructor
         assertSelectPageText_leftToRight(
                 createRendererUsingNewConstructor(PROTECTED_PDF, mContext, LOAD_PARAMS));
     }
@@ -758,7 +740,6 @@ public class PdfRendererTest {
     public void selectPageText_emptySpace() throws Exception {
         assertSelectPageText_emptySpace(createRenderer(SAMPLE_PDF, mContext));
 
-        // create renderer using new constructor
         assertSelectPageText_emptySpace(
                 createRendererUsingNewConstructor(PROTECTED_PDF, mContext, LOAD_PARAMS));
     }
@@ -782,7 +763,6 @@ public class PdfRendererTest {
     public void selectPageText_withOutRightBoundary_throwsException() throws Exception {
         assertSelectPageText_withoutRighttBoundary(createRenderer(SAMPLE_PDF, mContext));
 
-        // create renderer using new constructor
         assertSelectPageText_withoutRighttBoundary(
                 createRendererUsingNewConstructor(PROTECTED_PDF, mContext, LOAD_PARAMS));
     }
@@ -799,7 +779,6 @@ public class PdfRendererTest {
     public void selectPageText_withOutStopBoundary_throwsException() throws Exception {
         assertSelectPageText_withoutLeftBoundary(createRenderer(SAMPLE_PDF, mContext));
 
-        // create renderer using new constructor
         assertSelectPageText_withoutLeftBoundary(
                 createRendererUsingNewConstructor(PROTECTED_PDF, mContext, LOAD_PARAMS));
     }
@@ -811,6 +790,55 @@ public class PdfRendererTest {
         Point rightPoint = new Point(157, 330);
         assertThrows(NullPointerException.class,
                 () -> firstPage.selectContent(null, new SelectionBoundary(rightPoint), true));
+    }
+
+    @Test
+    public void getPageGotoLinks_pageWithoutGotoLink() throws Exception {
+        assertPageGotoLinks_pageWithoutGotoLink(createRenderer(SAMPLE_PDF, mContext));
+
+        assertPageGotoLinks_pageWithGotoLink(
+                createRendererUsingNewConstructor(SAMPLE_PDF, mContext, null));
+    }
+
+    private void assertPageGotoLinks_pageWithoutGotoLink(PdfRenderer renderer) {
+        PdfRenderer.Page page = renderer.openPage(0);
+
+        assertThat(page.getGotoLinks()).isEmpty();
+
+        page.close();
+        renderer.close();
+    }
+
+    @Test
+    public void getPageGotoLinks_pageWithGotoLink() throws Exception {
+        assertPageGotoLinks_pageWithGotoLink(createRenderer(R.raw.sample_links, mContext));
+
+        assertPageGotoLinks_pageWithGotoLink(
+                createRendererUsingNewConstructor(R.raw.sample_links, mContext, null));
+    }
+
+    private void assertPageGotoLinks_pageWithGotoLink(PdfRenderer renderer) {
+        PdfRenderer.Page page = renderer.openPage(0);
+
+        assertThat(page.getGotoLinks().size()).isEqualTo(1);
+        //assert destination
+        PdfPageGotoLinkContent.Destination destination = page.getGotoLinks().get(
+                0).getDestination();
+        assertThat(destination.getPageNumber()).isEqualTo(1);
+        assertThat(destination.getXCoordinate()).isEqualTo((float) 0.0);
+        assertThat(destination.getYCoordinate()).isEqualTo((float) 85.0);
+        assertThat(destination.getZoom()).isEqualTo((float) 0.0);
+
+        //assert coordinates
+        assertThat(page.getGotoLinks().get(0).getBounds()).hasSize(1);
+        Rect rect = page.getGotoLinks().get(0).getBounds().get(0);
+        assertThat(rect.left).isEqualTo(91);
+        assertThat(rect.top).isEqualTo(246);
+        assertThat(rect.right).isEqualTo(235);
+        assertThat(rect.bottom).isEqualTo(262);
+
+        page.close();
+        renderer.close();
     }
 
     private void assertSamplePdf(PdfRenderer renderer, PdfRenderer expectedRenderer) {

@@ -37,8 +37,10 @@ import static org.junit.Assert.assertThrows;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.graphics.pdf.PdfRendererPreV;
 import android.graphics.pdf.RenderParams;
+import android.graphics.pdf.content.PdfPageGotoLinkContent;
 import android.graphics.pdf.models.PageMatchBounds;
 import android.graphics.pdf.models.selection.PageSelection;
 import android.graphics.pdf.models.selection.SelectionBoundary;
@@ -559,6 +561,43 @@ public class PdfRendererPreVTest {
         }
     }
 
+    @Test
+    public void getPageGotoLinks_pageWithoutGotoLink() throws Exception {
+        PdfRendererPreV renderer = createPreVRenderer(SAMPLE_PDF, mContext, null);
+        PdfRendererPreV.Page page = renderer.openPage(0);
+
+        assertThat(page.getGotoLinks()).isEmpty();
+
+        page.close();
+        renderer.close();
+    }
+
+    @Test
+    public void getPageGotoLinks_pageWithGotoLink() throws Exception {
+        PdfRendererPreV renderer = createPreVRenderer(R.raw.sample_links, mContext, null);
+        PdfRendererPreV.Page page = renderer.openPage(0);
+
+        assertThat(page.getGotoLinks().size()).isEqualTo(1);
+        //assert destination
+        PdfPageGotoLinkContent.Destination destination = page.getGotoLinks().get(
+                0).getDestination();
+        assertThat(destination.getPageNumber()).isEqualTo(1);
+        assertThat(destination.getXCoordinate()).isEqualTo((float) 0.0);
+        assertThat(destination.getYCoordinate()).isEqualTo((float) 85.0);
+        assertThat(destination.getZoom()).isEqualTo((float) 0.0);
+
+        //assert coordinates
+        assertThat(page.getGotoLinks().get(0).getBounds()).hasSize(1);
+        Rect rect = page.getGotoLinks().get(0).getBounds().get(0);
+        assertThat(rect.left).isEqualTo(91);
+        assertThat(rect.top).isEqualTo(246);
+        assertThat(rect.right).isEqualTo(235);
+        assertThat(rect.bottom).isEqualTo(262);
+
+        page.close();
+        renderer.close();
+    }
+
     private void assertSamplePdf(PdfRendererPreV renderer, PdfRendererPreV expectedRenderer) {
         assertThat(renderer.getDocumentLinearizationType()).isEqualTo(
                 expectedRenderer.getDocumentLinearizationType());
@@ -614,6 +653,7 @@ public class PdfRendererPreVTest {
         assertThrows(IllegalStateException.class, page::close);
         assertThrows(IllegalStateException.class, page::getHeight);
         assertThrows(IllegalStateException.class, page::getWidth);
+        assertThrows(IllegalStateException.class, page::getGotoLinks);
         assertThrows(IllegalStateException.class, page::getLinkContents);
         assertThrows(IllegalStateException.class, page::getTextContents);
         assertThrows(IllegalStateException.class, page::getImageContents);
