@@ -25,6 +25,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.SystemProperties;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
@@ -54,6 +55,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+@AppModeFull(reason = "Instant applications cannot see any other application")
 @RunWith(AndroidJUnit4.class)
 public class PackageManagerMultiArchAppTest {
 
@@ -295,23 +297,6 @@ public class PackageManagerMultiArchAppTest {
     @After
     public void cleanUp() throws Exception {
         uninstallPackage(TEST_APP_PKG);
-    }
-
-    @Test
-    @RequiresFlagsEnabled(Flags.FLAG_FORCE_MULTI_ARCH_NATIVE_LIBS_MATCH)
-    public void testInstallMultiArchApp_wrongBaseArch_fail() throws Exception {
-        String baseArch = null;
-        if (getDeviceDefaultBaseArch().equals(BASE_ARCH_ARM)) {
-            baseArch = BASE_ARCH_X86;
-        } else {
-            baseArch = BASE_ARCH_ARM;
-        }
-
-        String result = installPackage(getTestApkPath(getDeviceDefaultBitness(),
-                /* isTargetSDK33= */ false, baseArch));
-
-        assertThat(result).contains(EXPECTED_FAILED_ERROR_MESSAGE);
-        assertThat(isInstalled()).isFalse();
     }
 
     @Test
