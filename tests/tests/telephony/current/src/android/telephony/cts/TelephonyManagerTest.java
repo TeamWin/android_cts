@@ -143,6 +143,7 @@ import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.TestThread;
+import com.android.compatibility.common.util.ThrowingRunnable;
 import com.android.internal.telephony.flags.Flags;
 import com.android.internal.telephony.uicc.IccUtils;
 
@@ -2928,6 +2929,46 @@ public class TelephonyManagerTest {
             fail("Expected SecurityException. App does not have carrier privileges");
         } catch (SecurityException e) {
         }
+    }
+
+    @Test
+    public void testSetLine1NumberUpdatesSubscriptionInfo() throws Exception {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION));
+
+        // get a random 10 digit number
+        final String randomLine1Number = String.format(
+                "%010d",
+                (long) (10_000_000_000L * Math.random()));
+
+        ThrowingRunnable r = () -> {
+            String originalLine1Number = mTelephonyManager.getLine1Number();
+            String originalAlpha = mTelephonyManager.getLine1AlphaTag();
+
+            try {
+                // Check to see whether the original Line1Number was overridden
+                mTelephonyManager.setLine1NumberForDisplay(null, null);
+                if (Objects.equals(originalLine1Number, mTelephonyManager.getLine1Number())) {
+                    // Number wasn't overridden
+                    originalLine1Number = null;
+                }
+                if (Objects.equals(originalAlpha, mTelephonyManager.getLine1AlphaTag())) {
+                    // Alpha tag wasn't overridden
+                    originalAlpha = null;
+                }
+
+                mTelephonyManager.setLine1NumberForDisplay(originalAlpha, randomLine1Number);
+                final SubscriptionInfo subInfo =
+                        mSubscriptionManager.getActiveSubscriptionInfo(mTestSub);
+                assertEquals(randomLine1Number, subInfo.getNumber());
+            } finally {
+                mTelephonyManager.setLine1NumberForDisplay(originalAlpha, originalLine1Number);
+            }
+        };
+
+        CarrierPrivilegeUtils.withCarrierPrivileges(
+                getContext(),
+                SubscriptionManager.getDefaultSubscriptionId(),
+                r);
     }
 
     /**
