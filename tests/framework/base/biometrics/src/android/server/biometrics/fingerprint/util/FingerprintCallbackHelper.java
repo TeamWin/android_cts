@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.biometrics.fingerprint;
+package android.server.biometrics.fingerprint.util;
 
 import android.app.Activity;
 import android.hardware.fingerprint.FingerprintManager;

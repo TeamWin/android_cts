@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.biometrics;
+package android.server.biometrics.util;
 
 import android.app.Activity;
 import android.hardware.biometrics.BiometricPrompt;
@@ -120,7 +120,7 @@ public class BiometricCallbackHelper extends BiometricPrompt.AuthenticationCallb
         updateJournal();
     }
 
-    void onNegativeButtonPressed() {
+    public void onNegativeButtonPressed() {
         Log.d(TAG, "onNegativeButtonPressed");
         mState.mNegativeButtonPressed = true;
         updateJournal();

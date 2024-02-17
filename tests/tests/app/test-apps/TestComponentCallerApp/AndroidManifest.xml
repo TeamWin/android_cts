@@ -21,6 +21,9 @@
     <permission android:name="android.permission.COMPONENT_CALLER_HELPER_UNUSED_PERMISSION" />
     <permission android:name="android.permission.COMPONENT_CALLER_HELPER_PATH_PROVIDER_READ_PERMISSION" />
 
+    <!-- To allow background activity launches for the tests -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+
     <application>
         <activity android:name=".TestInitialCallerActivity"
                   android:exported="true">

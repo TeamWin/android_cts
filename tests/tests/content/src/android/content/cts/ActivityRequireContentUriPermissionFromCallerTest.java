@@ -36,6 +36,7 @@ import android.content.ServiceConnection;
 import android.content.cts.contenturitestapp.IContentUriTestService;
 import android.net.Uri;
 import android.os.IBinder;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
@@ -83,6 +84,7 @@ import java.util.concurrent.TimeUnit;
  *         invoked via a broadcast sent from the activity.
  * </ol>
  */
+@AppModeFull
 @RequiresFlagsEnabled(android.security.Flags.FLAG_CONTENT_URI_PERMISSION_APIS)
 @RunWith(TestParameterInjector.class)
 public class ActivityRequireContentUriPermissionFromCallerTest {

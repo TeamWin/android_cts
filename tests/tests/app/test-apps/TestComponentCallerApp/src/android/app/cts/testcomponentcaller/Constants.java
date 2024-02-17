@@ -51,10 +51,14 @@ public class Constants {
     public static final int NONE_PROVIDED_USE_HELPER_APP_URI_LOCATION_ID = 0;
     public static final int URI_IN_DATA_LOCATION_ID = 1;
     public static final int URI_IN_CLIP_DATA_LOCATION_ID = 2;
+    public static final int URI_IN_EXTRA_STREAM_LOCATION_ID = 3;
+    public static final int URI_IN_ARRAY_LIST_EXTRA_STREAMS_LOCATION_ID = 4;
+    public static final int URI_IN_EXTRA_UNKNOWN_LOCATION_ID = 5;
 
     public static final String ACTION_ID = "actionId";
     public static final int START_TEST_ACTIVITY_ACTION_ID = 0;
     public static final int SEND_TEST_BROADCAST_ACTION_ID = 1;
+    public static final int TRY_TO_RETRIEVE_EXTRA_STREAM_REFERRER_NAME = 2;
 
     public static final String IS_NEW_INTENT = "isNewIntent";
 
@@ -64,5 +68,6 @@ public class Constants {
     public static final String EXTRA_ILLEGAL_ARG_EXCEPTION_CAUGHT =
             "illegalArgumentExceptionCaught";
     public static final String EXTRA_CHECK_CONTENT_URI_PERMISSION_RESULT = "permissionResult";
+    public static final String EXTRA_UNKNOWN = "unknown";
     public static final int INVALID_PERMISSION_RESULT = -2;
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.biometrics;
+package android.server.biometrics.util;
 
 import static com.android.server.biometrics.nano.BiometricServiceStateProto.*;
 
@@ -46,7 +46,7 @@ public class BiometricServiceState {
             STATE_ERROR_PENDING_SYSUI,
             STATE_SHOWING_DEVICE_CREDENTIAL})
     @Retention(RetentionPolicy.SOURCE)
-    @interface AuthSessionState {}
+    public @interface AuthSessionState {}
 
     @AuthSessionState public final int mState;
     @NonNull public final SensorStates mSensorStates;
