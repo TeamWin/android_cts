@@ -1534,7 +1534,7 @@ public class IntentTest {
                 mContext, 0, mIntent, PendingIntent.FLAG_IMMUTABLE).getIntentSender();
         target = Intent.createChooser(mIntent, null, sender);
         assertEquals(sender, target.getParcelableExtra(
-                Intent.EXTRA_CHOSEN_COMPONENT_INTENT_SENDER, IntentSender.class));
+                Intent.EXTRA_CHOOSER_RESULT_INTENT_SENDER, IntentSender.class));
 
         // Asser that setting the data URI *without* a permission granting flag *doesn't* copy
         // anything to ClipData.
