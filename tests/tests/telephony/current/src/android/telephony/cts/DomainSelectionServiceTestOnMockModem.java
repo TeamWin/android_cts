@@ -40,6 +40,7 @@ import static junit.framework.Assert.assertTrue;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeNoException;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.annotation.NonNull;
@@ -47,6 +48,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.SystemProperties;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
@@ -101,6 +103,7 @@ public class DomainSelectionServiceTestOnMockModem extends DomainSelectionCallin
     private static MockModemManager sMockModemManager;
 
     private static boolean sSupportDomainSelection = false;;
+    private static boolean sDisableCall = false;
 
     static {
         initializeLatches();
@@ -129,6 +132,8 @@ public class DomainSelectionServiceTestOnMockModem extends DomainSelectionCallin
         if (!sSupportDomainSelection) {
             return;
         }
+
+        sDisableCall = SystemProperties.getBoolean("ro.telephony.disable-call", false);
 
         MockModemManager.enforceMockModemDeveloperSetting();
         sMockModemManager = new MockModemManager();
@@ -260,6 +265,8 @@ public class DomainSelectionServiceTestOnMockModem extends DomainSelectionCallin
     public void testDomainSelectionServiceEmergencyCallReselectDomain() throws Exception {
         if (VDBG) Log.d(LOG_TAG, "testDomainSelectionServiceEmergencyCallReselectDomain");
 
+        assumeFalse(sDisableCall);
+
         setupForEmergencyCalling();
 
         TestDomainSelectionService testService = sServiceConnector.getTestService();
@@ -300,6 +307,8 @@ public class DomainSelectionServiceTestOnMockModem extends DomainSelectionCallin
     @Test
     public void testDomainSelectionServiceEmergencyCall() throws Exception {
         if (VDBG) Log.d(LOG_TAG, "testDomainSelectionServiceEmergencyCall");
+
+        assumeFalse(sDisableCall);
 
         setupForEmergencyCalling();
 
