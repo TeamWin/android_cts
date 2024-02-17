@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  ~ Copyright (C) 2020 The Android Open Source Project
+  ~ Copyright (C) 2024 The Android Open Source Project
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -16,17 +16,19 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.server.biometrics.fingerprint">
-
-    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
-
-    <queries>
-        <package android:name="android.server.biometrics.fingerprint.cts" />
-    </queries>
+    package="android.server.biometrics.fingerprint.cts">
 
     <application>
-        <activity android:name="android.server.biometrics.fingerprint.AuthOnCreateActivity"
+        <uses-library android:name="android.test.runner" />
+
+        <provider android:name="android.server.wm.TestJournalProvider"
+            android:authorities="android.server.wm.testjournalprovider"
             android:exported="true"/>
     </application>
+
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
+        android:targetPackage="android.server.biometrics.fingerprint.cts"
+        android:label="CTS tests for FingerprintManager">
+    </instrumentation>
 
 </manifest>

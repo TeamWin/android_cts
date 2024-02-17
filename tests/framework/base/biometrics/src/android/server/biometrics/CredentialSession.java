@@ -16,6 +16,8 @@
 
 package android.server.biometrics;
 
+import android.server.biometrics.util.Utils;
+
 public class CredentialSession implements AutoCloseable {
 
     private static final String SET_PASSWORD = "locksettings set-pin 1234";
