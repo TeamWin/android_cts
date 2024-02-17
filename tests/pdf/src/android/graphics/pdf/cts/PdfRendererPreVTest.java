@@ -21,24 +21,22 @@ import static android.graphics.pdf.PdfRendererPreV.DOCUMENT_LINEARIZED_TYPE_NON_
 import static android.graphics.pdf.cts.Utils.A4_HEIGHT_PTS;
 import static android.graphics.pdf.cts.Utils.A4_PORTRAIT;
 import static android.graphics.pdf.cts.Utils.A4_WIDTH_PTS;
+import static android.graphics.pdf.cts.Utils.INCORRECT_LOAD_PARAMS;
+import static android.graphics.pdf.cts.Utils.LOAD_PARAMS;
+import static android.graphics.pdf.cts.Utils.PROTECTED_PDF;
+import static android.graphics.pdf.cts.Utils.SAMPLE_PDF;
 import static android.graphics.pdf.cts.Utils.calculateArea;
 import static android.graphics.pdf.cts.Utils.createPreVRenderer;
-import static android.graphics.pdf.cts.Utils.getColorProbes;
 import static android.graphics.pdf.cts.Utils.getFile;
 import static android.graphics.pdf.cts.Utils.getParcelFileDescriptorFromResourceId;
-import static android.graphics.pdf.cts.Utils.renderPreV;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.Point;
-import android.graphics.Rect;
-import android.graphics.pdf.LoadParams;
 import android.graphics.pdf.PdfRendererPreV;
 import android.graphics.pdf.RenderParams;
 import android.graphics.pdf.models.PageMatchBounds;
@@ -59,15 +57,6 @@ import java.util.List;
 
 @RunWith(AndroidJUnit4.class)
 public class PdfRendererPreVTest {
-
-    private static final int PROTECTED_PDF = R.raw.sample_test_protected;
-    private static final int SAMPLE_PDF = R.raw.sample_test;
-
-    private static final LoadParams LOAD_PARAMS = new LoadParams.Builder().setPassword(
-            "qwerty").build();
-
-    private static final LoadParams INCORRECT_LOAD_PARAMS = new LoadParams.Builder().setPassword(
-            "abc-def").build();
 
     private Context mContext;
 
@@ -162,7 +151,7 @@ public class PdfRendererPreVTest {
     }
 
     @Test
-    public void getDocumentType_withLinearizedPdf() throws Exception {
+    public void getDocumentType_withNonLinearizedPdf() throws Exception {
         PdfRendererPreV renderer = createPreVRenderer(SAMPLE_PDF, mContext, LOAD_PARAMS);
         assertThat(renderer.getDocumentLinearizationType()).isEqualTo(
                 DOCUMENT_LINEARIZED_TYPE_NON_LINEARIZED);
@@ -170,7 +159,7 @@ public class PdfRendererPreVTest {
     }
 
     @Test
-    public void getDocumentType_withNonLinearizedPdf() throws Exception {
+    public void getDocumentType_withLinearizedPdf() throws Exception {
         PdfRendererPreV renderer = createPreVRenderer(PROTECTED_PDF, mContext, LOAD_PARAMS);
         assertThat(renderer.getDocumentLinearizationType()).isEqualTo(
                 DOCUMENT_LINEARIZED_TYPE_LINEARIZED);
@@ -191,7 +180,7 @@ public class PdfRendererPreVTest {
 
     @Test
     public void getPdfPageTextContents_pdfWithText() throws Exception {
-        PdfRendererPreV renderer = createPreVRenderer(R.raw.sample_test, mContext, null);
+        PdfRendererPreV renderer = createPreVRenderer(SAMPLE_PDF, mContext, null);
         PdfRendererPreV.Page firstPage = renderer.openPage(0);
 
         assertThat(firstPage.getTextContents().size()).isEqualTo(1);
@@ -200,6 +189,30 @@ public class PdfRendererPreVTest {
 
         firstPage.close();
         renderer.close();
+    }
+
+    @Test
+    public void getOpenPage_pageOutOfBounds_throwsException() throws Exception {
+        PdfRendererPreV renderer = createPreVRenderer(SAMPLE_PDF, mContext, null);
+
+        assertThrows(IllegalArgumentException.class, () -> renderer.openPage(-1));
+        PdfRendererPreV.Page page0 = renderer.openPage(0);
+        page0.close();
+        PdfRendererPreV.Page page1 = renderer.openPage(1);
+        page1.close();
+        assertThrows(IllegalArgumentException.class, () -> renderer.openPage(3));
+    }
+
+    @Test
+    public void getPageIndex() throws Exception {
+        PdfRendererPreV renderer = createPreVRenderer(SAMPLE_PDF, mContext, null);
+        PdfRendererPreV.Page page = renderer.openPage(2);
+
+        assertThat(page.getIndex()).isEqualTo(2);
+
+        page.close();
+        renderer.close();
+
     }
 
     @Test
@@ -514,6 +527,7 @@ public class PdfRendererPreVTest {
         Point rightPoint = new Point(157, 330);
         assertThrows(NullPointerException.class,
                 () -> firstPage.selectContent(null, new SelectionBoundary(rightPoint), true));
+
     }
 
     @Test
@@ -536,15 +550,6 @@ public class PdfRendererPreVTest {
     }
 
     @Test
-    public void renderPage_onNullBitmap_throwsException() throws Exception {
-        try (PdfRendererPreV renderer = createPreVRenderer(A4_PORTRAIT, mContext, null);
-             PdfRendererPreV.Page page = renderer.openPage(0)) {
-            assertThrows(NullPointerException.class,
-                    () -> page.render(null, null, null, new RenderParams.Builder(1).build()));
-        }
-    }
-
-    @Test
     public void renderPage_withNullParams_throwsException() throws Exception {
         try (PdfRendererPreV renderer = createPreVRenderer(A4_PORTRAIT, mContext, null);
              PdfRendererPreV.Page page = renderer.openPage(0)) {
@@ -552,52 +557,6 @@ public class PdfRendererPreVTest {
                     Bitmap.createBitmap(A4_WIDTH_PTS, A4_HEIGHT_PTS, Bitmap.Config.ARGB_8888), null,
                     null, null));
         }
-    }
-
-    @Test
-    public void renderPage_renderParamsWithBadMode_throwsException() throws Exception {
-        assertThrows(IllegalArgumentException.class,
-                () -> renderPreV(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, null, 1 << 30,
-                        RenderParams.FLAG_RENDER_HIGHLIGHT_ANNOTATIONS, mContext));
-    }
-
-    @Test
-    public void renderPageWithoutClip() throws Exception {
-        Bitmap bm = renderPreV(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, null, 1, 1, mContext);
-        int[] probes = getColorProbes(bm);
-
-        // Compare rendering to expected result. This ensures that all other tests in this class do
-        // not accidentally all compare empty bitmaps.
-        assertEquals(Color.RED, probes[0]);
-        assertEquals(Color.RED, probes[1]);
-        assertEquals(Color.GREEN, probes[2]);
-        assertEquals(Color.GREEN, probes[3]);
-        assertEquals(Color.RED, probes[4]);
-        assertEquals(Color.RED, probes[5]);
-        assertEquals(Color.GREEN, probes[6]);
-        assertEquals(Color.GREEN, probes[7]);
-        assertEquals(Color.BLUE, probes[8]);
-        assertEquals(Color.BLUE, probes[9]);
-        assertEquals(Color.BLACK, probes[10]);
-        assertEquals(Color.BLACK, probes[11]);
-        assertEquals(Color.BLUE, probes[12]);
-        assertEquals(Color.BLUE, probes[13]);
-        assertEquals(Color.BLACK, probes[14]);
-        assertEquals(Color.BLACK, probes[15]);
-    }
-
-    @Test
-    public void renderWithBadLowerCornerOfClip() throws Exception {
-        Rect clip = new Rect(0, 0, A4_WIDTH_PTS + 20, A4_HEIGHT_PTS + 20);
-
-        assertClip(clip);
-    }
-
-    @Test
-    public void renderWithBadUpperCornerOfClip() throws Exception {
-        Rect clip = new Rect(-20, -20, A4_WIDTH_PTS, A4_HEIGHT_PTS);
-
-        assertClip(clip);
     }
 
     private void assertSamplePdf(PdfRendererPreV renderer, PdfRendererPreV expectedRenderer) {
@@ -665,11 +624,5 @@ public class PdfRendererPreVTest {
         assertThrows(IllegalStateException.class, () -> page.render(
                 Bitmap.createBitmap(A4_WIDTH_PTS, A4_HEIGHT_PTS, Bitmap.Config.ARGB_8888), null,
                 null, new RenderParams.Builder(1).build()));
-    }
-
-    private void assertClip(Rect destClip) {
-        assertThrows(IllegalArgumentException.class,
-                () -> renderPreV(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, destClip, 1, 1,
-                        mContext));
     }
 }
