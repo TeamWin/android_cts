@@ -38,6 +38,7 @@ _RADIUS_RTOL_MIN_FD = 0.15
 OFFSET_RTOL = 0.15
 RADIUS_RTOL = 0.10
 ZOOM_MAX_THRESH = 10.0
+ZOOM_RTOL = 0.01  # variation of zoom ratio between capture result vs req
 
 
 def get_test_tols_and_cap_size(cam, props, chart_distance, debug):
@@ -209,6 +210,29 @@ def find_center_circle(
   return circle
 
 
+def preview_zoom_data_to_string(test_data):
+  """Returns formatted string from test_data.
+
+  Floats are capped at 2 floating points.
+
+  Args:
+    test_data: dict; contains the detected circles for each zoom value
+
+  Returns:
+    Formatted String
+  """
+  output = []
+  for key, value in test_data.items():
+    if isinstance(value, float):
+      output.append(f'{key}: {value:.2f}')
+    elif isinstance(value, list):
+      output.append(f"{key}: [{', '.join([f'{item:.2f}' for item in value])}]")
+    else:
+      output.append(f'{key}: {value}')
+
+  return ', '.join(output)
+
+
 def verify_zoom_results(test_data, size, z_max, z_min):
   """Verify that the output images' zoom level reflects the correct zoom ratios.
 
@@ -234,8 +258,10 @@ def verify_zoom_results(test_data, size, z_max, z_min):
     zoom_max_thresh = z_max_ratio
   test_data_max_z = (test_data[max(test_data.keys())]['z'] /
                      test_data[min(test_data.keys())]['z'])
-  logging.debug('test zoom ratio max: %.2f', test_data_max_z)
-  if test_data_max_z < zoom_max_thresh:
+  logging.debug('test zoom ratio max: %.2f vs threshold %.2f',
+                test_data_max_z, zoom_max_thresh)
+
+  if not math.isclose(test_data_max_z, zoom_max_thresh, rel_tol=ZOOM_RTOL):
     test_failed = True
     e_msg = (f'Max zoom ratio tested: {test_data_max_z:.4f}, '
              f'range advertised min: {z_min}, max: {z_max} '
@@ -247,6 +273,8 @@ def verify_zoom_results(test_data, size, z_max, z_min):
   z_0 = float(test_data[0]['z'])
 
   for i, data in test_data.items():
+    logging.debug(' ')  # add blank line between frames
+    logging.debug('Frame# %d {%s}', i, preview_zoom_data_to_string(data))
     logging.debug('Zoom: %.2f, fl: %.2f', data['z'], data['fl'])
     offset_xy = [(data['circle'][0] - size[0] // 2),
                  (data['circle'][1] - size[1] // 2)]
@@ -260,18 +288,30 @@ def verify_zoom_results(test_data, size, z_max, z_min):
                   z_ratio, radius_ratio)
     if not math.isclose(z_ratio, radius_ratio, rel_tol=data['r_tol']):
       test_failed = True
-      e_msg = (f"Circle radius in capture taken at {z_0:.2f} "
+      e_msg = (f"{i} Circle radius in capture taken at {z_0:.2f} "
                "was expected to increase in capture taken at "
                f"{data['z']:.2f} by {data['z']:.2f}/{z_0:.2f}="
                f"{z_ratio:.2f}, but it increased by "
                f"{radius_ratio:.2f}. RTOL: {data['r_tol']}")
       logging.error(e_msg)
+    else:
+      d_msg = (f"{i} Circle radius in capture taken at {z_0:.2f} "
+               "was expected to increase in capture taken at "
+               f"{data['z']:.2f} by {data['z']:.2f}/{z_0:.2f}="
+               f"{z_ratio:.2f}. It is increased by "
+               f"{radius_ratio:.2f}. RTOL: {data['r_tol']}")
+      logging.debug(d_msg)
 
     # check relative offset against init vals w/ no focal length change
     if i == 0 or test_data[i-1]['fl'] != data['fl']:  # set init values
       z_init = float(data['z'])
       offset_hypot_init = math.hypot(offset_xy[0], offset_xy[1])
       logging.debug('offset_hypot_init: %.3f', offset_hypot_init)
+      d_msg = (f"-- init {i} zoom: {data['z']:.2f}, "
+               f'offset init: {offset_hypot_init:.1f}, '
+               f'offset rel: {math.hypot(offset_xy[0], offset_xy[1]):.1f}, '
+               f'zoom: {z_ratio:.1f} ')
+      logging.debug(d_msg)
     else:  # check
       z_ratio = data['z'] / z_init
       offset_hypot_rel = math.hypot(offset_xy[0], offset_xy[1]) / z_ratio
@@ -281,11 +321,20 @@ def verify_zoom_results(test_data, size, z_max, z_min):
       if not math.isclose(offset_hypot_init, offset_hypot_rel,
                           rel_tol=rel_tol, abs_tol=_OFFSET_ATOL):
         test_failed = True
-        e_msg = (f"zoom: {data['z']:.2f}, "
+        e_msg = (f"{i} zoom: {data['z']:.2f}, "
                  f'offset init: {offset_hypot_init:.4f}, '
                  f'offset rel: {offset_hypot_rel:.4f}, '
+                 f'Zoom: {z_ratio:.1f}, '
                  f'RTOL: {rel_tol}, ATOL: {_OFFSET_ATOL}')
         logging.error(e_msg)
+      else:
+        d_msg = (f"{i} zoom: {data['z']:.2f}, "
+                 f'offset init: {offset_hypot_init:.1f}, '
+                 f'offset rel: {offset_hypot_rel:.1f}, '
+                 f'offset dist: {math.hypot(offset_xy[0], offset_xy[1]):.1f}, '
+                 f'Zoom: {z_ratio:.1f}, '
+                 f'RTOL: {rel_tol}, ATOL: {_OFFSET_ATOL}')
+        logging.debug(d_msg)
 
   return not test_failed
 
