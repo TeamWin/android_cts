@@ -27,6 +27,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -35,9 +36,11 @@ import android.nfc.Flags;
 import android.nfc.cardemulation.AidGroup;
 import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
+import android.nfc.cardemulation.HostApduService;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
+import android.os.UserHandle;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
@@ -55,6 +58,7 @@ import org.mockito.MockitoAnnotations;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.List;
 
 @RequiresFlagsEnabled(Flags.FLAG_ENABLE_NFC_MAINLINE)
 @RunWith(AndroidJUnit4.class)
@@ -117,6 +121,48 @@ public class ApduServiceInfoTest {
         assertEquals(apduServiceInfo.getDescription(), "");
         assertEquals(apduServiceInfo.getUid(), 0);
         assertEquals(apduServiceInfo.getSettingsActivityName(), "");
+    }
+
+    private ResolveInfo findForegroundServiceResolveInfo() {
+        final PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
+        List<ResolveInfo> resolvedServices = pm.queryIntentServicesAsUser(
+                new Intent(HostApduService.SERVICE_INTERFACE),
+                PackageManager.ResolveInfoFlags.of(PackageManager.GET_META_DATA),
+                UserHandle.SYSTEM);
+        for (ResolveInfo resolvedService : resolvedServices) {
+            ServiceInfo si = resolvedService.serviceInfo;
+            ComponentName componentName = new ComponentName(si.packageName, si.name);
+            if (componentName.equals(WalletRoleTestUtils.getForegroundService())) {
+                return resolvedService;
+            }
+        }
+        return null;
+    }
+
+    @Test
+    public void test_Constructor_ParseManifest_ForegroundService() throws Exception {
+        final PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
+        ResolveInfo resolvedService = findForegroundServiceResolveInfo();
+        assertNotNull(resolvedService);
+        ApduServiceInfo apduServiceInfo = new ApduServiceInfo(pm, resolvedService, true);
+
+        assertEquals(apduServiceInfo.getComponent(), WalletRoleTestUtils.getForegroundService());
+        assertNull(apduServiceInfo.getOffHostSecureElement());
+        ArrayList<String> aids = new ArrayList<String>();
+        aids.add("A000000004101011");
+        aids.add("A000000004101012");
+        aids.add("A000000004101013");
+        AidGroup expectedAidGroup = new AidGroup(aids, CardEmulation.CATEGORY_PAYMENT);
+        assertEquals(apduServiceInfo.getAids(), aids);
+        AidGroup actualAidGroup = apduServiceInfo.getAidGroups().get(0);
+        assertEquals(expectedAidGroup.getCategory(), actualAidGroup.getCategory());
+        assertEquals(expectedAidGroup.getAids(), actualAidGroup.getAids());
+        assertEquals(apduServiceInfo.getCategoryForAid("A000000004101011"), CATEGORY_PAYMENT);
+        assertTrue(apduServiceInfo.hasCategory(CATEGORY_PAYMENT));
+        assertTrue(apduServiceInfo.isOnHost());
+        assertFalse(apduServiceInfo.requiresUnlock());
+        assertTrue(apduServiceInfo.requiresScreenOn());
+        assertEquals(apduServiceInfo.getDescription(), "Foreground CTS Nfc Test Service");
     }
 
     @Test
