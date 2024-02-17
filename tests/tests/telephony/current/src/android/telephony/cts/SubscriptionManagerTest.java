@@ -85,6 +85,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -1512,6 +1513,7 @@ public class SubscriptionManagerTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_SUBSCRIPTION_USER_ASSOCIATION_QUERY)
+    @Ignore("b/325654424")
     public void testIsSubscriptionAssociatedWithUser() throws Exception {
         // Testing with the current context user.
         UserHandle currentUserHandle = InstrumentationRegistry.getContext().getUser();

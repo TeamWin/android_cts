@@ -25,7 +25,8 @@ import android.app.usage.UsageEvents.Event;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.pm.cts.shortcutmanager.common.Constants;
-import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.ShellIdentityUtils;

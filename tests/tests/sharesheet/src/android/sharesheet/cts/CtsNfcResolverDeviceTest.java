@@ -29,11 +29,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.nfc.Flags;
+import android.nfc.NfcAdapter;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
-import android.service.chooser.CustomChoosers;
-import android.service.chooser.Flags;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -60,9 +60,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * CTS tests for the NFC-customized resolver launched via {@link CustomChoosers#showNfcResolver()}.
+ * CTS tests for the NFC-customized resolver.
  */
-@RequiresFlagsEnabled(Flags.FLAG_SUPPORT_NFC_RESOLVER)
+@RequiresFlagsEnabled(Flags.FLAG_ENABLE_NFC_MAINLINE)
 @RunWith(AndroidJUnit4.class)
 public class CtsNfcResolverDeviceTest {
     @Rule
@@ -94,6 +94,19 @@ public class CtsNfcResolverDeviceTest {
     private String mAppLabel,
             mActivityTesterAppLabel, mActivityTesterActivityLabel,
             mIntentFilterTesterAppLabel, mIntentFilterTesterIntentFilterLabel;
+
+
+    private static Intent createNfcResolverIntent(
+            Intent target,
+            CharSequence title,
+            List<ResolveInfo> resolutionList) {
+        Intent resolverIntent = new Intent(NfcAdapter.ACTION_SHOW_NFC_RESOLVER);
+        resolverIntent.putExtra(Intent.EXTRA_INTENT, target);
+        resolverIntent.putExtra(Intent.EXTRA_TITLE, title);
+        resolverIntent.putParcelableArrayListExtra(
+                NfcAdapter.EXTRA_RESOLVE_INFOS, new ArrayList<>(resolutionList));
+        return resolverIntent;
+    }
 
     /**
      * To validate Sharesheet API and API behavior works as intended, UI tests are required. It is
@@ -134,7 +147,7 @@ public class CtsNfcResolverDeviceTest {
         // wait for the UI to load. Do this by resolving which activity consumes the share intent.
         // There must be a system Sharesheet or fail, otherwise fetch its package.
         Intent shareIntent =
-                CustomChoosers.createNfcResolverIntent(new Intent(), null, new ArrayList<>());
+                createNfcResolverIntent(new Intent(), null, new ArrayList<>());
         ResolveInfo shareRi = pm.resolveActivity(shareIntent, PackageManager.MATCH_DEFAULT_ONLY);
 
         assertNotNull(shareRi);
@@ -178,7 +191,7 @@ public class CtsNfcResolverDeviceTest {
                 .collect(Collectors.toList());
 
         runAndExecuteCleanupBeforeAnyThrow(() -> {
-            Intent resolverIntent = CustomChoosers.createNfcResolverIntent(
+            Intent resolverIntent = createNfcResolverIntent(
                     sendIntent, title, newTargets);
             resolverIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             mContext.startActivity(resolverIntent);

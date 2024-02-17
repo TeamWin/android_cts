@@ -148,6 +148,7 @@ public enum TelecomTestApp implements Parcelable {
                             PhoneAccount.CAPABILITY_SUPPORTS_TRANSACTIONAL_OPERATIONS
                                     | PhoneAccount.CAPABILITY_SUPPORTS_VIDEO_CALLING
                                     | PhoneAccount.CAPABILITY_VIDEO_CALLING
+                                    | PhoneAccount.CAPABILITY_SELF_MANAGED
                     ).build();
 
     public static final PhoneAccount TRANSACTIONAL_CLONE_ACCOUNT =

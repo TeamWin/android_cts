@@ -31,8 +31,10 @@ import static org.junit.Assume.assumeTrue;
 
 import android.hardware.biometrics.BiometricPrompt;
 import android.hardware.biometrics.BiometricTestSession;
+import android.hardware.biometrics.Flags;
 import android.hardware.biometrics.SensorProperties;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.server.wm.TestJournalProvider;
 import android.server.wm.WindowManagerState;
 import android.util.Log;
@@ -348,6 +350,7 @@ public class BiometricActivityTests extends BiometricTestBase {
                     + "BiometricPrompt.Builder#setAllowedAuthenticators",
             "android.hardware.biometrics."
                     + "BiometricPrompt#authenticate"})
+    @RequiresFlagsDisabled(Flags.FLAG_CUSTOM_BIOMETRIC_PROMPT)
     @Test
     public void testBiometricOrCredential_credentialButtonInvoked_biometricNotEnrolled()
             throws Exception {

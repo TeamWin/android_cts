@@ -25,24 +25,28 @@ import android.os.Bundle;
 import android.util.Log;
 import android.voiceinteraction.service.MainInteractionSession;
 
-import java.util.concurrent.CountDownLatch;
+import androidx.annotation.Nullable;
+
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class VoiceInteractionTestReceiver extends BroadcastReceiver {
 
     private static final String TAG = VoiceInteractionTestReceiver.class.getSimpleName();
 
-    private static CountDownLatch sServiceStartedLatch = new CountDownLatch(1);
-    private static Intent sReceivedIntent;
-    private static CountDownLatch sScreenshotReceivedLatch = new CountDownLatch(1);
-    private static CountDownLatch sAssistDataReceivedLatch = new CountDownLatch(1);
-    private static CountDownLatch sOnShowReceivedLatch = new CountDownLatch(1);
+    private static LinkedBlockingQueue<Intent> sServiceStartedQueue = new LinkedBlockingQueue<>();
+    private static LinkedBlockingQueue<Intent> sScreenshotReceivedQueue =
+            new LinkedBlockingQueue<>();
+    private static LinkedBlockingQueue<Intent> sAssistDataReceivedQueue =
+            new LinkedBlockingQueue<>();
+    private static LinkedBlockingQueue<Intent> sOnShowReceivedQueue = new LinkedBlockingQueue<>();
 
     public static void waitSessionStarted(long timeout, TimeUnit unit) throws InterruptedException {
-        if (!sServiceStartedLatch.await(timeout, unit)) {
+        Intent intent = sServiceStartedQueue.poll(timeout, unit);
+        if (intent == null) {
             fail("Timed out waiting for session to start");
         }
-        String error = sReceivedIntent.getStringExtra("error");
+        String error = intent.getStringExtra("error");
         if (error != null) {
             fail(error);
         }
@@ -51,60 +55,62 @@ public class VoiceInteractionTestReceiver extends BroadcastReceiver {
     /** Waits for onHandleScreenshot being called. */
     public static boolean waitScreenshotReceived(long timeout, TimeUnit unit)
             throws InterruptedException {
-        if (!sScreenshotReceivedLatch.await(timeout, unit)) {
+        Intent intent = sScreenshotReceivedQueue.poll(timeout, unit);
+        if (intent == null) {
             // Timeout. Assume this means no screenshot is sent to VoiceInteractionService.
             return false;
         }
-        if (!sReceivedIntent.hasExtra(MainInteractionSession.EXTRA_RECEIVED)) {
+        if (!intent.hasExtra(MainInteractionSession.EXTRA_RECEIVED)) {
             throw new IllegalStateException("Expect EXTRA_RECEIVED");
         }
-        return sReceivedIntent.getBooleanExtra(MainInteractionSession.EXTRA_RECEIVED, false);
+        return intent.getBooleanExtra(MainInteractionSession.EXTRA_RECEIVED, false);
     }
 
     /** Waits for onHandleAssist being called. */
     public static boolean waitAssistDataReceived(long timeout, TimeUnit unit)
             throws InterruptedException {
-        if (!sAssistDataReceivedLatch.await(timeout, unit)) {
+        Intent intent = sAssistDataReceivedQueue.poll(timeout, unit);
+        if (intent == null) {
             // Timeout. Assume this means no assist data is sent to VoiceInteractionService.
             return false;
         }
-        if (!sReceivedIntent.hasExtra(MainInteractionSession.EXTRA_RECEIVED)) {
+        if (!intent.hasExtra(MainInteractionSession.EXTRA_RECEIVED)) {
             throw new IllegalStateException("Expect EXTRA_RECEIVED");
         }
-        return sReceivedIntent.getBooleanExtra(MainInteractionSession.EXTRA_RECEIVED, false);
+        return intent.getBooleanExtra(MainInteractionSession.EXTRA_RECEIVED, false);
     }
 
     /** Waits for onShow being called. */
+    @Nullable
     public static Bundle waitOnShowReceived(long timeout, TimeUnit unit)
             throws InterruptedException {
-        if (!sOnShowReceivedLatch.await(timeout, unit)) {
+        Intent intent = sOnShowReceivedQueue.poll(timeout, unit);
+        if (intent == null) {
             // Timeout. Assume this means no assist data is sent to VoiceInteractionService.
             return null;
         }
-        return sReceivedIntent.getExtras();
+        return intent.getExtras();
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.i(TAG, "Got broadcast that MainInteractionService started");
-        sReceivedIntent = intent;
+        Log.i(TAG, "Got broadcast: " + intent);
         switch (intent.getAction()) {
-            case MainInteractionSession.ACTION_SESSION_STARTED -> sServiceStartedLatch.countDown();
-            case MainInteractionSession.ACTION_SCREENSHOT_RECEIVED ->
-                    sScreenshotReceivedLatch.countDown();
-            case MainInteractionSession.ACTION_ASSIST_DATA_RECEIVED ->
-                    sAssistDataReceivedLatch.countDown();
-            case MainInteractionSession.ACTION_ON_SHOW_RECEIVED ->
-                    sOnShowReceivedLatch.countDown();
+            case MainInteractionSession.ACTION_SESSION_STARTED -> sServiceStartedQueue.add(intent);
+            case MainInteractionSession.ACTION_SCREENSHOT_RECEIVED -> sScreenshotReceivedQueue.add(
+                    intent);
+            case MainInteractionSession.ACTION_ASSIST_DATA_RECEIVED -> sAssistDataReceivedQueue.add(
+                    intent);
+            case MainInteractionSession.ACTION_ON_SHOW_RECEIVED -> sOnShowReceivedQueue.add(intent);
         }
     }
 
     /** Resets the states. */
     public static void reset() {
-        sReceivedIntent = null;
-        sServiceStartedLatch = new CountDownLatch(1);
-        sScreenshotReceivedLatch = new CountDownLatch(1);
-        sAssistDataReceivedLatch = new CountDownLatch(1);
-        sOnShowReceivedLatch = new CountDownLatch(1);
+        sServiceStartedQueue = new LinkedBlockingQueue<>();
+        sScreenshotReceivedQueue = new LinkedBlockingQueue<>();
+        sAssistDataReceivedQueue = new LinkedBlockingQueue<>();
+        sOnShowReceivedQueue = new LinkedBlockingQueue<>();
+
     }
 }

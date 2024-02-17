@@ -27,13 +27,6 @@ import org.junit.Test;
 import java.util.List;
 
 public class PropertyNotAvailableErrorCodeTest {
-    private static final int STATUS_NOT_AVAILABLE = 3;
-    private static final int STATUS_NOT_AVAILABLE_DISABLED = 6;
-    private static final int STATUS_NOT_AVAILABLE_SPEED_LOW = 7;
-    private static final int STATUS_NOT_AVAILABLE_SPEED_HIGH = 8;
-    private static final int STATUS_NOT_AVAILABLE_POOR_VISIBILITY = 9;
-    private static final int STATUS_NOT_AVAILABLE_SAFETY = 10;
-
     @Test
     public void testToString() {
         assertThat(PropertyNotAvailableErrorCode.toString(
@@ -64,7 +57,7 @@ public class PropertyNotAvailableErrorCodeTest {
             String propertyNotAvailableErrorCodeString =
                     PropertyNotAvailableErrorCode.toString(errorCode);
             assertWithMessage("%s should start with ", propertyNotAvailableErrorCodeString).that(
-                    propertyNotAvailableErrorCodeString.startsWith("")).isTrue();
+                    propertyNotAvailableErrorCodeString.startsWith("NOT")).isTrue();
         }
     }
 }

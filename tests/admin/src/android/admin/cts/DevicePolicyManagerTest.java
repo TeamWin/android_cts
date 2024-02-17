@@ -40,18 +40,19 @@ import android.provider.Settings;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.Suppress;
 import android.util.Log;
+
+import androidx.test.filters.Suppress;
 
 import java.io.ByteArrayInputStream;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
 /**
  * TODO: Make sure DO APIs are not called by PO.
  * Test that exercises {@link DevicePolicyManager}. The test requires that the

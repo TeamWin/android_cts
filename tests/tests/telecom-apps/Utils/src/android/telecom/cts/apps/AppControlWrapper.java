@@ -262,6 +262,19 @@ public class AppControlWrapper {
         return null;
     }
 
+    /**
+     * Fetch all the PhoneAccounts associated with the application.
+     */
+    public List<PhoneAccount> getRegisteredPhoneAccounts() throws RemoteException {
+        Log.i(TAG, "getRegisteredPhoneAccounts");
+        try {
+            return mBinder.getRegisteredPhoneAccounts();
+        } catch (RemoteException e) {
+            handleRemoteException(e, "getRegisteredPhoneAccounts");
+        }
+        return null;
+    }
+
     private void handleRemoteException(RemoteException e, String callingMethod)
             throws RemoteException {
         if (e.getClass().equals(DeadObjectException.class)) {

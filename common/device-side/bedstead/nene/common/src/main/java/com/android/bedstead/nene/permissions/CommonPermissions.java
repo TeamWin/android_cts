@@ -1890,6 +1890,9 @@ public class CommonPermissions {
     public static final String MANAGE_DEVICE_POLICY_AIRPLANE_MODE = "android.permission.MANAGE_DEVICE_POLICY_AIRPLANE_MODE";
     /** See {@link Manifest#MANAGE_DEVICE_POLICY_MOBILE_NETWORK} */
     public static final String MANAGE_DEVICE_POLICY_MOBILE_NETWORK = "android.permission.MANAGE_DEVICE_POLICY_MOBILE_NETWORK";
+    /** See {@link Manifest#MANAGE_DEVICE_POLICY_MANAGED_SUBSCRIPTIONS}*/
+    public static final String MANAGE_DEVICE_POLICY_MANAGED_SUBSCRIPTIONS =
+            "android.permission.MANAGE_DEVICE_POLICY_MANAGED_SUBSCRIPTIONS";
     /** See {@link Manifest#MANAGE_DEVICE_POLICY_PHYSICAL_MEDIA} */
     public static final String MANAGE_DEVICE_POLICY_PHYSICAL_MEDIA = "android.permission.MANAGE_DEVICE_POLICY_PHYSICAL_MEDIA";
     /** See {@link Manifest#MANAGE_DEVICE_POLICY_SMS} */

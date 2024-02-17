@@ -27,10 +27,10 @@ import android.content.Intent;
 import android.content.pm.cts.shortcutmanager.common.Constants;
 import android.content.pm.cts.shortcutmanager.common.ReplyUtil;
 import android.permission.cts.PermissionUtils;
-import android.test.suitebuilder.annotation.SmallTest;
-import android.test.suitebuilder.annotation.Suppress;
 import android.view.KeyEvent;
 
+import androidx.test.filters.SmallTest;
+import androidx.test.filters.Suppress;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;

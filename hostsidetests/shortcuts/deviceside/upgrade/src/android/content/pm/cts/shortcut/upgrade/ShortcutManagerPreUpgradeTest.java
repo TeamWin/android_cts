@@ -22,8 +22,9 @@ import android.content.pm.ShortcutInfo;
 import android.content.pm.cts.shortcut.device.common.ShortcutManagerDeviceTestBase;
 import android.graphics.drawable.Icon;
 import android.os.PersistableBundle;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Log;
+
+import androidx.test.filters.SmallTest;
 
 import junit.framework.AssertionFailedError;
 

@@ -30,9 +30,9 @@ import android.car.hardware.property.CarPropertyManager;
 import android.car.hardware.property.PropertyAccessDeniedSecurityException;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.util.SparseArray;
 
+import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Assert;

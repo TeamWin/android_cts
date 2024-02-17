@@ -19,7 +19,8 @@ import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils
 
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
-import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.CddTest;
 

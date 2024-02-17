@@ -1120,6 +1120,7 @@ public class TelephonyManagerTestOnMockModem {
     @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
     @Test
     public void getAllowedCarriers_ReadPhoneState_Restricted() throws Exception {
+        assumeTrue(isCarrierLockEnabled());
         sMockModemManager.updateCarrierRestrictionInfo(getCarrierList(false),
                 CarrierRestrictions.CarrierRestrictionStatus.RESTRICTED);
         CarrierRestrictionRules rules =runWithShellPermissionIdentity(() -> {
@@ -1134,6 +1135,7 @@ public class TelephonyManagerTestOnMockModem {
             codeName = "VanillaIceCream")
     @Test
     public void getCarrierRestrictionRules() {
+        assumeTrue(isCarrierLockEnabled());
         assumeTrue(Flags.carrierRestrictionRulesEnhancement());
         // settings the data in MockModem
         android.hardware.radio.sim.CarrierRestrictions carrierRestrictions =
@@ -1167,6 +1169,7 @@ public class TelephonyManagerTestOnMockModem {
             codeName = "VanillaIceCream")
     @Test
     public void getCarrierRestrictionRules_WithEphlmnList() {
+        assumeTrue(isCarrierLockEnabled());
         assumeTrue(Flags.carrierRestrictionRulesEnhancement());
         // settings the data in MockModem
         android.hardware.radio.sim.CarrierRestrictions carrierRestrictions =
@@ -1236,4 +1239,9 @@ public class TelephonyManagerTestOnMockModem {
         return carrierInfo;
     }
 
+    private boolean isCarrierLockEnabled() {
+        return InstrumentationRegistry.getInstrumentation().getContext()
+                .getPackageManager().hasSystemFeature(
+                        PackageManager.FEATURE_TELEPHONY_CARRIERLOCK);
+    }
 }

@@ -26,11 +26,12 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.platform.test.annotations.AppModeSdkSandbox;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.util.Xml;
 import android.view.View;
+
+import androidx.test.filters.SmallTest;
 
 import org.xmlpull.v1.XmlPullParser;
 

@@ -19,11 +19,12 @@ import android.app.Instrumentation;
 import android.app.ListActivity;
 import android.app.stubs.MockListActivity;
 import android.test.ActivityInstrumentationTestCase2;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
+
+import androidx.test.filters.SmallTest;
 
 import junit.framework.Assert;
 

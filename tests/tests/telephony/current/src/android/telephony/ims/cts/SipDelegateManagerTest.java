@@ -23,6 +23,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -58,6 +59,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.internal.telephony.flags.Flags;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -252,8 +254,14 @@ public class SipDelegateManagerTest {
 
     @Before
     public void beforeTest() {
-        if (!ImsUtils.shouldTestTelephony()) {
-            return;
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            // If the device does not have FEATURE_TELEPHONY_IMS_SINGLE_REGISTRATION,
+            // skip the all tests
+            assumeTrue(ImsUtils.shouldTestImsSingleRegistration());
+        } else {
+            if (!ImsUtils.shouldTestTelephony()) {
+                return;
+            }
         }
         TelephonyManager tm = (TelephonyManager) InstrumentationRegistry.getInstrumentation()
                 .getContext().getSystemService(Context.TELEPHONY_SERVICE);

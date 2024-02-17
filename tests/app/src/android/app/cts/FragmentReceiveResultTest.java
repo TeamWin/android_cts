@@ -26,7 +26,8 @@ import android.app.stubs.R;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.test.ActivityInstrumentationTestCase2;
-import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.filters.SmallTest;
 
 import org.mockito.ArgumentCaptor;
 

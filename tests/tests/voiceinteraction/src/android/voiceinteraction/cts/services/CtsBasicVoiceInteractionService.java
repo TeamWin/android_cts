@@ -87,7 +87,9 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
     private AlwaysOnHotwordDetector.EventPayload mDetectedResult;
     private HotwordRejectedResult mRejectedResult;
     private ArrayList<String> mStreamedQueries = new ArrayList<>();
+    private ArrayList<byte[]> mStreamedAccessibilityData = new ArrayList();
     private String mCurrentQuery = "";
+    private byte[] mCurrentAccessibilityData = new byte[0];
     private HotwordDetectionServiceFailure mHotwordDetectionServiceFailure = null;
     private SoundTriggerFailure mSoundTriggerFailure = null;
     private String mUnknownFailure = null;
@@ -679,6 +681,19 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
                 public void onQueryDetected(@NonNull VisualQueryDetectedResult partialResult) {
                     Log.i(TAG, "onQueryDetected with VisualQueryDetectedResult");
                     mCurrentQuery += partialResult.getPartialQuery();
+                    mCurrentAccessibilityData = accumulateAccessibilityStreamedData(
+                            mCurrentAccessibilityData,
+                            partialResult.getAccessibilityDetectionData());
+                }
+
+                private byte[] accumulateAccessibilityStreamedData(byte[] streamedData,
+                        byte[] newData) {
+                    byte[] newStreamedData = new byte[streamedData.length + newData.length];
+                    System.arraycopy(streamedData, 0, newStreamedData, 0,
+                            streamedData.length);
+                    System.arraycopy(newData, 0, newStreamedData, streamedData.length,
+                            newData.length);
+                    return newStreamedData;
                 }
 
                 @Override
@@ -688,6 +703,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
                     // reason, regardless of the queries being rejected or finished.
                     mStreamedQueries.add(mCurrentQuery);
                     mCurrentQuery = "";
+                    mCurrentAccessibilityData = new byte[0];
                     if (mOnQueryFinishRejectLatch != null) {
                         mOnQueryFinishRejectLatch.countDown();
                     }
@@ -695,10 +711,11 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
 
                 @Override
                 public void onQueryFinished() {
-
                     Log.i(TAG, "onQueryFinished");
                     mStreamedQueries.add(mCurrentQuery);
+                    mStreamedAccessibilityData.add(mCurrentAccessibilityData);
                     mCurrentQuery = "";
+                    mCurrentAccessibilityData = new byte[0];
                     if (mOnQueryFinishRejectLatch != null) {
                         mOnQueryFinishRejectLatch.countDown();
                     }
@@ -730,11 +747,17 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
                         VisualQueryDetectionServiceFailure visualQueryDetectionServiceFailure) {
                     Log.i(TAG, "onFailure visualQueryDetectionServiceFailure: "
                             + visualQueryDetectionServiceFailure);
+                    if (mOnFailureLatch != null) {
+                        mOnFailureLatch.countDown();
+                    }
                 }
 
                 @Override
                 public void onUnknownFailure(String errorMessage) {
                     Log.i(TAG, "onUnknownFailure errorMessage: " + errorMessage);
+                    if (mOnFailureLatch != null) {
+                        mOnFailureLatch.countDown();
+                    }
                 }
             };
             mVisualQueryDetector = callCreateVisualQueryDetector(callback);
@@ -856,6 +879,13 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      */
     public ArrayList<String> getStreamedQueriesResult() {
         return mStreamedQueries;
+    }
+
+    /**
+     * Returns the OnQueryDetected() result.
+     */
+    public ArrayList<byte[]> getAccessibilityDataResult() {
+        return mStreamedAccessibilityData;
     }
 
     /**

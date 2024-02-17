@@ -32,6 +32,7 @@ import android.service.voice.HotwordDetectedResult;
 import android.util.Log;
 
 import com.android.compatibility.common.util.PropertyUtil;
+import com.android.compatibility.common.util.SystemUtil;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -501,4 +502,13 @@ public class Utils {
         }
         return sAdjustedOperationTimeoutMs;
     }
+
+    /** Sets the secure accessibility settings for visual query detector */
+    public static void toggleVisualQueryAccessibilitySettings(boolean enable) {
+        final StringBuilder cmd = new StringBuilder("settings put secure ")
+                .append("visual_query_accessibility_detection_enabled").append(" ")
+                .append(enable ? "1" : "0");
+        SystemUtil.runShellCommand(cmd.toString());
+    }
+
 }

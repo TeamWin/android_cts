@@ -20,12 +20,10 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.car.builtin.os.ParcelHelper;
 import android.os.Parcel;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.util.ArraySet;
 
+import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
-
-import java.util.Arrays;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -124,6 +124,14 @@ public class ASurfaceControlTestUtils {
         applyAndDeleteSurfaceTransaction(surfaceTransaction);
     }
 
+    /** Dispatches setDesiredHdrHeadroom to the NDK */
+    public static void setDesiredHdrHeadroom(long surfaceControl, float desiredRatio) {
+        long surfaceTransaction = createSurfaceTransaction();
+        nSurfaceTransaction_setDesiredHdrHeadroom(surfaceControl, surfaceTransaction,
+                desiredRatio);
+        applyAndDeleteSurfaceTransaction(surfaceTransaction);
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     // Native function prototypes
     ///////////////////////////////////////////////////////////////////////////
@@ -188,6 +196,9 @@ public class ASurfaceControlTestUtils {
             long vsyncId);
     public static native void nSurfaceTransaction_setExtendedRangeBrightness(
             long surfaceControl, long surfaceTransaction, float currentRatio, float desiredRatio);
+    /** Dispatches to the NDK */
+    public static native void nSurfaceTransaction_setDesiredHdrHeadroom(
+            long surfaceControl, long surfaceTransaction, float desiredRatio);
     public static native void nSurfaceTransaction_setDataSpace(
             long surfaceControl, long surfaceTransaction, int dataspace);
 

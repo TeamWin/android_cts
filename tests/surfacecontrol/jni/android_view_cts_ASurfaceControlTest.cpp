@@ -602,6 +602,15 @@ void SurfaceTransaction_setExtendedRangeBrightness(JNIEnv* /*env*/, jclass, jlon
                                                    currentRatio, desiredRatio);
 }
 
+void SurfaceTransaction_setDesiredHdrHeadroom(JNIEnv* /*env*/, jclass, jlong surfaceControl,
+                                                   jlong surfaceTransaction, jfloat desiredRatio) {
+    ASurfaceTransaction_setDesiredHdrHeadroom(reinterpret_cast<ASurfaceTransaction*>(
+                                                           surfaceTransaction),
+                                                   reinterpret_cast<ASurfaceControl*>(
+                                                           surfaceControl),
+                                                   desiredRatio);
+}
+
 void SurfaceTransaction_setDataSpace(JNIEnv* /*env*/, jclass, jlong surfaceControl,
                                      jlong surfaceTransaction, jint dataspace) {
     ASurfaceTransaction_setBufferDataSpace(reinterpret_cast<ASurfaceTransaction*>(
@@ -730,6 +739,8 @@ static const JNINativeMethod JNI_METHODS[] = {
          (void*)SurfaceTransaction_setFrameTimeline},
         {"nSurfaceTransaction_setExtendedRangeBrightness", "(JJFF)V",
          (void*)SurfaceTransaction_setExtendedRangeBrightness},
+        {"nSurfaceTransaction_setDesiredHdrHeadroom", "(JJF)V",
+         (void*)SurfaceTransaction_setDesiredHdrHeadroom},
         {"nSurfaceTransaction_setDataSpace", "(JJI)V", (void*)SurfaceTransaction_setDataSpace},
         {"getSolidBuffer", "(III)Landroid/hardware/HardwareBuffer;", (void*)Utils_getSolidBuffer},
         {"getQuadrantBuffer", "(IIIIII)Landroid/hardware/HardwareBuffer;",

@@ -35,6 +35,7 @@ android_test {
         "CtsVirtualDeviceCommonLib",
         "sts-device-util",
         "com.android.window.flags.window-aconfig-java",
+        "androidx.test.rules",
     ],
     libs: [
         "android.test.runner",

@@ -26,7 +26,8 @@ import android.provider.ContactsContract.SimAccount;
 import android.provider.ContactsContract.SimContacts;
 import android.provider.cts.contacts.account.StaticAccountAuthenticator;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.MediumTest;
+
+import androidx.test.filters.MediumTest;
 
 import com.android.compatibility.common.util.SystemUtil;
 

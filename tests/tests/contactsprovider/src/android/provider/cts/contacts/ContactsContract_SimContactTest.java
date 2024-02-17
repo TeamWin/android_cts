@@ -23,11 +23,11 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.SystemClock;
 import android.provider.ContactsContract.SimAccount;
 import android.provider.ContactsContract.SimContacts;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.MediumTest;
+
+import androidx.test.filters.MediumTest;
 
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;

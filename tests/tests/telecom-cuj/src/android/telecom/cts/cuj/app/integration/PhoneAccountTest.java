@@ -18,6 +18,8 @@ package android.telecom.cts.cuj.app.integration;
 
 import static android.telecom.cts.apps.TelecomTestApp.SELF_MANAGED_CS_MAIN_ACCOUNT_CUSTOM;
 import static android.telecom.cts.apps.TelecomTestApp.TRANSACTIONAL_MAIN_SUPPLEMENTARY_ACCOUNT;
+import static android.telecom.cts.apps.TelecomTestApp.TRANSACTIONAL_APP_SUPPLEMENTARY_HANDLE;
+import static android.telecom.cts.apps.TelecomTestApp.TRANSACTIONAL_PACKAGE_NAME;
 import static android.telecom.cts.apps.TelecomTestApp.ConnectionServiceVoipAppMain;
 import static android.telecom.cts.apps.TelecomTestApp.TransactionalVoipAppMain;
 
@@ -26,12 +28,16 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.content.ComponentName;
 import android.os.RemoteException;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telecom.cts.apps.AppControlWrapper;
 import android.telecom.cts.cuj.BaseAppVerifier;
+
+import com.android.server.telecom.flags.Flags;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -110,12 +116,12 @@ public class PhoneAccountTest extends BaseAppVerifier {
         try {
             voipCsApp = bindToApp(ConnectionServiceVoipAppMain);
 
-            registerCustomAcctAndVerify(
+            registerAcctAndVerify(
                     voipCsApp,
                     SELF_MANAGED_CS_MAIN_ACCOUNT_CUSTOM,
                     2 /* numOfExpectedAccounts */);
 
-            unregisterCustomAcctAndVerify(
+            unregisterAcctAndVerify(
                     voipCsApp,
                     SELF_MANAGED_CS_MAIN_ACCOUNT_CUSTOM,
                     1 /* numOfExpectedAccounts */);
@@ -164,6 +170,131 @@ public class PhoneAccountTest extends BaseAppVerifier {
     }
 
     /**
+     * verify {@link TelecomManager#getRegisteredPhoneAccounts(PhoneAccountHandle) } returns
+     * the expected {@link PhoneAccount}.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_GET_REGISTERED_PHONE_ACCOUNTS)
+    @Test
+    public void testGetOwnSelfManagedPhoneAccount_TransactionalVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        final PhoneAccountHandle expectedHandle = TRANSACTIONAL_APP_SUPPLEMENTARY_HANDLE;
+        final PhoneAccount expectedAccount      = TRANSACTIONAL_MAIN_SUPPLEMENTARY_ACCOUNT;
+
+        AppControlWrapper transactionalApp = null;
+
+        try {
+            transactionalApp = bindToApp(TransactionalVoipAppMain);
+
+            assertEquals(1, getRegisteredPhoneAccounts(transactionalApp).size());
+
+            // register a PhoneAccount app-side so that the  {@link
+            // TelecomManager#getOwnSelfManagedPhoneAccount(PhoneAccountHandle) } can be tested.
+            registerAcctAndVerify(
+                    transactionalApp,
+                    expectedAccount,
+                    2 /* numOfExpectedAccounts */);
+
+            // API under test
+            List<PhoneAccount> accounts = getRegisteredPhoneAccounts(transactionalApp);
+            assertEquals(2, accounts.size());
+            boolean foundExpectedHandle = false;
+            for(PhoneAccount account : accounts){
+                if(account.getAccountHandle().equals(expectedHandle)){
+                    foundExpectedHandle = true;
+                    assertPhoneAccountValuesMatch(expectedAccount, account);
+                }
+            }
+            assertTrue(foundExpectedHandle);
+
+            // cleanup the registered account so other tests are not affected
+            unregisterAcctAndVerify(
+                    transactionalApp,
+                    expectedAccount,
+                    1 /* numOfExpectedAccounts */);
+        } finally {
+            tearDownApp(transactionalApp);
+        }
+    }
+
+    /**
+     * verify the expected behavior when 2 {@link PhoneAccount}s use the same
+     * {@link PhoneAccountHandle} and register with Telecom.
+     * {@link TelecomManager#getRegisteredPhoneAccounts(PhoneAccountHandle) } returns
+     * the last registered {@link PhoneAccount} with the linked {@link PhoneAccountHandle}.
+     */
+    @RequiresFlagsEnabled(Flags.FLAG_GET_REGISTERED_PHONE_ACCOUNTS)
+    @Test
+    public void testMultipleAccountsWithUniquePhoneAccountHandle() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        AppControlWrapper transactionalApp = null;
+        final PhoneAccountHandle uniqueHandle =
+                new PhoneAccountHandle(
+                        new ComponentName(TRANSACTIONAL_PACKAGE_NAME, TRANSACTIONAL_PACKAGE_NAME),
+                        "777");
+
+        final PhoneAccount acctVideoCap =
+                PhoneAccount.builder(uniqueHandle, "PA_VIDEO_CAPS")
+                        .setCapabilities(
+                                PhoneAccount.CAPABILITY_SUPPORTS_TRANSACTIONAL_OPERATIONS
+                                        | PhoneAccount.CAPABILITY_SUPPORTS_VIDEO_CALLING
+                                        | PhoneAccount.CAPABILITY_VIDEO_CALLING
+                                        | PhoneAccount.CAPABILITY_SELF_MANAGED
+                        ).build();
+
+        final PhoneAccount acctAudioOnlyCap =
+                PhoneAccount.builder(uniqueHandle, "PA_AUDIO_ONLY_CAPS")
+                        .setCapabilities(
+                                PhoneAccount.CAPABILITY_SUPPORTS_TRANSACTIONAL_OPERATIONS
+                                        | PhoneAccount.CAPABILITY_SELF_MANAGED
+                        ).build();
+
+        try {
+            transactionalApp = bindToApp(TransactionalVoipAppMain);
+
+            // register a PhoneAccount app-side so that {@link
+            // TelecomManager#getOwnSelfManagedPhoneAccount(PhoneAccountHandle) } can be tested
+            registerAcctAndVerify(transactionalApp, acctVideoCap, 2 /* numOfAccounts */);
+
+            // API under test
+            List<PhoneAccount> accounts = getRegisteredPhoneAccounts(transactionalApp);
+            assertEquals(2, accounts.size());
+            boolean foundExpectedHandle = false;
+            for(PhoneAccount account : accounts){
+                if(account.getAccountHandle().equals(uniqueHandle)){
+                    foundExpectedHandle = true;
+                    assertPhoneAccountValuesMatch(acctVideoCap, account);
+                }
+            }
+            assertTrue(foundExpectedHandle);
+
+            // register another PhoneAccount with the same PhoneAccountHandle. The old PhoneAccount
+            // values will be overridden with the new values registered.
+            registerAcctAndVerify(transactionalApp, acctAudioOnlyCap, 2 /* numOfAccounts */);
+
+            // API under test
+            accounts = getRegisteredPhoneAccounts(transactionalApp);
+            assertEquals(2, accounts.size());
+            foundExpectedHandle = false;
+            for(PhoneAccount account : accounts){
+                if(account.getAccountHandle().equals(uniqueHandle)){
+                    foundExpectedHandle = true;
+                    assertPhoneAccountValuesMatch(acctAudioOnlyCap, account);
+                }
+            }
+            assertTrue(foundExpectedHandle);
+
+            // cleanup the registered account so other tests are not affected
+            unregisterAcctAndVerify(transactionalApp, acctAudioOnlyCap, 1 /* numOfAccounts */);
+        } finally {
+            tearDownApp(transactionalApp);
+        }
+    }
+
+    /**
      * Test the scenario where a managed application that registers a secondary phone account on top
      * of an already existing phone account.  The application should also be able to query and
      * unregister it.
@@ -192,12 +323,12 @@ public class PhoneAccountTest extends BaseAppVerifier {
         AppControlWrapper transactionalApp = null;
         try {
             transactionalApp = bindToApp(TransactionalVoipAppMain);
-            registerCustomAcctAndVerify(
+            registerAcctAndVerify(
                     transactionalApp,
                     TRANSACTIONAL_MAIN_SUPPLEMENTARY_ACCOUNT,
                     2 /* numOfExpectedAccounts */);
 
-            unregisterCustomAcctAndVerify(
+            unregisterAcctAndVerify(
                     transactionalApp,
                     TRANSACTIONAL_MAIN_SUPPLEMENTARY_ACCOUNT,
                     1 /* numOfExpectedAccounts */);
@@ -209,6 +340,15 @@ public class PhoneAccountTest extends BaseAppVerifier {
     /*********************************************************************************************
      *                           Helpers
      /*********************************************************************************************/
+
+    private void assertPhoneAccountValuesMatch(PhoneAccount expected, PhoneAccount actual) {
+        assertNotNull(actual);
+        assertEquals(expected.getAccountHandle(), actual.getAccountHandle());
+        assertEquals(expected.getCapabilities(), actual.getCapabilities());
+        assertEquals(expected.describeContents(), actual.describeContents());
+        assertEquals(expected.getAddress(), actual.getAddress());
+        assertEquals(expected.getIcon(), actual.getIcon());
+    }
 
     private PhoneAccount verifyDefaultAccountIsRegistered(AppControlWrapper appControlWrapper)
             throws RemoteException {
@@ -228,7 +368,7 @@ public class PhoneAccountTest extends BaseAppVerifier {
         assertEquals(0, handles.size());
     }
 
-    private void registerCustomAcctAndVerify(AppControlWrapper appControlWrapper,
+    private void registerAcctAndVerify(AppControlWrapper appControlWrapper,
                                             PhoneAccount acct,
                                             int numOfExpectedAccounts) throws RemoteException {
         appControlWrapper.registerCustomPhoneAccount(acct);
@@ -237,9 +377,9 @@ public class PhoneAccountTest extends BaseAppVerifier {
         // services due to b/310739126
     }
 
-    private void unregisterCustomAcctAndVerify(AppControlWrapper appControlWrapper,
-                                              PhoneAccount acct,
-                                              int numOfExpectedAccounts) throws RemoteException {
+    private void unregisterAcctAndVerify(AppControlWrapper appControlWrapper,
+                                         PhoneAccount acct,
+                                         int numOfExpectedAccounts) throws RemoteException {
         appControlWrapper.unregisterPhoneAccountWithHandle(acct.getAccountHandle());
         assertFalse(isPhoneAccountRegistered(acct.getAccountHandle()));
         assertEquals(numOfExpectedAccounts, appControlWrapper.getAccountHandlesForApp().size());

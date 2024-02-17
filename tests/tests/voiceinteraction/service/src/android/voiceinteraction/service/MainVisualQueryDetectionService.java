@@ -62,6 +62,7 @@ import javax.annotation.concurrent.GuardedBy;
 public class MainVisualQueryDetectionService extends VisualQueryDetectionService {
     static final String TAG = "MainVisualQueryDetectionService";
 
+    public static final byte[] TEST_BYTES = new byte[] {0, 1, 2, 3};
     public static final String PERCEPTION_MODULE_SUCCESS = "Perception module working";
     public static final String FAKE_QUERY_FIRST = "What is ";
     public static final String FAKE_QUERY_SECOND = "the weather today?";
@@ -81,6 +82,7 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
     public static final int SCENARIO_COMPLEX_RESULT_STREAM_QUERY_ONLY = 8;
     public static final int SCENARIO_AUDIO_VISUAL_ATTENTION_STREAM = 9;
     public static final int SCENARIO_ACCESSIBILITY_ATTENTION_STREAM = 10;
+    public static final int SCENARIO_STREAM_WITH_ACCESSIBILITY_DATA = 11;
     public static final int SCENARIO_READ_FILE_MMAP_READ_ONLY = 100;
     public static final int SCENARIO_READ_FILE_MMAP_WRITE = 101;
     public static final int SCENARIO_READ_FILE_MMAP_MULTIPLE = 102;
@@ -300,6 +302,16 @@ public class MainVisualQueryDetectionService extends VisualQueryDetectionService
                                 .build());
                 streamQuery(
                         new VisualQueryDetectedResult.Builder().setPartialQuery(FAKE_QUERY_SECOND)
+                                .build());
+                finishQuery();
+                lostAttention();
+            };
+        } else if (scenario == SCENARIO_STREAM_WITH_ACCESSIBILITY_DATA) {
+            detectionJob = () -> {
+                gainedAttention();
+                streamQuery(
+                        new VisualQueryDetectedResult.Builder()
+                                .setAccessibilityDetectionData(TEST_BYTES)
                                 .build());
                 finishQuery();
                 lostAttention();

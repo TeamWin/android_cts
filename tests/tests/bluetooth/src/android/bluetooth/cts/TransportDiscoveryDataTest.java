@@ -21,9 +21,9 @@ import static org.junit.Assert.assertEquals;
 import android.bluetooth.le.TransportBlock;
 import android.bluetooth.le.TransportDiscoveryData;
 import android.os.Parcel;
-import android.test.suitebuilder.annotation.SmallTest;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.CddTest;
@@ -35,7 +35,6 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
-
 
 /**
  * Unit test cases for {@link TransportDiscoveryData}.

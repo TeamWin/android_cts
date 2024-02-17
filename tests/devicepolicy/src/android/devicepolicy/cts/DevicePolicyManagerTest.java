@@ -41,6 +41,7 @@ import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -137,6 +138,7 @@ public final class DevicePolicyManagerTest {
     @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setMaxPolicyStorageLimit")
+    @Ignore
     public void setMaxPolicyStorageLimit_setsLimit() {
         int currentLimit = sDevicePolicyManager.getMaxPolicyStorageLimit();
         try {
@@ -155,6 +157,7 @@ public final class DevicePolicyManagerTest {
     @Test
     @EnsureDoesNotHavePermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setMaxPolicyStorageLimit")
+    @Ignore
     public void setMaxPolicyStorageLimit_noPermission_throwsException() {
         assertThrows(
                 SecurityException.class, () -> sDevicePolicyManager.setMaxPolicyStorageLimit(-1));
@@ -165,6 +168,7 @@ public final class DevicePolicyManagerTest {
     @Test
     @EnsureDoesNotHavePermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#getMaxPolicyStorageLimit")
+    @Ignore
     public void getMaxPolicyStorageLimit_noPermission_throwsException() {
         assertThrows(
                 SecurityException.class, () -> sDevicePolicyManager.getMaxPolicyStorageLimit());

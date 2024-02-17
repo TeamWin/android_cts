@@ -53,6 +53,7 @@ android_test {
         "CtsCrossProcessSurfaceControlViewHostTestService",
         "flag-junit",
         "com.android.window.flags.window-aconfig-java",
+        "hwui_flags_java_lib",
     ],
 
     jni_libs: [

@@ -18,8 +18,7 @@ package android.graphics.fonts;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.test.suitebuilder.annotation.MediumTest;
-
+import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;

@@ -30,7 +30,6 @@ import android.app.UiAutomation;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.test.suitebuilder.annotation.MediumTest;
 import android.text.Selection;
 import android.text.TextUtils;
 import android.view.View;
@@ -40,6 +39,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 

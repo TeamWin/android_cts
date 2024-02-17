@@ -21,7 +21,8 @@ import static org.junit.Assert.assertNotNull;
 
 import android.bluetooth.BluetoothSocketException;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.filters.SmallTest;
 
 /** Unit test to test APIs and functionality for {@link BluetoothSocketException}. */
 public final class BluetoothSocketExceptionTest extends AndroidTestCase {

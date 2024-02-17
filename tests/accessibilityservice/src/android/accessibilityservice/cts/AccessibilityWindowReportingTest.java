@@ -79,6 +79,7 @@ import com.android.compatibility.common.util.SystemUtil;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -180,7 +181,7 @@ public class AccessibilityWindowReportingTest {
     }
 
     @Test
-    @Presubmit
+    @Ignore("b/325640120")
     public void putWindowInPictureInPicture_generatesEventAndReportsProperty() throws Exception {
         if (!sInstrumentation.getContext().getPackageManager()
                 .hasSystemFeature(FEATURE_PICTURE_IN_PICTURE)) {

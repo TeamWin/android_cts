@@ -25,7 +25,8 @@ import android.content.pm.ShortcutInfo;
 import android.content.pm.cts.shortcut.device.common.ShortcutManagerDeviceTestBase;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Icon;
-import android.test.suitebuilder.annotation.SmallTest;
+
+import androidx.test.filters.SmallTest;
 
 @SmallTest
 public class ShortcutManagerPreBackupTest extends ShortcutManagerDeviceTestBase {

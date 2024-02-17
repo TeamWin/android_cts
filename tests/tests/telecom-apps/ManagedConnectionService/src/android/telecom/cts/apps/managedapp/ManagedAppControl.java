@@ -25,9 +25,9 @@ import static android.telecom.cts.apps.AssertOutcome.assertCountDownLatchWasCall
 import static android.telecom.cts.apps.AttributesUtil.getExtrasWithPhoneAccount;
 import static android.telecom.cts.apps.AttributesUtil.hasSetInactiveCapabilities;
 import static android.telecom.cts.apps.AttributesUtil.isOutgoing;
-import static android.telecom.cts.apps.TelecomTestApp.CONTROL_INTERFACE_ACTION;
 import static android.telecom.cts.apps.StackTraceUtil.appendStackTraceList;
 import static android.telecom.cts.apps.StackTraceUtil.createStackTraceList;
+import static android.telecom.cts.apps.TelecomTestApp.CONTROL_INTERFACE_ACTION;
 import static android.telecom.cts.apps.WaitUntil.waitUntilAvailableEndpointsIsSet;
 import static android.telecom.cts.apps.WaitUntil.waitUntilCallAudioStateIsSet;
 import static android.telecom.cts.apps.WaitUntil.waitUntilConnectionIsNonNull;
@@ -50,9 +50,9 @@ import android.telecom.cts.apps.CallEndpointTransaction;
 import android.telecom.cts.apps.CallExceptionTransaction;
 import android.telecom.cts.apps.IAppControl;
 import android.telecom.cts.apps.LatchedEndpointOutcomeReceiver;
-import android.telecom.cts.apps.TestAppConnection;
 import android.telecom.cts.apps.NoDataTransaction;
 import android.telecom.cts.apps.PhoneAccountTransaction;
+import android.telecom.cts.apps.TestAppConnection;
 import android.telecom.cts.apps.TestAppException;
 import android.telecom.cts.apps.TestAppTransaction;
 import android.telecom.cts.apps.WaitUntil;
@@ -313,6 +313,12 @@ public class ManagedAppControl extends Service {
         public List<PhoneAccountHandle> getOwnAccountHandlesForApp() {
             Log.i(TAG, "getOwnAccountHandlesForApp");
             return mTelecomManager.getOwnSelfManagedPhoneAccounts();
+        }
+
+        @Override
+        public List<PhoneAccount> getRegisteredPhoneAccounts() {
+            Log.i(TAG, "getRegisteredPhoneAccounts");
+            return mTelecomManager.getRegisteredPhoneAccounts();
         }
 
         private TestAppConnection getConnectionOrThrow(String id, List<String> stackTrace) {
