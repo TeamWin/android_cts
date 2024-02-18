@@ -116,6 +116,8 @@ public class ValidateTestsAbi {
         BINARY_EXCEPTIONS.add("mk_payload");
         BINARY_EXCEPTIONS.add("sign_virt_apex");
         BINARY_EXCEPTIONS.add("simg2img");
+        BINARY_EXCEPTIONS.add("dtdiff");
+        BINARY_EXCEPTIONS.add("dtc");
 
         /**
          * These binaries are testing components with no 32-bit variant, which
