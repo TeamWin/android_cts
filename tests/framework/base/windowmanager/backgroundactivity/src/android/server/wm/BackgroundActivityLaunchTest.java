@@ -183,7 +183,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
-    public void testBackgroundActivity_withinASMGracePeriod_isAllowed() throws Exception {
+    public void testBackgroundActivity_withinASMGracePeriod_isBlocked() throws Exception {
         assumeSdkNewerThanUpsideDownCake();
         // Start AppA foreground activity
         startActivity(APP_A.FOREGROUND_ACTIVITY);
@@ -191,7 +191,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         mContext.sendBroadcast(new Intent(APP_A.FOREGROUND_ACTIVITY_ACTIONS.FINISH_ACTIVITY));
         mWmState.waitAndAssertActivityRemoved(APP_A.FOREGROUND_ACTIVITY);
         startBackgroundActivity(APP_A);
-        assertActivityFocused(APP_A.BACKGROUND_ACTIVITY);
+        assertActivityNotFocused(APP_A.BACKGROUND_ACTIVITY);
     }
 
     @Test

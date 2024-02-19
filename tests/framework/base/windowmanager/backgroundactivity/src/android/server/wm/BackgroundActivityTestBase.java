@@ -316,6 +316,12 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
             return this;
         }
 
+        ActivityStartVerifier activityIntoNewTask(ComponentName to) {
+            activity(to);
+            mLaunchIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            return this;
+        }
+
         ActivityStartVerifier allowCrossUidLaunch() {
             mLaunchIntent.putExtra(COMMON_FOREGROUND_ACTIVITY_EXTRAS.ALLOW_CROSS_UID, true);
             return this;

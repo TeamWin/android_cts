@@ -265,6 +265,35 @@ public class ActivitySecurityModelTest extends BackgroundActivityTestBase {
     }
 
     /*
+     * Targets: A(curr), B(curr, opt-out)
+     * Setup: A B | (bottom -- top)
+     * Launcher: A
+     * Started: A
+     */
+    @Test
+    public void testActivitySandwich_asmPackageDisabledNewTask_launchAllowed() {
+        new ActivityStartVerifier()
+                .setupTaskWithForegroundActivity(APP_A)
+                .startFromForegroundActivity(APP_A)
+                .activity(APP_ASM_OPT_OUT.FOREGROUND_ACTIVITY)
+                .executeAndAssertLaunch(/*succeeds*/ true)
+                .thenAssertTaskStack(
+                        APP_ASM_OPT_OUT.FOREGROUND_ACTIVITY,
+                        APP_A.FOREGROUND_ACTIVITY);
+
+        // Current State: A B | (bottom -- top)
+        // Test - A launches A - succeeds
+        new ActivityStartVerifier()
+                .startFromForegroundActivity(APP_A)
+                .activityIntoNewTask(APP_B.FOREGROUND_ACTIVITY)
+                .executeAndAssertLaunch(/*succeeds*/ true)
+                .thenAssertTaskStack(
+                        APP_ASM_OPT_OUT.FOREGROUND_ACTIVITY,
+                        APP_A.FOREGROUND_ACTIVITY)
+                .thenAssertTaskStack(APP_B.FOREGROUND_ACTIVITY);
+    }
+
+    /*
      * Targets: A(curr), B(curr)
      * Setup: A B | (bottom -- top)
      * Launcher: A

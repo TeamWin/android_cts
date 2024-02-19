@@ -35,7 +35,6 @@ public class CommonComponents {
     public static class CommonForegroundActivityExtras {
         public final String ACTIVITY_ID = "ACTIVITY_ID_EXTRA";
         public final String ALLOW_CROSS_UID = "ALLOW_CROSS_UID_EXTRA";
-
         public final String LAUNCH_INTENTS = "LAUNCH_INTENTS_EXTRA";
         public final String FINISH_FIRST = "FINISH_FIRST_EXTRA";
     }
