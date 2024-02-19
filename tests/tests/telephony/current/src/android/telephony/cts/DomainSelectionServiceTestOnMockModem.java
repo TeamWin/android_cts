@@ -374,7 +374,7 @@ public class DomainSelectionServiceTestOnMockModem extends DomainSelectionCallin
 
         MockEmergencyRegResult regResult = getEmergencyRegResult(UTRAN,
                 REGISTRATION_STATE_UNKNOWN, NetworkRegistrationInfo.DOMAIN_CS,
-                false, false, 0, 0, "", "");
+                false, false, 0, 0, "310", "260");
         sMockModemManager.unsolEmergencyNetworkScanResult(sTestSlot, regResult);
 
         assertTrue(testService.waitForLatchCountdown(LATCH_ON_EMERGENCY_REG_RESULT));
@@ -389,6 +389,9 @@ public class DomainSelectionServiceTestOnMockModem extends DomainSelectionCallin
         assertEquals(regResult.getNwProvidedEmf(), receivedResult.getNwProvidedEmf());
         assertEquals(regResult.isVopsSupported(), receivedResult.isVopsSupported());
         assertEquals(regResult.isEmcBearerSupported(), receivedResult.isEmcBearerSupported());
+        assertEquals(regResult.getMcc(), receivedResult.getMcc());
+        assertEquals(regResult.getMnc(), receivedResult.getMnc());
+        assertEquals("us", receivedResult.getCountryIso());
     }
 
     private Call placeOutgoingCall(String address) throws Exception {
