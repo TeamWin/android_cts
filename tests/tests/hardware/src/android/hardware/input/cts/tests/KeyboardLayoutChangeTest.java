@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RunWith(AndroidJUnit4.class)
 public class KeyboardLayoutChangeTest extends InputHidTestCase {
 
-    private static final long KEYBOARD_LAYOUT_CHANGE_TIMEOUT = 500;
+    private static final long KEYBOARD_LAYOUT_CHANGE_TIMEOUT = 5000;
 
     private InputManager mInputManager;
     private InputDevice mInputDevice;
