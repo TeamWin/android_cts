@@ -95,9 +95,9 @@ import android.net.wifi.hotspot2.PasspointConfiguration;
 import android.net.wifi.hotspot2.ProvisioningCallback;
 import android.net.wifi.hotspot2.pps.Credential;
 import android.net.wifi.hotspot2.pps.HomeSp;
-import android.net.wifi.twt.TwtCallback;
 import android.net.wifi.twt.TwtRequest;
 import android.net.wifi.twt.TwtSession;
+import android.net.wifi.twt.TwtSessionCallback;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -7154,7 +7154,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
                 }
             }
         };
-        class TestTwtCallback implements TwtCallback {
+        class TestTwtSessionCallback implements TwtSessionCallback {
             final AtomicReference<TwtSession> mTwtSession = new AtomicReference<>();
             final AtomicInteger mTwtTeardownReasonCode = new AtomicInteger(-1);
             final AtomicInteger mTwtErrorCode = new AtomicInteger(-1);
@@ -7182,7 +7182,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
                 }
             }
         }
-        TestTwtCallback testTwtCallback = new TestTwtCallback();
+        TestTwtSessionCallback testTwtSessionCallback = new TestTwtSessionCallback();
         TestActionListener actionListener = new TestActionListener(mLock);
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
 
@@ -7230,23 +7230,24 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
                                     WifiManager.TWT_CAPABILITIES_KEY_LONG_MIN_WAKE_INTERVAL_MICROS),
                             twtCapabilities.get().getLong(
                                     WifiManager.TWT_CAPABILITIES_KEY_LONG_MAX_WAKE_INTERVAL_MICROS)).build(),
-                    mExecutor, testTwtCallback);
+                    mExecutor, testTwtSessionCallback);
             synchronized (mLock) {
                 now = System.currentTimeMillis();
                 deadline = now + TEST_WAIT_DURATION_MS;
-                while (testTwtCallback.mTwtSession.get() == null && now < deadline) {
+                while (testTwtSessionCallback.mTwtSession.get() == null && now < deadline) {
                     mLock.wait(deadline - now);
                     now = System.currentTimeMillis();
                 }
             }
-            assertNotNull("setupTwtSession() timed out !", testTwtCallback.mTwtSession.get());
-            assertTrue(testTwtCallback.mTwtSession.get().getWakeDurationMicros() > 0);
-            assertTrue(testTwtCallback.mTwtSession.get().getWakeIntervalMicros() > 0);
-            assertTrue(testTwtCallback.mTwtSession.get().getMloLinkId()
+            assertNotNull("setupTwtSession() timed out !",
+                    testTwtSessionCallback.mTwtSession.get());
+            assertTrue(testTwtSessionCallback.mTwtSession.get().getWakeDurationMicros() > 0);
+            assertTrue(testTwtSessionCallback.mTwtSession.get().getWakeIntervalMicros() > 0);
+            assertTrue(testTwtSessionCallback.mTwtSession.get().getMloLinkId()
                     == MloLink.INVALID_MLO_LINK_ID);
 
             // Verify TWT session get stats
-            testTwtCallback.mTwtSession.get().getStats(mExecutor, twtStatsCallback);
+            testTwtSessionCallback.mTwtSession.get().getStats(mExecutor, twtStatsCallback);
             synchronized (mLock) {
                 now = System.currentTimeMillis();
                 deadline = now + TEST_WAIT_DURATION_MS;
@@ -7270,19 +7271,20 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
             assertTrue(twtStats.get().getInt(TwtSession.TWT_STATS_KEY_INT_EOSP_COUNT) >= 0);
 
             // Verify TWT session close
-            testTwtCallback.mTwtSession.get().close();
+            testTwtSessionCallback.mTwtSession.get().close();
             synchronized (mLock) {
                 now = System.currentTimeMillis();
                 deadline = now + TEST_WAIT_DURATION_MS;
-                while (testTwtCallback.mTwtTeardownReasonCode.get() == -1 && now < deadline) {
+                while (testTwtSessionCallback.mTwtTeardownReasonCode.get() == -1
+                        && now < deadline) {
                     mLock.wait(deadline - now);
                     now = System.currentTimeMillis();
                 }
             }
             assertNotEquals("TwtSession#teardown() timed out !", -1,
-                    testTwtCallback.mTwtTeardownReasonCode.get());
-            assertTrue(testTwtCallback.mTwtTeardownReasonCode.get()
-                    == TwtCallback.TWT_REASON_CODE_LOCALLY_REQUESTED);
+                    testTwtSessionCallback.mTwtTeardownReasonCode.get());
+            assertTrue(testTwtSessionCallback.mTwtTeardownReasonCode.get()
+                    == TwtSessionCallback.TWT_REASON_CODE_LOCALLY_REQUESTED);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
@@ -7304,7 +7306,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
                 }
             }
         };
-        class TestTwtCallback implements TwtCallback {
+        class TestTwtSessionCallback implements TwtSessionCallback {
             final AtomicReference<TwtSession> mTwtSession = new AtomicReference<>();
             final AtomicInteger mTwtTeardownReasonCode = new AtomicInteger(-1);
             final AtomicInteger mTwtErrorCode = new AtomicInteger(-1);
@@ -7332,7 +7334,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
                 }
             }
         }
-        TestTwtCallback testTwtCallback = new TestTwtCallback();
+        TestTwtSessionCallback testTwtSessionCallback = new TestTwtSessionCallback();
         TestActionListener actionListener = new TestActionListener(mLock);
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
 
@@ -7371,32 +7373,34 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
                                     WifiManager.TWT_CAPABILITIES_KEY_LONG_MIN_WAKE_INTERVAL_MICROS),
                             twtCapabilities.get().getLong(
                                     WifiManager.TWT_CAPABILITIES_KEY_LONG_MAX_WAKE_INTERVAL_MICROS)).build(),
-                    mExecutor, testTwtCallback);
+                    mExecutor, testTwtSessionCallback);
             synchronized (mLock) {
                 now = System.currentTimeMillis();
                 deadline = now + TEST_WAIT_DURATION_MS;
-                while (testTwtCallback.mTwtSession.get() == null && now < deadline) {
+                while (testTwtSessionCallback.mTwtSession.get() == null && now < deadline) {
                     mLock.wait(deadline - now);
                     now = System.currentTimeMillis();
                 }
             }
-            assertNotNull("setupTwtSession() timed out !", testTwtCallback.mTwtSession.get());
+            assertNotNull("setupTwtSession() timed out !",
+                    testTwtSessionCallback.mTwtSession.get());
 
         } finally {
             // Test Twt Session, if setup, closes automatically
-            if (testTwtCallback.mTwtSession.get() != null) {
+            if (testTwtSessionCallback.mTwtSession.get() != null) {
                 synchronized (mLock) {
                     now = System.currentTimeMillis();
                     deadline = now + TEST_WAIT_DURATION_MS;
-                    while (testTwtCallback.mTwtTeardownReasonCode.get() == -1 && now < deadline) {
+                    while (testTwtSessionCallback.mTwtTeardownReasonCode.get() == -1
+                            && now < deadline) {
                         mLock.wait(deadline - now);
                         now = System.currentTimeMillis();
                     }
                 }
                 assertNotEquals("TwtSession auto close timed out !", -1,
-                        testTwtCallback.mTwtTeardownReasonCode.get());
-                assertEquals(testTwtCallback.mTwtTeardownReasonCode.get(),
-                        TwtCallback.TWT_REASON_CODE_LOCALLY_REQUESTED);
+                        testTwtSessionCallback.mTwtTeardownReasonCode.get());
+                assertEquals(testTwtSessionCallback.mTwtTeardownReasonCode.get(),
+                        TwtSessionCallback.TWT_REASON_CODE_LOCALLY_REQUESTED);
             }
             uiAutomation.dropShellPermissionIdentity();
         }
