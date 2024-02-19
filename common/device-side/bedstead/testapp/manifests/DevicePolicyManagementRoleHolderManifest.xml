@@ -86,6 +86,7 @@
     <uses-permission android:name="android.permission.MANAGE_DEVICE_POLICY_USB_FILE_TRANSFER" />
     <uses-permission android:name="android.permission.MANAGE_DEVICE_POLICY_CONTENT_PROTECTION" />
     <uses-permission android:name="android.permission.MANAGE_DEVICE_POLICY_QUERY_SYSTEM_UPDATES" />
+    <uses-permission android:name="android.permission.MANAGE_DEVICE_POLICY_THEFT_DETECTION" />
 
     <application
         android:label="DevicePolicyManagerRoleHolder" android:testOnly="true">
