@@ -72,12 +72,12 @@ public class MemtagBootctlTest extends BaseHostJUnit4Test {
 
     void checkMteOn() throws Exception {
         assertThat(getDevice().pullFileContents("/proc/cpuinfo")).contains(" mte");
-        runDeviceTest("testMteIsEnabled");
+        runDeviceTest("testMtePolicyEnforcedTrue");
     }
 
     void checkMteOff() throws Exception {
         assertThat(getDevice().pullFileContents("/proc/cpuinfo")).doesNotContain(" mte");
-        runDeviceTest("testMteIsDisabled");
+        runDeviceTest("testMtePolicyEnforcedFalse");
     }
 
     @Test
