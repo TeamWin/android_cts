@@ -69,6 +69,8 @@ public final class Context {
 
     /**
      * Get the {@link android.content.Context} for the "android" package in the given user.
+     * Note: The packageName returned will match the test package rather than 'android'.
+     * This is a property of [createPackageContextAsUser]
      */
     public android.content.Context androidContextAsUser(UserReference user) {
         try {
