@@ -40,10 +40,10 @@ import android.devicepolicy.cts.utils.PolicySetResultUtils;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.UserManager;
-import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.telephony.TelephonyManager;
 import android.telephony.data.ApnSetting;
 
+import com.android.bedstead.flags.annotations.RequireFlagsEnabled;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveUserRestriction;
@@ -560,7 +560,7 @@ public final class TelephonyTest {
     @Test
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_SIM_GLOBALLY")
-    @RequiresFlagsEnabled(android.app.admin.flags.Flags.FLAG_ESIM_MANAGEMENT_ENABLED)
+    @RequireFlagsEnabled(android.app.admin.flags.Flags.FLAG_ESIM_MANAGEMENT_ENABLED)
     public void
             setUserRestriction_disallowUnmanagedSubscriptionsGlobally_cannotSet_throwsException() {
         assertThrows(SecurityException.class,
@@ -573,7 +573,7 @@ public final class TelephonyTest {
     @Test
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_SIM_GLOBALLY")
-    @RequiresFlagsEnabled(android.app.admin.flags.Flags.FLAG_ESIM_MANAGEMENT_ENABLED)
+    @RequireFlagsEnabled(android.app.admin.flags.Flags.FLAG_ESIM_MANAGEMENT_ENABLED)
     public void setUserRestriction_disallowUnmanagedSubscriptionsGlobally_isSet() {
         try {
             sDeviceState.dpc().devicePolicyManager().addUserRestriction(
@@ -595,7 +595,7 @@ public final class TelephonyTest {
     @Test
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_SIM_GLOBALLY")
-    @RequiresFlagsEnabled(android.app.admin.flags.Flags.FLAG_ESIM_MANAGEMENT_ENABLED)
+    @RequireFlagsEnabled(android.app.admin.flags.Flags.FLAG_ESIM_MANAGEMENT_ENABLED)
     public void setUserRestriction_disallowUnmanagedSubscriptionsGlobally_isNotSet() {
         try {
             sDeviceState.dpc().devicePolicyManager().addUserRestriction(
