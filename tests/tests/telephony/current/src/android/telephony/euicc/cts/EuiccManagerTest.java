@@ -170,7 +170,8 @@ public class EuiccManagerTest {
         try {
             availableMemoryInBytes = mEuiccManager.getAvailableMemoryInBytes();
         } catch (UnsupportedOperationException e) {
-            // Expected when EuiccService#onGetAvailableMemoryInBytes() is not implemented.
+            String message = e.getMessage();
+            assertTrue(message != null && !message.isEmpty());
             return;
         } catch (Exception e) {
             fail("Exception occurred when retrieving the available memory: " + e.toString());
