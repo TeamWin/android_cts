@@ -40,7 +40,6 @@ import static junit.framework.Assert.assertTrue;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeNoException;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.annotation.NonNull;
@@ -265,7 +264,7 @@ public class DomainSelectionServiceTestOnMockModem extends DomainSelectionCallin
     public void testDomainSelectionServiceEmergencyCallReselectDomain() throws Exception {
         if (VDBG) Log.d(LOG_TAG, "testDomainSelectionServiceEmergencyCallReselectDomain");
 
-        assumeFalse(sDisableCall);
+        if (sDisableCall) return;
 
         setupForEmergencyCalling();
 
@@ -308,7 +307,7 @@ public class DomainSelectionServiceTestOnMockModem extends DomainSelectionCallin
     public void testDomainSelectionServiceEmergencyCall() throws Exception {
         if (VDBG) Log.d(LOG_TAG, "testDomainSelectionServiceEmergencyCall");
 
-        assumeFalse(sDisableCall);
+        if (sDisableCall) return;
 
         setupForEmergencyCalling();
 
