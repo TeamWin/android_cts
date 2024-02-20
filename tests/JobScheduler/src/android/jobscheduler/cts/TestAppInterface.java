@@ -19,6 +19,7 @@ import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.Manifest.permission.OVERRIDE_COMPAT_CHANGE_CONFIG_ON_RELEASE_BUILD;
 import static android.app.ActivityManager.getCapabilitiesSummary;
 import static android.app.ActivityManager.procStateToString;
+import static android.jobscheduler.cts.BaseJobSchedulerTest.HW_TIMEOUT_MULTIPLIER;
 import static android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver.ACTION_JOB_SCHEDULE_RESULT;
 import static android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver.EXTRA_REQUEST_JOB_UID_STATE;
 import static android.jobscheduler.cts.jobtestapp.TestJobService.ACTION_JOB_STARTED;
@@ -226,6 +227,11 @@ class TestAppInterface implements AutoCloseable {
     }
 
     void runSatisfiedJob(int jobId) throws Exception {
+        if (HW_TIMEOUT_MULTIPLIER > 1) {
+            // Device has increased HW multiplier. Wait a short amount of time before sending the
+            // run command since there's a higher chance JobScheduler's processing is delayed.
+            Thread.sleep(1_000L);
+        }
         SystemUtil.runShellCommand("cmd jobscheduler run -s"
                 + " -u " + UserHandle.myUserId() + " " + TEST_APP_PACKAGE + " " + jobId);
     }

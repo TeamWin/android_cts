@@ -36,6 +36,7 @@ import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.Process;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
@@ -54,6 +55,9 @@ import java.io.IOException;
  */
 @TargetApi(21)
 public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
+    private static final String TAG = BaseJobSchedulerTest.class.getSimpleName();
+    static final int HW_TIMEOUT_MULTIPLIER = SystemProperties.getInt("ro.hw_timeout_multiplier", 1);
+
     /** Environment that notifies of JobScheduler callbacks. */
     static MockJobService.TestEnvironment kTestEnvironment =
             MockJobService.TestEnvironment.getTestEnvironment();
@@ -111,6 +115,9 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
                     + mContext.getPackageName() + " false");
         } catch (IOException e) {
             Log.w("ConstraintTest", "Failed setting inactive false", e);
+        }
+        if (HW_TIMEOUT_MULTIPLIER != 0) {
+            Log.i(TAG, "HW multiplier set to " + HW_TIMEOUT_MULTIPLIER);
         }
     }
 
@@ -393,6 +400,11 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
     }
 
     void runSatisfiedJob(int jobId, String namespace) throws Exception {
+        if (HW_TIMEOUT_MULTIPLIER > 1) {
+            // Device has increased HW multiplier. Wait a short amount of time before sending the
+            // run command since there's a higher chance JobScheduler's processing is delayed.
+            Thread.sleep(1_000L);
+        }
         SystemUtil.runShellCommand(getInstrumentation(),
                 "cmd jobscheduler run -s"
                 + " -u " + UserHandle.myUserId()
