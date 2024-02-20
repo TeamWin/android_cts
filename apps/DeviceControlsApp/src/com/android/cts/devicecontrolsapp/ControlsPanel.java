@@ -17,34 +17,51 @@
 package com.android.cts.devicecontrolsapp;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.service.controls.ControlsProviderService;
 import android.text.Html;
-import android.util.TypedValue;
-import android.view.Gravity;
-import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
 public class ControlsPanel extends Activity {
+
+    private static final int DEFAULT_CONTROLS_SURFACE_VALUE = -1;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        TextView text = new TextView(this);
-        setContentView(text);
+        setContentView(R.layout.device_controls_app);
+        TextView lockscreen_setting_placeholder = findViewById(R.id.lockscreen_setting_placeholder);
+        TextView surface_placeholder = findViewById(R.id.surface_placeholder);
 
-        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) text.getLayoutParams();
-        lp.gravity = Gravity.CENTER;
-        lp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
-        lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-        text.setLayoutParams(lp);
-
-        boolean setting = getIntent().getBooleanExtra(
+        boolean settingAllowTrivialControls = getIntent().getBooleanExtra(
                 ControlsProviderService.EXTRA_LOCKSCREEN_ALLOW_TRIVIAL_CONTROLS, false);
-        text.setText(Html.fromHtml(getString(R.string.panel_content, setting),
+
+        int settingDreamExtra = getIntent().getIntExtra(
+                ControlsProviderService.EXTRA_CONTROLS_SURFACE,
+                DEFAULT_CONTROLS_SURFACE_VALUE
+        );
+
+        // Set values to the TextViews
+        lockscreen_setting_placeholder.setText(Html.fromHtml(
+                getString(R.string.panel_content, settingAllowTrivialControls),
                 Html.FROM_HTML_MODE_LEGACY));
-        text.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+        surface_placeholder.setText(Html.fromHtml(
+                getString(R.string.home_control_panel_surface,
+                        readableSetting(this, settingDreamExtra)),
+                Html.FROM_HTML_MODE_LEGACY));
+    }
+
+    private static String readableSetting(Context context, int settingDreamExtra) {
+        switch (settingDreamExtra) {
+            case ControlsProviderService.CONTROLS_SURFACE_ACTIVITY_PANEL:
+                return context.getString(R.string.not_hosted_in_dream_result);
+            case ControlsProviderService.CONTROLS_SURFACE_DREAM:
+                return context.getString(R.string.hosted_in_dream_result);
+            default:
+                return context.getString(R.string.unknown_result);
+        }
     }
 }
