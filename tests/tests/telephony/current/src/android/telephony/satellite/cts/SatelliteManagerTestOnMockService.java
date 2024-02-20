@@ -353,11 +353,11 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         byte[] testProvisionData = mText.getBytes();
         sSatelliteManager.provisionService(TOKEN, testProvisionData, cancellationSignal,
                 getContext().getMainExecutor(), error::offer);
-        cancellationSignal.cancel();
 
         Integer errorCode;
         try {
             errorCode = error.poll(TIMEOUT, TimeUnit.MILLISECONDS);
+            cancellationSignal.cancel();
         } catch (InterruptedException ex) {
             fail("testProvisionSatelliteService: Got InterruptedException ex=" + ex);
             return;
