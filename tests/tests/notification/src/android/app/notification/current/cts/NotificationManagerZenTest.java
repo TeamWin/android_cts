@@ -2743,6 +2743,30 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
+    public void getAutomaticZenRuleState_returnsRuleState() {
+        AutomaticZenRule rule = createRule("Test");
+
+        String ruleId = mNotificationManager.addAutomaticZenRule(rule);
+        assertThat(mNotificationManager.getAutomaticZenRuleState(ruleId)).isEqualTo(
+                Condition.STATE_FALSE);
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "", Condition.STATE_TRUE));
+        assertThat(mNotificationManager.getAutomaticZenRuleState(ruleId)).isEqualTo(
+                Condition.STATE_TRUE);
+
+        mNotificationManager.setAutomaticZenRuleState(ruleId,
+                new Condition(rule.getConditionId(), "", Condition.STATE_FALSE));
+        assertThat(mNotificationManager.getAutomaticZenRuleState(ruleId)).isEqualTo(
+                Condition.STATE_FALSE);
+
+        mNotificationManager.removeAutomaticZenRule(ruleId);
+        assertThat(mNotificationManager.getAutomaticZenRuleState(ruleId)).isEqualTo(
+                Condition.STATE_UNKNOWN);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
     public void setAutomaticZenRuleState_ruleWithGrayscale_applied() throws Exception {
         assertThat(isColorDisplayManagerSaturationActivated()).isFalse();
 
