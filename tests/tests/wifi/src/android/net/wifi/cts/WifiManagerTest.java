@@ -7179,8 +7179,8 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
                             >= 0);
             assertTrue(twtStats.get().getInt(TwtSession.TWT_STATS_KEY_INT_EOSP_COUNT) >= 0);
 
-            // Verify TWT session teardown
-            testTwtCallback.mTwtSession.get().teardown();
+            // Verify TWT session close
+            testTwtCallback.mTwtSession.get().close();
             synchronized (mLock) {
                 now = System.currentTimeMillis();
                 deadline = now + TEST_WAIT_DURATION_MS;
@@ -7198,6 +7198,119 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
         }
     }
 
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM, codeName =
+            "VanillaIceCream")
+    @Test
+    public void testTwtSessionAutoCloseable() throws Exception {
+        AtomicReference<Bundle> twtCapabilities = new AtomicReference<>();
+        long now, deadline;
+        Consumer<Bundle> twtCapabilityCallback = new Consumer<Bundle>() {
+            @Override
+            public void accept(Bundle capabilities) {
+                synchronized (mLock) {
+                    twtCapabilities.set(capabilities);
+                    mLock.notify();
+                }
+            }
+        };
+        class TestTwtCallback implements TwtCallback {
+            final AtomicReference<TwtSession> mTwtSession = new AtomicReference<>();
+            final AtomicInteger mTwtTeardownReasonCode = new AtomicInteger(-1);
+            final AtomicInteger mTwtErrorCode = new AtomicInteger(-1);
+
+            @Override
+            public void onFailure(int errorCode) {
+                synchronized (mLock) {
+                    mTwtErrorCode.set(errorCode);
+                    mLock.notify();
+                }
+            }
+
+            @Override
+            public void onTeardown(int reasonCode) {
+                synchronized (mLock) {
+                    mTwtTeardownReasonCode.set(reasonCode);
+                    mLock.notify();
+                }
+            }
+
+            @Override
+            public void onCreate(TwtSession twtSession) {
+                synchronized (mLock) {
+                    mTwtSession.set(twtSession);
+                }
+            }
+        }
+        TestTwtCallback testTwtCallback = new TestTwtCallback();
+        TestActionListener actionListener = new TestActionListener(mLock);
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            sWifiManager.getTwtCapabilities(mExecutor, twtCapabilityCallback);
+            synchronized (mLock) {
+                now = System.currentTimeMillis();
+                deadline = now + TEST_WAIT_DURATION_MS;
+                while (twtCapabilities.get() == null && now < deadline) {
+                    mLock.wait(deadline - now);
+                    now = System.currentTimeMillis();
+                }
+            }
+            assertNotNull("getTwtCapabilities() timed out !", twtCapabilities.get());
+            // Assume device is a TWT requester
+            assumeTrue(twtCapabilities.get().getBoolean(
+                    WifiManager.TWT_CAPABILITIES_KEY_BOOLEAN_TWT_REQUESTER));
+
+            // Connect to an available TWT responder network
+            List<WifiConfiguration> savedNetworks = sWifiManager.getConfiguredNetworks();
+            WifiConfiguration twtNetwork = TestHelper.findFirstAvailableSavedNetwork(sWifiManager,
+                    savedNetworks, TestHelper.AP_CAPABILITY_BIT_TWT_RESPONDER);
+            assumeTrue("Unable to locate TWT capable networks in range.\n", twtNetwork != null);
+            sWifiManager.disconnect();
+            waitForDisconnection();
+            sWifiManager.connect(twtNetwork.networkId, actionListener);
+            waitForConnection();
+
+            // Verify TWT session setup
+            sWifiManager.setupTwtSession(new TwtRequest.Builder(twtCapabilities.get().getInt(
+                            WifiManager.TWT_CAPABILITIES_KEY_INT_MIN_WAKE_DURATION_MICROS),
+                            twtCapabilities.get().getInt(
+                                    WifiManager.TWT_CAPABILITIES_KEY_INT_MAX_WAKE_DURATION_MICROS),
+                            twtCapabilities.get().getLong(
+                                    WifiManager.TWT_CAPABILITIES_KEY_LONG_MIN_WAKE_INTERVAL_MICROS),
+                            twtCapabilities.get().getLong(
+                                    WifiManager.TWT_CAPABILITIES_KEY_LONG_MAX_WAKE_INTERVAL_MICROS)).build(),
+                    mExecutor, testTwtCallback);
+            synchronized (mLock) {
+                now = System.currentTimeMillis();
+                deadline = now + TEST_WAIT_DURATION_MS;
+                while (testTwtCallback.mTwtSession.get() == null && now < deadline) {
+                    mLock.wait(deadline - now);
+                    now = System.currentTimeMillis();
+                }
+            }
+            assertNotNull("setupTwtSession() timed out !", testTwtCallback.mTwtSession.get());
+
+        } finally {
+            // Test Twt Session, if setup, closes automatically
+            if (testTwtCallback.mTwtSession.get() != null) {
+                synchronized (mLock) {
+                    now = System.currentTimeMillis();
+                    deadline = now + TEST_WAIT_DURATION_MS;
+                    while (testTwtCallback.mTwtTeardownReasonCode.get() == -1 && now < deadline) {
+                        mLock.wait(deadline - now);
+                        now = System.currentTimeMillis();
+                    }
+                }
+                assertNotEquals("TwtSession auto close timed out !", -1,
+                        testTwtCallback.mTwtTeardownReasonCode.get());
+                assertEquals(testTwtCallback.mTwtTeardownReasonCode.get(),
+                        TwtCallback.TWT_REASON_CODE_LOCALLY_REQUESTED);
+            }
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
     /**
      * Tests {@link WifiManager#isD2dSupportedWhenInfraStaDisabled()},
      * {@link WifiManager#setD2dAllowedWhenInfraStaDisabled()} and
