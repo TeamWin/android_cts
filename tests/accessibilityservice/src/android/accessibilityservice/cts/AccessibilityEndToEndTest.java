@@ -117,7 +117,9 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
@@ -800,7 +802,7 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
     @ApiTest(apis = {
             "android.view.accessibility.AccessibilityNodeInfo#ACTION_ARGUMENT_SCROLL_AMOUNT_FLOAT"})
     public void testActionArgumentScrollAmountFloat() throws Exception {
-        class MyView extends View {
+        class MyView extends TextView {
             MyView(Context context) {
                 super(context);
             }
@@ -811,14 +813,29 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
                 return scrollAmount < 0 ? false : true;
             }
         }
+
         Bundle bundle = new Bundle();
         bundle.putFloat(ACTION_ARGUMENT_SCROLL_AMOUNT_FLOAT, -1);
-        MyView myView = new MyView(getContext());
-        assertThat(myView.performAccessibilityAction(
+        String text = "action_argument_scroll_amount";
+
+        sUiAutomation.executeAndWaitForEvent(
+                () -> sInstrumentation.runOnMainSync(() -> {
+                    final MyView myView = new MyView(getContext());
+                    myView.setText(text);
+                    ((LinearLayout) mActivity.findViewById(R.id.containerView)).addView(myView);
+                }),
+                filterForEventType(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED),
+                DEFAULT_TIMEOUT_MS);
+        AccessibilityNodeInfo myViewNode =
+                sUiAutomation.getRootInActiveWindow().findAccessibilityNodeInfosByText(
+                        text).getFirst();
+
+        assertThat(myViewNode.performAction(
                 AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD.getId(),
                 bundle)).isFalse();
+
         bundle.putFloat(ACTION_ARGUMENT_SCROLL_AMOUNT_FLOAT, 1);
-        assertThat(myView.performAccessibilityAction(
+        assertThat(myViewNode.performAction(
                 AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD.getId(),
                 bundle)).isTrue();
     }
