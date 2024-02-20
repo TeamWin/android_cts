@@ -58,6 +58,7 @@ public class CtsWearableSensingService extends WearableSensingService {
     private static final HashMultimap<Integer, WearableSensingDataRequester> sDataRequesters =
             HashMultimap.create();
     private static boolean sOnStopHotwordRecognitionCalled = false;
+    private static boolean sShouldCallParentAndReturn = false;
 
     @Override
     public void onDataStreamProvided(ParcelFileDescriptor parcelFileDescriptor,
@@ -84,6 +85,11 @@ public class CtsWearableSensingService extends WearableSensingService {
             String packageName,
             WearableSensingDataRequester dataRequester,
             Consumer<Integer> statusConsumer) {
+        if (sShouldCallParentAndReturn) {
+            super.onDataRequestObserverRegistered(
+                    dataType, packageName, dataRequester, statusConsumer);
+            return;
+        }
         sDataRequesters.put(dataType, dataRequester);
         sPackageName = packageName;
         sStatusConsumer = statusConsumer;
@@ -96,6 +102,11 @@ public class CtsWearableSensingService extends WearableSensingService {
             String packageName,
             WearableSensingDataRequester dataRequester,
             Consumer<Integer> statusConsumer) {
+        if (sShouldCallParentAndReturn) {
+            super.onDataRequestObserverUnregistered(
+                    dataType, packageName, dataRequester, statusConsumer);
+            return;
+        }
         sDataRequesters.remove(dataType, dataRequester);
         sPackageName = packageName;
         sStatusConsumer = statusConsumer;
@@ -104,6 +115,10 @@ public class CtsWearableSensingService extends WearableSensingService {
 
     @Override
     public void onStopHotwordRecognition(Consumer<Integer> statusConsumer) {
+        if (sShouldCallParentAndReturn) {
+            super.onStopHotwordRecognition(statusConsumer);
+            return;
+        }
         Log.i(TAG, "onStopHotwordRecognition");
         sOnStopHotwordRecognitionCalled = true;
         sStatusConsumer = statusConsumer;
@@ -152,6 +167,7 @@ public class CtsWearableSensingService extends WearableSensingService {
         sPackageName = null;
         sDataRequesters.clear();
         sOnStopHotwordRecognitionCalled = false;
+        sShouldCallParentAndReturn = false;
     }
 
     public static void whenCallbackTriggeredRespondWithStatus(int status) {
@@ -237,5 +253,13 @@ public class CtsWearableSensingService extends WearableSensingService {
 
     public static boolean getOnStopHotwordRecognitionCalled() {
         return sOnStopHotwordRecognitionCalled;
+    }
+
+    /**
+     * Configures this WearableSensingService to delegate to its parent when a non-abstract method
+     * is called.
+     */
+    public static void configureMethodsToCallParentAndReturn() {
+        sShouldCallParentAndReturn = true;
     }
 }
