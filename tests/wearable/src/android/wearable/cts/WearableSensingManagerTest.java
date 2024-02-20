@@ -136,7 +136,7 @@ public class WearableSensingManagerTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_ENABLE_PROVIDE_WEARABLE_CONNECTION_API)
-    public void noAccessWhenAttemptingProvideWearableConnection() {
+    public void noAccessWhenAttemptingProvideConnection() {
         assertEquals(
                 PackageManager.PERMISSION_DENIED,
                 mContext.checkCallingOrSelfPermission(
@@ -144,14 +144,14 @@ public class WearableSensingManagerTest {
 
         // Test non system app throws SecurityException
         assertThrows(
-                "no access to provideWearableConnection from non system component",
+                "no access to provideConnection from non system component",
                 SecurityException.class,
                 () ->
-                        mWearableSensingManager.provideWearableConnection(
+                        mWearableSensingManager.provideConnection(
                                 mPipe[0], EXECUTOR, (result) -> {}));
     }
 
-    // Other tests for provideWearableConnection are in WearableSensingManagerIsolatedServiceTest
+    // Other tests for provideConnection are in WearableSensingManagerIsolatedServiceTest
     // because this API will restart the WSS process and hence requires WSS to be in a different
     // process from the test runner.
 

@@ -91,9 +91,9 @@ public class CtsIsolatedWearableSensingService extends WearableSensingService {
     private volatile boolean mBooleanState = false;
 
     @Override
-    public void onSecureWearableConnectionProvided(
+    public void onSecureConnectionProvided(
             ParcelFileDescriptor secureWearableConnection, Consumer<Integer> statusConsumer) {
-        Log.w(TAG, "onSecureWearableConnectionProvided");
+        Log.w(TAG, "onSecureConnectionProvided");
         mSecureWearableConnection = secureWearableConnection;
         statusConsumer.accept(WearableSensingManager.STATUS_SUCCESS);
     }

@@ -140,12 +140,12 @@ public class WearableSensingManagerIsolatedServiceTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_ENABLE_PROVIDE_WEARABLE_CONNECTION_API)
-    public void provideWearableConnection_canReceiveStatusFromWss()
+    public void provideConnection_canReceiveStatusFromWss()
             throws Exception {
         AtomicInteger statusCodeRef = new AtomicInteger(WearableSensingManager.STATUS_UNKNOWN);
         CountDownLatch statusCodeLatch = new CountDownLatch(1);
 
-        mWearableSensingManager.provideWearableConnection(
+        mWearableSensingManager.provideConnection(
                 mSocketPair[1],
                 EXECUTOR,
                 (statusCode) -> {
@@ -159,7 +159,7 @@ public class WearableSensingManagerIsolatedServiceTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_ENABLE_PROVIDE_WEARABLE_CONNECTION_API)
-    public void provideWearableConnection_otherEndAttachedToCdm_canReceiveDataInWss()
+    public void provideConnection_otherEndAttachedToCdm_canReceiveDataInWss()
             throws Exception {
         getInstrumentation()
                 .getUiAutomation()
@@ -171,7 +171,7 @@ public class WearableSensingManagerIsolatedServiceTest {
         byte[] dataToWrite = DATA_TO_WRITE.getBytes(StandardCharsets.UTF_8);
         CountDownLatch statusCodeLatch = new CountDownLatch(1);
 
-        mWearableSensingManager.provideWearableConnection(
+        mWearableSensingManager.provideConnection(
                 mSocketPair[1], EXECUTOR, (statusCode) -> statusCodeLatch.countDown());
         assertThat(statusCodeLatch.await(3, SECONDS)).isTrue();
         mCompanionDeviceManager.sendMessage(
@@ -185,7 +185,7 @@ public class WearableSensingManagerIsolatedServiceTest {
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_ENABLE_PROVIDE_WEARABLE_CONNECTION_API)
     public void
-            provideWearableConnection_otherEndAttachedToCdm_canReceiveDataFromWss()
+            provideConnection_otherEndAttachedToCdm_canReceiveDataFromWss()
                     throws Exception {
         getInstrumentation()
                 .getUiAutomation()
@@ -196,7 +196,7 @@ public class WearableSensingManagerIsolatedServiceTest {
         mCdmAssociationId = attachTransportToCdm(mSocketPair[0]);
         CountDownLatch statusCodeLatch = new CountDownLatch(1);
 
-        mWearableSensingManager.provideWearableConnection(
+        mWearableSensingManager.provideConnection(
                 mSocketPair[1], EXECUTOR, (statusCode) -> statusCodeLatch.countDown());
         assertThat(statusCodeLatch.await(3, SECONDS)).isTrue();
         sendDataToWearableFromWss(DATA_TO_WRITE);
@@ -208,7 +208,7 @@ public class WearableSensingManagerIsolatedServiceTest {
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_ENABLE_PROVIDE_WEARABLE_CONNECTION_API)
     public void
-            provideWearableConnection_wearableStreamClosedThenSendDataFromWss_channelErrorStatus()
+            provideConnection_wearableStreamClosedThenSendDataFromWss_channelErrorStatus()
                     throws Exception {
         getInstrumentation()
                 .getUiAutomation()
@@ -222,7 +222,7 @@ public class WearableSensingManagerIsolatedServiceTest {
         CountDownLatch channelErrorStatusLatch = new CountDownLatch(2);
         mCdmAssociationId = attachTransportToCdm(mSocketPair[0]);
 
-        mWearableSensingManager.provideWearableConnection(
+        mWearableSensingManager.provideConnection(
                 mSocketPair[1],
                 EXECUTOR,
                 (statusCode) -> {
@@ -246,7 +246,7 @@ public class WearableSensingManagerIsolatedServiceTest {
         Flags.FLAG_ENABLE_RESTART_WSS_PROCESS
     })
     public void
-            provideWearableConnection_wearableStreamClosedThenSendDataFromWss_restartWssProcess()
+            provideConnection_wearableStreamClosedThenSendDataFromWss_restartWssProcess()
                     throws Exception {
         getInstrumentation()
                 .getUiAutomation()
@@ -257,7 +257,7 @@ public class WearableSensingManagerIsolatedServiceTest {
         CountDownLatch statusLatch = new CountDownLatch(1);
         mCdmAssociationId = attachTransportToCdm(mSocketPair[0]);
 
-        mWearableSensingManager.provideWearableConnection(
+        mWearableSensingManager.provideConnection(
                 mSocketPair[1], EXECUTOR, (statusCode) -> statusLatch.countDown());
         assertThat(statusLatch.await(3, SECONDS)).isTrue();
         setBooleanStateInWss();
@@ -275,7 +275,7 @@ public class WearableSensingManagerIsolatedServiceTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_ENABLE_PROVIDE_WEARABLE_CONNECTION_API)
-    public void provideWearableConnection_wssStreamClosed_channelErrorStatus() throws Exception {
+    public void provideConnection_wssStreamClosed_channelErrorStatus() throws Exception {
         getInstrumentation()
                 .getUiAutomation()
                 .adoptShellPermissionIdentity(
@@ -288,7 +288,7 @@ public class WearableSensingManagerIsolatedServiceTest {
         CountDownLatch channelErrorStatusLatch = new CountDownLatch(2);
         mCdmAssociationId = attachTransportToCdm(mSocketPair[0]);
 
-        mWearableSensingManager.provideWearableConnection(
+        mWearableSensingManager.provideConnection(
                 mSocketPair[1],
                 EXECUTOR,
                 (statusCode) -> {
@@ -310,12 +310,12 @@ public class WearableSensingManagerIsolatedServiceTest {
         Flags.FLAG_ENABLE_PROVIDE_WEARABLE_CONNECTION_API,
         Flags.FLAG_ENABLE_RESTART_WSS_PROCESS
     })
-    public void provideWearableConnection_restartsWssProcess() throws Exception {
-        // The first call of provideWearableConnection may not restart the process,
+    public void provideConnection_restartsWssProcess() throws Exception {
+        // The first call of provideConnection may not restart the process,
         // so we call once first, then set up and call it again
         AtomicInteger statusCodeRef1 = new AtomicInteger(WearableSensingManager.STATUS_UNKNOWN);
         CountDownLatch statusCodeLatch1 = new CountDownLatch(1);
-        mWearableSensingManager.provideWearableConnection(
+        mWearableSensingManager.provideConnection(
                 mSocketPair[1],
                 EXECUTOR,
                 (statusCode) -> {
@@ -330,7 +330,7 @@ public class WearableSensingManagerIsolatedServiceTest {
         AtomicInteger statusCodeRef2 = new AtomicInteger(WearableSensingManager.STATUS_UNKNOWN);
         CountDownLatch statusCodeLatch2 = new CountDownLatch(1);
 
-        mWearableSensingManager.provideWearableConnection(
+        mWearableSensingManager.provideConnection(
                 mSocketPair[1],
                 EXECUTOR,
                 (statusCode) -> {
