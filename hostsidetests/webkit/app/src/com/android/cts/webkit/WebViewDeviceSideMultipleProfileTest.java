@@ -17,19 +17,18 @@
 package com.android.cts.webkit;
 
 import android.app.admin.DeviceAdminReceiver;
-import android.util.Log;
 import android.webkit.WebView;
 import android.webkit.cts.WebViewSyncLoader;
 
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 
+import com.android.compatibility.common.util.NullWebViewUtils;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-
-import java.io.IOException;
 
 public class WebViewDeviceSideMultipleProfileTest {
     // Profile owner component.
@@ -51,6 +50,10 @@ public class WebViewDeviceSideMultipleProfileTest {
     @Test
     @UiThreadTest
     public void testCreateWebViewAndNavigate() {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
         mActivity.createAndAttachWebView();
         WebView webView = mActivity.getWebView();
         Assert.assertNotNull(webView);
