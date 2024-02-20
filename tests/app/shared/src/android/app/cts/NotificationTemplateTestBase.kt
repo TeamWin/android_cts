@@ -33,15 +33,15 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
-import org.junit.Before
 import kotlin.reflect.KClass
+import org.junit.Before
 
 open class NotificationTemplateTestBase {
 
     // Used to give time to visually inspect or attach a debugger before the checkViews block
     protected var waitBeforeCheckingViews: Long = 0
     protected var context: Context =
-            InstrumentationRegistry.getInstrumentation().getTargetContext();
+            InstrumentationRegistry.getInstrumentation().getTargetContext()
 
     @Before
     public fun baseSetUp() {
@@ -62,8 +62,10 @@ open class NotificationTemplateTestBase {
         val activityIntent = Intent(context, NotificationHostActivity::class.java)
         activityIntent.putExtra(NotificationHostActivity.EXTRA_REMOTE_VIEWS, views)
         heightDimen?.also {
-            activityIntent.putExtra(NotificationHostActivity.EXTRA_HEIGHT,
-                    context.resources.getDimensionPixelSize(it))
+            activityIntent.putExtra(
+                NotificationHostActivity.EXTRA_HEIGHT,
+                    context.resources.getDimensionPixelSize(it)
+            )
         }
         ActivityScenario.launch<NotificationHostActivity>(activityIntent).use { scenario ->
             scenario.moveToState(Lifecycle.State.RESUMED)
