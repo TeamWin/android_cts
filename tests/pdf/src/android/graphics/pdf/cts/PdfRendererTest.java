@@ -796,8 +796,9 @@ public class PdfRendererTest {
     public void getPageGotoLinks_pageWithoutGotoLink() throws Exception {
         assertPageGotoLinks_pageWithoutGotoLink(createRenderer(SAMPLE_PDF, mContext));
 
-        assertPageGotoLinks_pageWithGotoLink(
-                createRendererUsingNewConstructor(SAMPLE_PDF, mContext, null));
+        assertPageGotoLinks_pageWithoutGotoLink(
+                createRendererUsingNewConstructor(SAMPLE_PDF, mContext,
+                        SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR));
     }
 
     private void assertPageGotoLinks_pageWithoutGotoLink(PdfRenderer renderer) {
@@ -814,7 +815,8 @@ public class PdfRendererTest {
         assertPageGotoLinks_pageWithGotoLink(createRenderer(R.raw.sample_links, mContext));
 
         assertPageGotoLinks_pageWithGotoLink(
-                createRendererUsingNewConstructor(R.raw.sample_links, mContext, null));
+                createRendererUsingNewConstructor(R.raw.sample_links, mContext,
+                        SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR));
     }
 
     private void assertPageGotoLinks_pageWithGotoLink(PdfRenderer renderer) {

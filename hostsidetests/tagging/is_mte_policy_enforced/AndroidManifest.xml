@@ -25,6 +25,6 @@
 
     <instrumentation
         android:name="androidx.test.runner.AndroidJUnitRunner"
-        android:targetPackage="android.cts.tagging.is_mte_enabled" />
+        android:targetPackage="android.cts.tagging.is_mte_policy_enforced" />
 </manifest>
 
