@@ -39,7 +39,7 @@ public class ShortcutManagerPostBackupTest extends ShortcutManagerDeviceTestBase
                 .isEmpty();
 
         assertWith(getManager().getPinnedShortcuts())
-                .haveIds("ms1", "ms2")
+                .haveIds("s1", "s2", "ms1", "ms2")
                 .areAllEnabled();
 
         assertWith(getManager().getManifestShortcuts())
@@ -47,9 +47,8 @@ public class ShortcutManagerPostBackupTest extends ShortcutManagerDeviceTestBase
                 .areAllPinned()
                 .areAllEnabled();
 
-        // At this point, s1 and s2 don't look to exist to the publisher, so it can publish a
-        // dynamic shortcut and that should work.
-        // But updateShortcuts() don't.
+        // At this point, s1 and s2 are restored on the device, developers can publish a
+        // dynamic shortcut or updateShortcuts and that should work.
 
         final ShortcutInfo s1 = new ShortcutInfo.Builder(getContext(), "s1")
                 .setShortLabel("shortlabel1_new_one")
@@ -69,9 +68,8 @@ public class ShortcutManagerPostBackupTest extends ShortcutManagerDeviceTestBase
                 .areAllEnabled();
 
         assertWith(getManager().getPinnedShortcuts())
-                .haveIds("ms1", "ms2", "s1") // s2 not in the list.
+                .haveIds("ms1", "ms2", "s1", "s2")
                 .areAllEnabled();
-
     }
 
     public void testRestoredOnNewVersion() {
@@ -183,60 +181,7 @@ public class ShortcutManagerPostBackupTest extends ShortcutManagerDeviceTestBase
                 .isEmpty();
 
         assertWith(getManager().getPinnedShortcuts())
-                .isEmpty();
-
-        // ms1 was manifest/immutable, but can be overwritten.
-        final ShortcutInfo ms1 = new ShortcutInfo.Builder(getContext(), "ms1")
-                .setShortLabel("ms1_new_one")
-                .setActivity(getActivity("MainActivity"))
-                .setIntents(new Intent[]{new Intent("main")})
-                .build();
-
-        assertTrue(getManager().setDynamicShortcuts(list(ms1)));
-
-        assertWith(getManager().getDynamicShortcuts())
-                .haveIds("ms1");
-        assertWith(getManager().getPinnedShortcuts())
-                .haveIds("ms1");
-
-        // Adding s1 should also work.
-        final ShortcutInfo s1 = new ShortcutInfo.Builder(getContext(), "s1")
-                .setShortLabel("s1_new_one")
-                .setActivity(getActivity("MainActivity"))
-                .setIntents(new Intent[]{new Intent("main")})
-                .build();
-
-        assertTrue(getManager().addDynamicShortcuts(list(s1)));
-
-        assertWith(getManager().getDynamicShortcuts())
-                .haveIds("s1", "ms1");
-        assertWith(getManager().getPinnedShortcuts())
-                .haveIds("s1", "ms1");
-
-        // Update on ms2 should be no-op.
-        final ShortcutInfo ms2 = new ShortcutInfo.Builder(getContext(), "ms2")
-                .setShortLabel("ms2-updated")
-                .build();
-        assertTrue(getManager().updateShortcuts(list(ms2)));
-
-        assertWith(getManager().getManifestShortcuts())
-                .isEmpty();
-        assertWith(getManager().getDynamicShortcuts())
-                .haveIds("s1", "ms1")
-                .areAllEnabled()
-                .areAllPinned()
-                .areAllMutable()
-
-                .selectByIds("s1")
-                .forAllShortcuts(si -> {
-                    assertEquals("s1_new_one", si.getShortLabel());
-                })
-
-                .revertToOriginalList()
-                .selectByIds("ms1")
-                .forAllShortcuts(si -> {
-                    assertEquals("ms1_new_one", si.getShortLabel());
-                });
+                .haveIds("ms1", "ms2", "s1", "s2");
     }
 
     /**
@@ -264,7 +209,6 @@ public class ShortcutManagerPostBackupTest extends ShortcutManagerDeviceTestBase
 
     private void assertNoShortcuts() {
         assertWith(getManager().getDynamicShortcuts()).isEmpty();
-        assertWith(getManager().getPinnedShortcuts()).isEmpty();
         assertWith(getManager().getManifestShortcuts()).isEmpty();
     }
 
@@ -273,16 +217,13 @@ public class ShortcutManagerPostBackupTest extends ShortcutManagerDeviceTestBase
 
         // Make sure "disable" won't change the disabled reason. Also make sure "enable" won't
         // enable them.
-        getManager().disableShortcuts(list("s1", "s2", "ms1"));
+        getManager().disableShortcuts(list("s1", "s2"));
         assertNoShortcuts();
 
-        getManager().enableShortcuts(list("ms1", "s2"));
+        getManager().enableShortcuts(list("s2"));
         assertNoShortcuts();
 
-        getManager().enableShortcuts(list("ms1"));
-        assertNoShortcuts();
-
-        getManager().removeDynamicShortcuts(list("s1", "ms1"));
+        getManager().removeDynamicShortcuts(list("s1"));
         assertNoShortcuts();
 
         getManager().removeAllDynamicShortcuts();
@@ -300,8 +241,8 @@ public class ShortcutManagerPostBackupTest extends ShortcutManagerDeviceTestBase
         PersistableBundle pb = new PersistableBundle();
         pb.putBoolean("acceptit", true);
 
-        final ShortcutInfo ms2 = new ShortcutInfo.Builder(getContext(), "ms2")
-                .setShortLabel("ms2_new_one")
+        final ShortcutInfo s2 = new ShortcutInfo.Builder(getContext(), "s2")
+                .setShortLabel("s2_new_one")
                 .setActivity(getActivity("MainActivity"))
                 .setIntents(new Intent[]{new Intent("main2")})
                 .setExtras(pb)
@@ -318,7 +259,7 @@ public class ShortcutManagerPostBackupTest extends ShortcutManagerDeviceTestBase
         };
         getContext().registerReceiver(onResult, myFilter,
                 Context.RECEIVER_EXPORTED_UNAUDITED);
-        assertTrue(getManager().requestPinShortcut(ms2,
+        assertTrue(getManager().requestPinShortcut(s2,
                 PendingIntent.getBroadcast(getContext(), 0, new Intent(myIntentAction)
                                 .setPackage(getContext().getPackageName()),
                         PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE)
@@ -328,11 +269,9 @@ public class ShortcutManagerPostBackupTest extends ShortcutManagerDeviceTestBase
                 latch.await(30, TimeUnit.SECONDS));
 
         assertWith(getManager().getPinnedShortcuts())
-                .haveIds("ms2")
-                .areAllNotDynamic()
-                .areAllNotManifest()
-                .areAllMutable()
+                .haveIds("s1", "s2", "ms1", "ms2")
                 .areAllPinned()
+                .selectByIds("s2")
                 .forAllShortcuts(si -> {
                     // requestPinShortcut() acts as an update in this case, so even though
                     // the original shortcut hada  long label, this one does not.
