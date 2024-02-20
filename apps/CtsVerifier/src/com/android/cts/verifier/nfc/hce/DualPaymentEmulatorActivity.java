@@ -4,7 +4,6 @@ import android.annotation.TargetApi;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.nfc.cardemulation.CardEmulation;
 import android.os.Bundle;
 
 import com.android.cts.verifier.R;
@@ -42,7 +41,9 @@ public class DualPaymentEmulatorActivity extends BaseEmulatorActivity {
             return;
         }
         // Verify HCE service 2 is the default
-        if (makePaymentDefault(PaymentService2.COMPONENT, R.string.nfc_hce_change_preinstalled_wallet)) {
+        int stringId = isWalletRoleAvailable() ? R.string.nfc_hce_change_default_wallet
+                : R.string.nfc_hce_change_preinstalled_wallet;
+        if (makePaymentDefault(PaymentService2.COMPONENT, stringId)) {
             mState = STATE_MAKING_SERVICE2_DEFAULT;
         } else {
             // Already default
@@ -61,12 +62,20 @@ public class DualPaymentEmulatorActivity extends BaseEmulatorActivity {
     protected void onPause() {
         super.onPause();
     }
-    public static Intent buildReaderIntent(Context context) {
+
+    /**
+    * Accepting isWalletRoleAvailable as a parameter to decide sequences accordingly
+    **/
+    public static Intent buildReaderIntent(Context context, boolean isWalletRoleAvailable) {
         Intent readerIntent = new Intent(context, SimpleReaderActivity.class);
+        CommandApdu[] commandSequence = isWalletRoleAvailable
+                ? PaymentService1.APDU_COMMAND_SEQUENCE : PaymentService2.APDU_COMMAND_SEQUENCE;
+        String[] responseSequence = isWalletRoleAvailable
+                ? PaymentService1.APDU_RESPOND_SEQUENCE : PaymentService2.APDU_RESPOND_SEQUENCE;
         readerIntent.putExtra(SimpleReaderActivity.EXTRA_APDUS,
-                PaymentService2.APDU_COMMAND_SEQUENCE);
+                commandSequence);
         readerIntent.putExtra(SimpleReaderActivity.EXTRA_RESPONSES,
-                PaymentService2.APDU_RESPOND_SEQUENCE);
+                responseSequence);
         readerIntent.putExtra(SimpleReaderActivity.EXTRA_LABEL,
                 context.getString(R.string.nfc_hce_dual_payment_reader));
         return readerIntent;
@@ -74,7 +83,8 @@ public class DualPaymentEmulatorActivity extends BaseEmulatorActivity {
 
     @Override
     void onApduSequenceComplete(ComponentName component, long duration) {
-        if (component.equals(PaymentService2.COMPONENT)) {
+        if (component.equals(isWalletRoleAvailable() ? PaymentService1.COMPONENT
+                : PaymentService2.COMPONENT)) {
             getPassButton().setEnabled(true);
         }
     }

@@ -41,7 +41,9 @@ public class PrefixPaymentEmulator2Activity extends BaseEmulatorActivity {
             return;
         }
         // Verify HCE service 2 is the default
-        if (makePaymentDefault(PrefixPaymentService2.COMPONENT, R.string.nfc_hce_change_preinstalled_wallet)) {
+        int stringId = isWalletRoleAvailable() ? R.string.nfc_hce_change_default_wallet
+                : R.string.nfc_hce_change_preinstalled_wallet;
+        if (makePaymentDefault(PrefixPaymentService2.COMPONENT, stringId)) {
             mState = STATE_MAKING_SERVICE2_DEFAULT;
         } else {
             // Already default
@@ -60,12 +62,22 @@ public class PrefixPaymentEmulator2Activity extends BaseEmulatorActivity {
     protected void onPause() {
         super.onPause();
     }
-    public static Intent buildReaderIntent(Context context) {
+
+    /**
+     * Accepting isWalletRoleAvailable as a parameter to decide sequences accordingly
+     **/
+    public static Intent buildReaderIntent(Context context, boolean isWalletRoleAvailable) {
         Intent readerIntent = new Intent(context, SimpleReaderActivity.class);
+        CommandApdu[] commandSequence = isWalletRoleAvailable
+                ? PrefixPaymentService1.APDU_COMMAND_SEQUENCE
+                : PrefixPaymentService2.APDU_COMMAND_SEQUENCE;
+        String[] responseSequence = isWalletRoleAvailable
+                ? PrefixPaymentService1.APDU_RESPOND_SEQUENCE
+                : PrefixPaymentService2.APDU_RESPOND_SEQUENCE;
         readerIntent.putExtra(SimpleReaderActivity.EXTRA_APDUS,
-                PrefixPaymentService2.APDU_COMMAND_SEQUENCE);
+                commandSequence);
         readerIntent.putExtra(SimpleReaderActivity.EXTRA_RESPONSES,
-                PrefixPaymentService2.APDU_RESPOND_SEQUENCE);
+                responseSequence);
         readerIntent.putExtra(SimpleReaderActivity.EXTRA_LABEL,
                 context.getString(R.string.nfc_hce_payment_prefix_aids_reader_2));
         return readerIntent;
@@ -73,7 +85,8 @@ public class PrefixPaymentEmulator2Activity extends BaseEmulatorActivity {
 
     @Override
     void onApduSequenceComplete(ComponentName component, long duration) {
-        if (component.equals(PrefixPaymentService2.COMPONENT)) {
+        if (component.equals(isWalletRoleAvailable() ? PrefixPaymentService1.COMPONENT
+                : PrefixPaymentService2.COMPONENT)) {
             getPassButton().setEnabled(true);
         }
     }

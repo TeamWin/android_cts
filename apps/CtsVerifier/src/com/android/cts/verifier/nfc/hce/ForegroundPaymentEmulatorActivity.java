@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.nfc.cardemulation.CardEmulation;
 import android.os.Bundle;
-import android.util.Log;
 
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.nfc.NfcDialogs;
@@ -35,11 +34,22 @@ public class ForegroundPaymentEmulatorActivity extends BaseEmulatorActivity {
 
     @Override
     void onServicesSetup(boolean result) {
-        if (!makePaymentDefault(PaymentService1.COMPONENT,
-                R.string.nfc_hce_change_preinstalled_wallet)) {
+        if (!isWalletRoleAvailable()) {
+            if (!makePaymentDefault(PaymentService1.COMPONENT,
+                    R.string.nfc_hce_change_preinstalled_wallet)) {
+                mCardEmulation.setPreferredService(this, PaymentService2.COMPONENT);
+                NfcDialogs.createHceTapReaderDialog(this,
+                        getString(R.string.nfc_hce_foreground_payment_help)).show();
+            } // else, wait for callback
+        } else {
+            if (isWalletRoleHeld()) {
+                makePaymentDefault(PaymentService1.COMPONENT,
+                        R.string.nfc_hce_change_preinstalled_wallet);
+            }
             mCardEmulation.setPreferredService(this, PaymentService2.COMPONENT);
-            NfcDialogs.createHceTapReaderDialog(this, getString(R.string.nfc_hce_foreground_payment_help)).show();
-        } // else, wait for callback
+            NfcDialogs.createHceTapReaderDialog(this,
+                    getString(R.string.nfc_hce_foreground_payment_help)).show();
+        }
     }
 
     @Override
