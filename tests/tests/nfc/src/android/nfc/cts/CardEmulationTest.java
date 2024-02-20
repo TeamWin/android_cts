@@ -193,14 +193,12 @@ public class CardEmulationTest {
 
     @Test
     public void testRegisterAidsForService() throws NoSuchFieldException, RemoteException {
-        CardEmulation instance = createMockedInstance();
         ArrayList<String> aids = new ArrayList<String>();
         aids.add("00000000000000");
-        when(mEmulation.registerAidGroupForService(anyInt(), any(ComponentName.class),
-            any(AidGroup.class))).thenReturn(true);
-        boolean result
-            = instance.registerAidsForService(mService, CardEmulation.CATEGORY_PAYMENT, aids);
-        Assert.assertTrue(result);
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
+        Assert.assertTrue(cardEmulation.registerAidsForService(mService,
+                CardEmulation.CATEGORY_PAYMENT, aids));
     }
 
     @Test
