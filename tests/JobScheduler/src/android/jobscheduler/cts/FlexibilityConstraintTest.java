@@ -40,7 +40,7 @@ import java.util.Map;
 public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
     private static final String TAG = "FlexibilityConstraintTest";
     public static final int FLEXIBLE_JOB_ID = FlexibilityConstraintTest.class.hashCode();
-    private static final long FLEXIBILITY_TIMEOUT_MILLIS = 5_000;
+    private static final long FLEXIBILITY_TIMEOUT_MILLIS = 5_000L * HW_TIMEOUT_MULTIPLIER;
 
     // Same values as in JobStatus.java
     private static final int CONSTRAINT_BATTERY_NOT_LOW = 1 << 1;
