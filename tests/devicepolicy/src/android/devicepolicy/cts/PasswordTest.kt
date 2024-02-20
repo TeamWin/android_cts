@@ -19,6 +19,7 @@ package android.devicepolicy.cts
 import android.app.admin.DevicePolicyManager
 import android.content.pm.PackageManager
 import android.os.Build
+import android.stats.devicepolicy.EventId
 import com.android.bedstead.harrier.BedsteadJUnit4
 import com.android.bedstead.harrier.Defaults
 import com.android.bedstead.harrier.DeviceState
@@ -40,6 +41,8 @@ import com.android.bedstead.harrier.policies.PasswordExpirationTimeout
 import com.android.bedstead.harrier.policies.PasswordQuality
 import com.android.bedstead.harrier.policies.PasswordSufficiency
 import com.android.bedstead.harrier.policies.StrongAuthTimeout
+import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder
+import com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat
 import com.android.bedstead.nene.TestApis
 import com.android.bedstead.nene.utils.Assert.assertThrows
 import com.android.compatibility.common.util.ApiTest
@@ -1215,9 +1218,320 @@ class PasswordTest {
         }
     }
 
+    /** Setting password quality to PASSWORD_QUALITY_COMPLEX is required to set PasswordMinimumLength. */
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(
+            policy = [PasswordQuality::class]
+    )
+    fun setPasswordMinimumLength_isLogged() {
+        val initialPasswordQuality = getInitialPasswordQuality()
+        val initialMinimumLength = deviceState.dpc().devicePolicyManager().getPasswordMinimumLength(
+                deviceState.dpc().componentName()
+        )
+
+        try {
+            setPasswordQuality(DevicePolicyManager.PASSWORD_QUALITY_COMPLEX)
+
+            EnterpriseMetricsRecorder.create().use { metrics ->
+                deviceState.dpc().devicePolicyManager().setPasswordMinimumLength(
+                        deviceState.dpc().componentName(),
+                        PASSWORD_QUALITY_LOG_TEST_VALUE
+                )
+
+                assertThat(
+                        metrics.query()
+                                .whereType().isEqualTo(EventId.SET_PASSWORD_MINIMUM_LENGTH_VALUE)
+                                .whereAdminPackageName().isEqualTo(deviceState.dpc().packageName())
+                                .whereInteger().isEqualTo(PASSWORD_QUALITY_LOG_TEST_VALUE)
+                )
+                        .wasLogged()
+            }
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumLength(
+                    deviceState.dpc().componentName(),
+                    initialMinimumLength
+            )
+            setPasswordQuality(initialPasswordQuality)
+        }
+    }
+
+    /** Setting password quality to PASSWORD_QUALITY_COMPLEX is required to set MinimumNumeric. */
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(
+            policy = [PasswordQuality::class]
+    )
+    fun setPasswordMinimumNumeric_isLogged() {
+        val initialPasswordQuality = getInitialPasswordQuality()
+        val initialMinimumNumeric = deviceState.dpc().devicePolicyManager().getPasswordMinimumNumeric(
+                deviceState.dpc().componentName()
+        )
+
+        try {
+            setPasswordQuality(DevicePolicyManager.PASSWORD_QUALITY_COMPLEX)
+
+            EnterpriseMetricsRecorder.create().use { metrics ->
+                deviceState.dpc().devicePolicyManager().setPasswordMinimumNumeric(
+                        deviceState.dpc().componentName(),
+                        PASSWORD_QUALITY_LOG_TEST_VALUE
+                )
+
+                assertThat(
+                        metrics.query()
+                                .whereType().isEqualTo(EventId.SET_PASSWORD_MINIMUM_NUMERIC_VALUE)
+                                .whereAdminPackageName().isEqualTo(deviceState.dpc().packageName())
+                                .whereInteger().isEqualTo(PASSWORD_QUALITY_LOG_TEST_VALUE)
+                )
+                        .wasLogged()
+            }
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumNumeric(
+                    deviceState.dpc().componentName(),
+                    initialMinimumNumeric
+            )
+
+            setPasswordQuality(initialPasswordQuality)
+        }
+    }
+
+    /** Setting password quality to PASSWORD_QUALITY_COMPLEX is required to set PasswordMinimumNonLetter. */
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(
+            policy = [PasswordQuality::class]
+    )
+    fun setPasswordMinimumNonLetter_isLogged() {
+        val initialPasswordQuality = getInitialPasswordQuality()
+        val initialMinimumNonLetter = deviceState.dpc().devicePolicyManager().getPasswordMinimumNonLetter(
+                deviceState.dpc().componentName()
+        )
+
+        try {
+            setPasswordQuality(DevicePolicyManager.PASSWORD_QUALITY_COMPLEX)
+
+            EnterpriseMetricsRecorder.create().use { metrics ->
+                deviceState.dpc().devicePolicyManager().setPasswordMinimumNonLetter(
+                        deviceState.dpc().componentName(),
+                        PASSWORD_QUALITY_LOG_TEST_VALUE
+                )
+
+                assertThat(
+                        metrics.query()
+                                .whereType().isEqualTo(EventId.SET_PASSWORD_MINIMUM_NON_LETTER_VALUE)
+                                .whereAdminPackageName().isEqualTo(deviceState.dpc().packageName())
+                                .whereInteger().isEqualTo(PASSWORD_QUALITY_LOG_TEST_VALUE)
+                )
+                        .wasLogged()
+            }
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumNonLetter(
+                    deviceState.dpc().componentName(),
+                    initialMinimumNonLetter
+            )
+
+            setPasswordQuality(initialPasswordQuality)
+        }
+    }
+
+    /** Setting password quality to PASSWORD_QUALITY_COMPLEX is required to set PasswordMinimumLetters. */
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(
+            policy = [PasswordQuality::class]
+    )
+    fun setPasswordMinimumLetters_isLogged() {
+        val initialPasswordQuality = getInitialPasswordQuality()
+        val initialMinimumLetters = deviceState.dpc().devicePolicyManager().getPasswordMinimumLetters(
+                deviceState.dpc().componentName()
+        )
+
+        try {
+            setPasswordQuality(DevicePolicyManager.PASSWORD_QUALITY_COMPLEX)
+
+            EnterpriseMetricsRecorder.create().use { metrics ->
+                deviceState.dpc().devicePolicyManager().setPasswordMinimumLetters(
+                        deviceState.dpc().componentName(),
+                        PASSWORD_QUALITY_LOG_TEST_VALUE
+                )
+
+                assertThat(
+                        metrics.query()
+                                .whereType().isEqualTo(EventId.SET_PASSWORD_MINIMUM_LETTERS_VALUE)
+                                .whereAdminPackageName().isEqualTo(deviceState.dpc().packageName())
+                                .whereInteger().isEqualTo(PASSWORD_QUALITY_LOG_TEST_VALUE)
+                )
+                        .wasLogged()
+            }
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumLetters(
+                    deviceState.dpc().componentName(),
+                    initialMinimumLetters
+            )
+
+            setPasswordQuality(initialPasswordQuality)
+        }
+    }
+
+    /** Setting password quality to PASSWORD_QUALITY_COMPLEX is required to set PasswordMinimumLowerCase. */
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(
+            policy = [PasswordQuality::class]
+    )
+    fun setPasswordMinimumLowerCase_isLogged() {
+        val initialPasswordQuality = getInitialPasswordQuality()
+        val initialMinimumLowerCase = deviceState.dpc().devicePolicyManager().getPasswordMinimumLowerCase(
+                deviceState.dpc().componentName()
+        )
+
+        try {
+            setPasswordQuality(DevicePolicyManager.PASSWORD_QUALITY_COMPLEX)
+
+            EnterpriseMetricsRecorder.create().use { metrics ->
+                deviceState.dpc().devicePolicyManager().setPasswordMinimumLowerCase(
+                        deviceState.dpc().componentName(),
+                        PASSWORD_QUALITY_LOG_TEST_VALUE
+                )
+
+                assertThat(
+                        metrics.query()
+                                .whereType().isEqualTo(EventId.SET_PASSWORD_MINIMUM_LOWER_CASE_VALUE)
+                                .whereAdminPackageName().isEqualTo(deviceState.dpc().packageName())
+                                .whereInteger().isEqualTo(PASSWORD_QUALITY_LOG_TEST_VALUE)
+                )
+                        .wasLogged()
+            }
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumLowerCase(
+                    deviceState.dpc().componentName(),
+                    initialMinimumLowerCase
+            )
+
+            setPasswordQuality(initialPasswordQuality)
+        }
+    }
+
+    /** Setting password quality to PASSWORD_QUALITY_COMPLEX is required to set PasswordMinimumUpperCase. */
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(
+            policy = [PasswordQuality::class]
+    )
+    fun setPasswordMinimumUpperCase_isLogged() {
+        val initialPasswordQuality = getInitialPasswordQuality()
+        val initialMinimumUpperCase = deviceState.dpc().devicePolicyManager().getPasswordMinimumUpperCase(
+                deviceState.dpc().componentName()
+        )
+
+        try {
+            setPasswordQuality(DevicePolicyManager.PASSWORD_QUALITY_COMPLEX)
+
+            EnterpriseMetricsRecorder.create().use { metrics ->
+                deviceState.dpc().devicePolicyManager().setPasswordMinimumUpperCase(
+                        deviceState.dpc().componentName(),
+                        PASSWORD_QUALITY_LOG_TEST_VALUE
+                )
+
+                assertThat(
+                        metrics.query()
+                                .whereType().isEqualTo(EventId.SET_PASSWORD_MINIMUM_UPPER_CASE_VALUE)
+                                .whereAdminPackageName().isEqualTo(deviceState.dpc().packageName())
+                                .whereInteger().isEqualTo(PASSWORD_QUALITY_LOG_TEST_VALUE)
+                )
+                        .wasLogged()
+            }
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumUpperCase(
+                    deviceState.dpc().componentName(),
+                    initialMinimumUpperCase
+            )
+
+            setPasswordQuality(initialPasswordQuality)
+        }
+    }
+
+    /** Setting password quality to PASSWORD_QUALITY_COMPLEX is required to set PasswordMinimumSymbols. */
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(
+            policy = [PasswordQuality::class]
+    )
+    fun setPasswordMinimumSymbols_isLogged() {
+        val initialPasswordQuality = getInitialPasswordQuality()
+        val initialMinimumSymbols = deviceState.dpc().devicePolicyManager().getPasswordMinimumSymbols(
+                deviceState.dpc().componentName()
+        )
+
+        try {
+            setPasswordQuality(DevicePolicyManager.PASSWORD_QUALITY_COMPLEX)
+
+            EnterpriseMetricsRecorder.create().use { metrics ->
+                deviceState.dpc().devicePolicyManager().setPasswordMinimumSymbols(
+                        deviceState.dpc().componentName(),
+                        PASSWORD_QUALITY_LOG_TEST_VALUE
+                )
+
+                assertThat(
+                        metrics.query()
+                                .whereType().isEqualTo(EventId.SET_PASSWORD_MINIMUM_SYMBOLS_VALUE)
+                                .whereAdminPackageName().isEqualTo(deviceState.dpc().packageName())
+                                .whereInteger().isEqualTo(PASSWORD_QUALITY_LOG_TEST_VALUE)
+                )
+                        .wasLogged()
+            }
+        } finally {
+            deviceState.dpc().devicePolicyManager().setPasswordMinimumSymbols(
+                    deviceState.dpc().componentName(),
+                    initialMinimumSymbols
+            )
+
+            setPasswordQuality(initialPasswordQuality)
+        }
+    }
+
+    @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(
+            policy = [PasswordQuality::class]
+    )
+    fun setPasswordQuality_isLogged() {
+        val initialPasswordQuality = getInitialPasswordQuality()
+
+        try {
+            EnterpriseMetricsRecorder.create().use { metrics ->
+                setPasswordQuality(DevicePolicyManager.PASSWORD_QUALITY_COMPLEX)
+
+                assertThat(
+                        metrics.query()
+                                .whereType().isEqualTo(EventId.SET_PASSWORD_QUALITY_VALUE)
+                                .whereAdminPackageName().isEqualTo(deviceState.dpc().packageName())
+                                .whereInteger().isEqualTo(DevicePolicyManager.PASSWORD_QUALITY_COMPLEX)
+                                .whereStrings().contains(NOT_CALLED_FROM_PARENT)
+                ).wasLogged()
+            }
+        } finally {
+            setPasswordQuality(initialPasswordQuality)
+        }
+    }
+
+    private fun getInitialPasswordQuality(): Int {
+        return deviceState.dpc().devicePolicyManager().getPasswordQuality(
+                deviceState.dpc().componentName()
+        )
+    }
+
+    private fun setPasswordQuality(passwordQuality: Int) {
+        deviceState.dpc().devicePolicyManager().setPasswordQuality(
+                deviceState.dpc().componentName(),
+                passwordQuality
+        )
+    }
+
     companion object {
         private const val TIMEOUT: Long = 51234
         private const val PASSWORD_MEDIUM_COMPLEXITY = "abc12"
+
         private const val TEST_VALUE: Int = 5
         private const val DEFAULT_LENGTH = 0
         private const val DEFAULT_NUMERIC = 1
@@ -1226,6 +1540,9 @@ class PasswordTest {
         private const val DEFAULT_LOWERCASE = 0
         private const val DEFAULT_NON_LETTER = 0
         private const val DEFAULT_SYMBOLS = 1
+
+        private const val NOT_CALLED_FROM_PARENT = "notCalledFromParent"
+        private const val PASSWORD_QUALITY_LOG_TEST_VALUE = 13
 
         @JvmField
         @ClassRule

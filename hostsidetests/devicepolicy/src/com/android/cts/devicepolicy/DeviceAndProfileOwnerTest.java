@@ -894,60 +894,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testPasswordMethodsLogged() throws Exception {
-        if (isAutomotive()) {
-            assertMetricsLogged(getDevice(), () -> {
-                executeDeviceTestMethod(".DevicePolicyLoggingTest", "testPasswordMethodsLogged");
-            }, new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_COMPLEXITY_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setInt(0x50000)
-                    .setBoolean(false)
-                    .build());
-            return;
-        }
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".DevicePolicyLoggingTest", "testPasswordMethodsLogged");
-        }, new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_QUALITY_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setInt(PASSWORD_QUALITY_COMPLEX)
-                    .setStrings(NOT_CALLED_FROM_PARENT)
-                    .build(),
-            new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_MINIMUM_LENGTH_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setInt(13)
-                    .build(),
-            new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_MINIMUM_NUMERIC_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setInt(14)
-                    .build(),
-            new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_MINIMUM_NON_LETTER_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setInt(15)
-                    .build(),
-            new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_MINIMUM_LETTERS_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setInt(16)
-                    .build(),
-            new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_MINIMUM_LOWER_CASE_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setInt(17)
-                    .build(),
-            new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_MINIMUM_UPPER_CASE_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setInt(18)
-                    .build(),
-            new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_MINIMUM_SYMBOLS_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setInt(19)
-                    .build(),
-                new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_COMPLEXITY_VALUE)
-                        .setAdminPackageName(DEVICE_ADMIN_PKG)
-                        .setInt(0x50000)
-                        .setBoolean(false)
-                        .build());
-    }
-
-    @Test
     public void testSetKeyguardDisabledFeaturesLogged() throws Exception {
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(
