@@ -332,6 +332,7 @@ public class BiometricServiceTests extends BiometricTestBase {
         }
     }
 
+    @CddTest(requirements = {"7.3.10/C-1-5"})
     @Test
     public void testBiometricsRemovedWhenCredentialRemoved() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
