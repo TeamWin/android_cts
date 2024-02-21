@@ -18,10 +18,11 @@ package android.companion.cts.uiautomation
 
 import android.companion.cts.common.MAC_ADDRESS_A
 import android.content.ComponentName
-import android.content.pm.PackageManager.FEATURE_AUTOMOTIVE
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.compatibility.common.util.FeatureUtil
 import kotlin.test.assertFailsWith
+import org.junit.Assume.assumeFalse
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -34,7 +35,6 @@ import org.junit.runner.RunWith
 @AppModeFull(reason = "CompanionDeviceManager APIs are not available to the instant apps.")
 @RunWith(AndroidJUnit4::class)
 class RequestNotificationsTest : UiAutomationTestBase(null, null) {
-    private val isAuto: Boolean by lazy { pm.hasSystemFeature(FEATURE_AUTOMOTIVE) }
 
     @Test
     fun test_requestNotifications() {
@@ -48,14 +48,25 @@ class RequestNotificationsTest : UiAutomationTestBase(null, null) {
 
         cdm.requestNotificationAccess(
             ComponentName(instrumentation.targetContext, NotificationListener::class.java))
-        if (isAuto) {
+        if (FeatureUtil.isAutomotive()) {
             confirmationUi.waitUntilNotificationVisible(isAuto = true)
         } else {
             confirmationUi.waitUntilNotificationVisible()
         }
     }
 
+    override fun setUp() {
+        // The CompanionDeviceManager app is not available on Wear.
+        assumeFalse("Skipping test for wear devices", FeatureUtil.isWatch())
+
+        super.setUp()
+    }
+
     override fun tearDown() {
+        if (FeatureUtil.isWatch()) {
+            return
+        }
+
         uiDevice.pressBack()
         super.tearDown()
     }
