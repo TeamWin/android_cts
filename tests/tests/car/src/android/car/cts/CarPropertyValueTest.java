@@ -30,6 +30,7 @@ import android.car.hardware.property.CarPropertyManager;
 import android.car.hardware.property.PropertyAccessDeniedSecurityException;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.util.SparseArray;
 
 import androidx.test.filters.SmallTest;
@@ -50,6 +51,10 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Instant apps cannot get car related permissions.")
 public final class CarPropertyValueTest extends AbstractCarTestCase {
+    private static final List<Integer> SUPPORTED_PROPERTY_STATUSES = Arrays.asList(
+            CarPropertyValue.STATUS_AVAILABLE,
+            CarPropertyValue.STATUS_ERROR,
+            CarPropertyValue.STATUS_UNAVAILABLE);
 
     private static final String TAG = CarPropertyValueTest.class.getSimpleName();
 
@@ -142,14 +147,18 @@ public final class CarPropertyValueTest extends AbstractCarTestCase {
     }
 
     @Test
-    public void testGetPropertyStatus() {
-        List<Integer> expectedStatus = Arrays.asList(
-                CarPropertyValue.STATUS_AVAILABLE,
-                CarPropertyValue.STATUS_ERROR,
-                CarPropertyValue.STATUS_UNAVAILABLE);
+    public void testGetStatus() {
         for (CarPropertyValue propertyValue : mCarPropertyValues) {
-            int status = propertyValue.getStatus();
-            assertThat(expectedStatus).contains(status);
+            assertThat(propertyValue.getStatus()).isIn(SUPPORTED_PROPERTY_STATUSES);
+        }
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
+    @Test
+    public void testGetPropertyStatus() {
+        for (CarPropertyValue propertyValue : mCarPropertyValues) {
+            assertThat(propertyValue.getPropertyStatus()).isIn(SUPPORTED_PROPERTY_STATUSES);
+            assertThat(propertyValue.getPropertyStatus()).isEqualTo(propertyValue.getStatus());
         }
     }
 
