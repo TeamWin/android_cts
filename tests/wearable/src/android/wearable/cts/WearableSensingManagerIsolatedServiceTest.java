@@ -32,6 +32,8 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeFalse;
+
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import android.Manifest;
@@ -41,6 +43,7 @@ import android.companion.AssociationInfo;
 import android.companion.AssociationRequest;
 import android.companion.CompanionDeviceManager;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
 import android.os.ParcelFileDescriptor.AutoCloseInputStream;
 import android.os.ParcelFileDescriptor.AutoCloseOutputStream;
@@ -115,13 +118,15 @@ public class WearableSensingManagerIsolatedServiceTest {
 
     @Before
     public void setUp() throws Exception {
+        mContext = getInstrumentation().getContext();
+        // For an unknown reason, the CDM onTransportsChanged listener is not called on TV builds
+        assumeFalse(isTelevision(mContext));
         // Sleep for 2 seconds to avoid flakiness until b/326256152 is fixed. The bug can cause
         // CDM to reuse the same associationId previously assigned to WearableSensingSecureChannel
         // after the previous association is disassociation. If async clean up of the CDM
         // secure channel for that previous association has not completed, it can affect the new
         // association with the reused associationId and causes tests to flake.
         SystemClock.sleep(2000);
-        mContext = getInstrumentation().getContext();
         mWearableSensingManager =
                 (WearableSensingManager)
                         mContext.getSystemService(Context.WEARABLE_SENSING_SERVICE);
@@ -488,5 +493,10 @@ public class WearableSensingManagerIsolatedServiceTest {
                 });
         assertThat(latch.await(3, SECONDS)).isTrue();
         return statusRef.get();
+    }
+
+    private static boolean isTelevision(Context context) {
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
     }
 }
