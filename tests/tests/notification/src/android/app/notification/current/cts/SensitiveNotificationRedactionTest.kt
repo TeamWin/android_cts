@@ -35,6 +35,7 @@ import android.app.stubs.shared.NotificationHelper.SEARCH_TYPE
 import android.companion.CompanionDeviceManager
 import android.content.Intent
 import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.graphics.drawable.Icon
 import android.net.MacAddress
 import android.os.Bundle
@@ -53,6 +54,7 @@ import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.google.common.truth.Truth.assertWithMessage
+import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -314,6 +316,7 @@ class SensitiveNotificationRedactionTest : BaseNotificationManagerTest() {
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_REDACT_SENSITIVE_NOTIFICATIONS_FROM_UNTRUSTED_LISTENERS)
     fun testListenerWithCdmAssociationGetsUnredacted() {
+        assumeFalse(mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE))
         val cdmManager = mContext.getSystemService(CompanionDeviceManager::class.java)!!
         val macAddress = MacAddress.fromString("00:00:00:00:00:AA")
         try {
