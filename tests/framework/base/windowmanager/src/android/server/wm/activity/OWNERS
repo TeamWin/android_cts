@@ -1,0 +1,14 @@
+# Android > Android OS & Apps > Framework (Java + Native) > Window Manager > Animations/Transitions
+# Bug template url: https://b.corp.google.com/issues/new?component=316275&template=1018192 = per-file *Transition*
+
+# Android > Android OS & Apps > Framework (Java + Native) > Window Manager > Insets & Display Cutout (Notch)
+# Bug template url: https://b.corp.google.com/issues/new?component=339570&template=1037597 = per-file *ForceRelayoutTest*
+
+# Android > Android OS & Apps > Framework (Java + Native) > Window Manager > WM Shell > Picture-In-Picture
+# Bug template url: https://b.corp.google.com/issues/new?component=316251&template=1018197 = per-file PinnedStackTests.java
+
+# Android > Android OS & Apps > Framework (Java + Native) > Window Manager > Other
+# Bug template url: https://b.corp.google.com/issues/new?component=316125&template=1018199 = per-file Anr*, Deprecated*, KeepClear*, LockTask*, Robustness*
+
+# Android > Android OS & Apps > Framework (Java + Native) > Activity Manager > Task and Activity lifecycle
+# Bug template url: https://b.corp.google.com/issues/new?component=316020&template=1018174
