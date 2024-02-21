@@ -89,7 +89,6 @@ public class JobThrottlingTest {
     private NetworkingHelper mNetworkingHelper;
     private PowerManager mPowerManager;
     private int mTestJobId;
-    private int mTestPackageUid;
     private boolean mDeviceIdleEnabled;
     private boolean mDeviceLightIdleEnabled;
     private boolean mAppStandbyEnabled;
@@ -121,10 +120,9 @@ public class JobThrottlingTest {
         mNetworkingHelper =
                 new NetworkingHelper(InstrumentationRegistry.getInstrumentation(), mContext);
         mPowerManager = mContext.getSystemService(PowerManager.class);
-        mTestPackageUid = mContext.getPackageManager().getPackageUid(TEST_APP_PACKAGE, 0);
         mTestJobId = (int) (SystemClock.uptimeMillis() / 1000);
         mTestAppInterface = new TestAppInterface(mContext, mTestJobId);
-        assertFalse("Test package already in temp whitelist", isTestAppTempWhitelisted());
+
         makeTestPackageIdle();
         mDeviceIdleEnabled = isDeviceIdleEnabled(mUiDevice);
         mDeviceLightIdleEnabled = isDeviceLightIdleEnabled(mUiDevice);
@@ -1366,7 +1364,6 @@ public class JobThrottlingTest {
         BatteryUtils.resetBatterySaver();
         Settings.Global.putString(mContext.getContentResolver(),
                 Settings.Global.BATTERY_STATS_CONSTANTS, mInitialBatteryStatsConstants);
-        removeTestAppFromTempWhitelist();
         setPowerAllowlistState(false);
 
         mNetworkingHelper.tearDown();
@@ -1393,16 +1390,6 @@ public class JobThrottlingTest {
     private void toggleAutoRestrictedBucketOnBgRestricted(boolean enable) {
         mActivityManagerDeviceConfigStateHelper.set("bg_auto_restricted_bucket_on_bg_restricted",
                 Boolean.toString(enable));
-    }
-
-    private boolean isTestAppTempWhitelisted() throws Exception {
-        final String output = mUiDevice.executeShellCommand("cmd deviceidle tempwhitelist").trim();
-        for (String line : output.split("\n")) {
-            if (line.contains("UID=" + UserHandle.getAppId(mTestPackageUid))) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private void sendScheduleJobBroadcast(boolean allowWhileIdle) throws Exception {
@@ -1479,13 +1466,6 @@ public class JobThrottlingTest {
         }
         uiDevice.executeShellCommand("am set-standby-bucket " + TEST_APP_PACKAGE
                 + " " + bucketName);
-    }
-
-    private boolean removeTestAppFromTempWhitelist() throws Exception {
-        mUiDevice.executeShellCommand("cmd deviceidle tempwhitelist"
-                + " -u " + UserHandle.myUserId()
-                + " -r " + TEST_APP_PACKAGE);
-        return waitUntilTrue(SHELL_TIMEOUT, () -> !isTestAppTempWhitelisted());
     }
 
     /**

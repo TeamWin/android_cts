@@ -6,6 +6,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.app.role.RoleManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -31,6 +32,7 @@ public abstract class BaseEmulatorActivity extends PassFailButtons.Activity {
     static final String TAG = "BaseEmulatorActivity";
     NfcAdapter mAdapter;
     CardEmulation mCardEmulation;
+    RoleManager mRoleManager;
     ProgressDialog mSetupDialog;
     ComponentName mMakingDefault;
 
@@ -63,6 +65,7 @@ public abstract class BaseEmulatorActivity extends PassFailButtons.Activity {
         mCardEmulation = CardEmulation.getInstance(mAdapter);
         IntentFilter filter = new IntentFilter(HceUtils.ACTION_APDU_SEQUENCE_COMPLETE);
         registerReceiver(mReceiver, filter, RECEIVER_EXPORTED);
+        mRoleManager = getSystemService(RoleManager.class);
     }
 
     abstract void onServicesSetup(boolean result);
@@ -94,14 +97,24 @@ public abstract class BaseEmulatorActivity extends PassFailButtons.Activity {
         super.onResume();
     }
 
+    protected boolean isWalletRoleHeld() {
+        return mRoleManager.isRoleHeld(RoleManager.ROLE_WALLET);
+    }
+
+    protected boolean isWalletRoleAvailable() {
+        return mRoleManager.isRoleAvailable(RoleManager.ROLE_WALLET);
+    }
+
     final void setupServices(Context context, ComponentName... components) {
         mSetupDialog = new ProgressDialog(context);
         new SetupServicesTask().execute(components);
     }
 
     final boolean makePaymentDefault(final ComponentName defaultComponent, int stringId) {
-        if (!mCardEmulation.isDefaultServiceForCategory(defaultComponent,
-                CardEmulation.CATEGORY_PAYMENT)) {
+        if ((isWalletRoleAvailable() && !isWalletRoleHeld())
+                || (!isWalletRoleAvailable()
+                && !mCardEmulation.isDefaultServiceForCategory(defaultComponent,
+                                CardEmulation.CATEGORY_PAYMENT))) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Note");
             builder.setMessage(stringId);
@@ -109,13 +122,20 @@ public abstract class BaseEmulatorActivity extends PassFailButtons.Activity {
             builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    Intent changeDefault = new Intent(CardEmulation.ACTION_CHANGE_DEFAULT);
-                    changeDefault.putExtra(CardEmulation.EXTRA_CATEGORY,
-                            CardEmulation.CATEGORY_PAYMENT);
-                    changeDefault.putExtra(CardEmulation.EXTRA_SERVICE_COMPONENT, defaultComponent);
-                    changeDefault.putExtra(Intent.EXTRA_USER,
-                            UserHandle.getUserHandleForUid(getApplicationInfo().uid));
-                    startActivityForResult(changeDefault, 0);
+                    if (!isWalletRoleAvailable()) {
+                        Intent changeDefault = new Intent(CardEmulation.ACTION_CHANGE_DEFAULT);
+                        changeDefault.putExtra(CardEmulation.EXTRA_CATEGORY,
+                                CardEmulation.CATEGORY_PAYMENT);
+                        changeDefault.putExtra(CardEmulation.EXTRA_SERVICE_COMPONENT,
+                                defaultComponent);
+                        changeDefault.putExtra(Intent.EXTRA_USER,
+                                UserHandle.getUserHandleForUid(getApplicationInfo().uid));
+                        startActivityForResult(changeDefault, 0);
+                    } else {
+                        Intent roleRequestIntent = mRoleManager
+                                .createRequestRoleIntent(RoleManager.ROLE_WALLET);
+                        startActivityForResult(roleRequestIntent, 0);
+                    }
                 }
             });
             builder.show();
@@ -186,28 +206,45 @@ public abstract class BaseEmulatorActivity extends PassFailButtons.Activity {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == Activity.RESULT_OK) {
             // Verify it's default
-            if (!mCardEmulation.isDefaultServiceForCategory(mMakingDefault,
-                    CardEmulation.CATEGORY_PAYMENT)) {
-                // Popup dialog-box
+            if (!isWalletRoleAvailable()) {
+                if (!mCardEmulation.isDefaultServiceForCategory(mMakingDefault,
+                        CardEmulation.CATEGORY_PAYMENT)) {
+                    // Popup dialog-box
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setTitle("Test failed.");
+                    builder.setMessage("The service was not made the default service according "
+                            + "to CardEmulation.getDefaultServiceForCategory(), verify the make "
+                            + "default implementation is correct.");
+                    builder.setPositiveButton("OK", null);
+                    builder.show();
+                    onPaymentDefaultResult(mMakingDefault, false);
+                } else {
+                    onPaymentDefaultResult(mMakingDefault, true);
+                }
+            } else if (!isWalletRoleHeld()) {
+                roleSelectionFailed();
+            }
+        } else {
+            if (!isWalletRoleAvailable()) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("Test failed.");
-                builder.setMessage("The service was not made the default service according " +
-                        "to CardEmulation.getDefaultServiceForCategory(), verify the make " +
-                        "default implementation is correct.");
+                builder.setMessage("You clicked no");
                 builder.setPositiveButton("OK", null);
                 builder.show();
                 onPaymentDefaultResult(mMakingDefault, false);
-            } else {
-                onPaymentDefaultResult(mMakingDefault, true);
+            } else if (!isWalletRoleHeld()) {
+                roleSelectionFailed();
             }
-        } else {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Test failed.");
-            builder.setMessage("You clicked no.");
-            builder.setPositiveButton("OK", null);
-            builder.show();
-            onPaymentDefaultResult(mMakingDefault, false);
         }
+    }
+
+    private void roleSelectionFailed() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Test failed.");
+        builder.setMessage("You selected the wrong app or 'None' to be the "
+                + "wallet role holder.");
+        builder.setPositiveButton("OK", null);
+        builder.show();
     }
 
     void onPaymentDefaultResult(ComponentName component, boolean success) {

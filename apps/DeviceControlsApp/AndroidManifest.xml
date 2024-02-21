@@ -37,7 +37,9 @@
                   android:showForAllUsers="true"
                   android:permission="android.permission.BIND_CONTROLS"
                   android:taskAffinity=""
-        />
+                  android:showWhenLocked="true"
+                  android:resizeableActivity="true"
+            />
 
     </application>
 </manifest>

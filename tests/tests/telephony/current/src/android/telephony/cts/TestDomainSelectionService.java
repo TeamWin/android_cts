@@ -137,23 +137,26 @@ public class TestDomainSelectionService extends Service {
 
         @Override
         public void onServiceStateUpdated(int slotId, int subId,
-                @NonNull ServiceState unusedServiceState) {
+                @NonNull ServiceState serviceState) {
             synchronized (mLock) {
                 Log.i(TAG, "onServiceStateUpdated");
+                super.onServiceStateUpdated(slotId, subId, serviceState);
                 countDownLatch(LATCH_ON_SERVICE_STATE_UPDATED);
             }
         }
 
         @Override
-        public void onBarringInfoUpdated(int slotId, int subId, @NonNull BarringInfo unusedInfo) {
+        public void onBarringInfoUpdated(int slotId, int subId, @NonNull BarringInfo barringInfo) {
             synchronized (mLock) {
                 Log.i(TAG, "onBarringInfoUpdated");
+                super.onBarringInfoUpdated(slotId, subId, barringInfo);
                 countDownLatch(LATCH_ON_BARRING_INFO_UPDATED);
             }
         }
 
         @Override
         public @NonNull Executor getCreateExecutor() {
+            mExecutor = super.getCreateExecutor();
             return mExecutor;
         }
     }

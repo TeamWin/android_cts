@@ -1363,6 +1363,7 @@
     <string name="nfc_hce_throughput_reader">HCE throughput test (Reader)</string>
     <string name="nfc_hce_throughput_emulator_help">This test verifies that your HCE implementation can reach a decent throughput. While Android does not have any requirements on HCE performance, many HCE applications such as transport and payment apps do. If the average APDU roundtrip time is more than 50ms, please take a look at your implementation to see where the delay is coming from.</string>
     <string name="nfc_hce_change_preinstalled_wallet">The device has an installed payment application that is currently set as default. To complete the test, you will be asked whether you want to make another app the default app. Select yes.</string>
+    <string name="nfc_hce_change_default_wallet">The device has an installed Wallet application that is currently set as default. To complete the test, you will be asked whether you want to make another app the default Wallet app. Select yes. Then make sure to select CTSVerifier app. Then hit OK. </string>
     <string name="nfc_hce_change_default_help">You will now be asked whether you want to make Payment Service #1 the default app. Select yes.</string>
     <string name="nfc_hce_conflicting_non_payment_help">When tapping the first time, you will be shown a dialog that asks you to choose between TransportService #1 and TransportService #2. Select TransportService #2. Verify a dialog is shown that asks you to tap again to complete. Now tap again, and if communication with TransportService #2 is successfull the pass button will be enabled."</string>
 
@@ -7148,6 +7149,8 @@ Follow the instructions on the screen to measure the frequency response for the 
     </string>
     <string name="controls_panel_setting_test_false">2a. Controls Panel setting in extra test false value</string>
     <string name="controls_panel_setting_test_true">2b. Controls Panel setting in extra test true value</string>
+    <string name="controls_panel_dream_test_false">3a. Control Panel starting on keyguard test false value </string>
+    <string name="controls_panel_dream_test_true">3b. Control Panel starting as a dream test true value </string>
     <string name="controls_panel_setting_test_info">This test verifies that an app that shows a
     panel in the device controls space will receive the correct value of the setting for controlling
     devices on the lock screen as part of their intent extras.\n\n
@@ -7158,6 +7161,25 @@ Follow the instructions on the screen to measure the frequency response for the 
         (you might need to enable other settings for it to be available). Set that setting to %1$s.
         \n Then, open the device controls space (instructions below the button) and verify that the
         text inside the panel indicates that the setting is %1$s
+    </string>
+    <string name="controls_panel_dream_true_test_instructions">
+   1 - Find the Home Control Panel \n
+      - Open Settings, Search for "Screen Saver", find \"Home Controls\", \n\n
+   2 - For Case When Dock is Available\n
+     - Place the device on the dock and wait for the device to time out. \n\n
+   3 - For Case When Dock is Not Available \n
+    - Update \"When to start\" to \"While Charging\". \n
+    - Press the preview button or wait for the device to time out to enter dream mode. \n\n
+   4 - Verification of Hosting Status \n
+     - Verify that the hosting status is \"Hosted in Dream Service\".
+    </string>
+
+    <string name="controls_panel_dream_false_test_instructions">
+        Using the button below, open Settings.
+        Find the setting that allows you to control external devices from the lockscreen
+        (you might need to enable other settings for it to be available). Set that setting to true.
+        \n Then, open the device controls space (instructions below the button) and verify that the
+        hosting status is \"Not Hosted in Dream Service\"
     </string>
 
     <!--  Strings for Input tests  -->

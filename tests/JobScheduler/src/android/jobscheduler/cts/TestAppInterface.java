@@ -19,6 +19,7 @@ import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.Manifest.permission.OVERRIDE_COMPAT_CHANGE_CONFIG_ON_RELEASE_BUILD;
 import static android.app.ActivityManager.getCapabilitiesSummary;
 import static android.app.ActivityManager.procStateToString;
+import static android.jobscheduler.cts.BaseJobSchedulerTest.HW_TIMEOUT_MULTIPLIER;
 import static android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver.ACTION_JOB_SCHEDULE_RESULT;
 import static android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver.EXTRA_REQUEST_JOB_UID_STATE;
 import static android.jobscheduler.cts.jobtestapp.TestJobService.ACTION_JOB_STARTED;
@@ -77,13 +78,16 @@ class TestAppInterface implements AutoCloseable {
 
     private final Context mContext;
     private final int mJobId;
+    private final int mTestPackageUid;
 
     /* accesses must be synchronized on itself */
     private final SparseArray<TestJobState> mTestJobStates = new SparseArray();
 
-    TestAppInterface(Context ctx, int jobId) {
+    TestAppInterface(Context ctx, int jobId) throws Exception {
         mContext = ctx;
         mJobId = jobId;
+
+        mTestPackageUid = mContext.getPackageManager().getPackageUid(TEST_APP_PACKAGE, 0);
 
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ACTION_JOB_STARTED);
@@ -102,6 +106,13 @@ class TestAppInterface implements AutoCloseable {
         }
         // Remove the app from the whitelist.
         SystemUtil.runShellCommand("cmd deviceidle whitelist -" + TEST_APP_PACKAGE);
+        if (isTestAppTempWhitelisted()) {
+            Log.w(TAG, "Test package already in temp whitelist");
+            if (!removeTestAppFromTempWhitelist()) {
+                // Don't block the test, but log in case it's an issue.
+                Log.w(TAG, "Test package wasn't removed from the temp whitelist");
+            }
+        }
     }
 
     void cleanup() throws Exception {
@@ -121,6 +132,7 @@ class TestAppInterface implements AutoCloseable {
         SystemUtil.runShellCommand("am compat reset-all " + TEST_APP_PACKAGE);
         // Remove the app from the whitelist.
         SystemUtil.runShellCommand("cmd deviceidle whitelist -" + TEST_APP_PACKAGE);
+        removeTestAppFromTempWhitelist();
         mTestJobStates.clear();
         SystemUtil.runShellCommand(
                 "cmd jobscheduler reset-execution-quota -u current " + TEST_APP_PACKAGE);
@@ -215,6 +227,11 @@ class TestAppInterface implements AutoCloseable {
     }
 
     void runSatisfiedJob(int jobId) throws Exception {
+        if (HW_TIMEOUT_MULTIPLIER > 1) {
+            // Device has increased HW multiplier. Wait a short amount of time before sending the
+            // run command since there's a higher chance JobScheduler's processing is delayed.
+            Thread.sleep(1_000L);
+        }
         SystemUtil.runShellCommand("cmd jobscheduler run -s"
                 + " -u " + UserHandle.myUserId() + " " + TEST_APP_PACKAGE + " " + jobId);
     }
@@ -273,6 +290,28 @@ class TestAppInterface implements AutoCloseable {
                     new ComponentName(TEST_APP_PACKAGE, TEST_APP_ACTIVITY);
             new WindowManagerStateHelper().waitForActivityRemoved(testComponentName);
         }
+    }
+
+    boolean isTestAppTempWhitelisted() {
+        final String output = SystemUtil.runShellCommand("cmd deviceidle tempwhitelist").trim();
+        final String expectedText = "UID=" + UserHandle.getAppId(mTestPackageUid);
+        for (String line : output.split("\n")) {
+            if (line.contains(expectedText)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    boolean removeTestAppFromTempWhitelist() throws Exception {
+        SystemUtil.runShellCommand("cmd deviceidle tempwhitelist"
+                + " -u " + UserHandle.myUserId()
+                + " -r " + TEST_APP_PACKAGE);
+        final boolean removed = waitUntilTrue(3_000, () -> !isTestAppTempWhitelisted());
+        if (!removed) {
+            Log.e(TAG, "Test app wasn't removed from temp whitelist");
+        }
+        return removed;
     }
 
     /** Directly start the FGS in the test app. */

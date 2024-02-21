@@ -82,5 +82,12 @@ public class BluetoothProfileConnectionInfoTest {
         assertEquals(info.isLeOutput(), true);
         assertEquals(info.getVolume(), volume);
     }
+
+    @Test
+    public void testCoverageHfp() {
+        final BluetoothProfileConnectionInfo info = BluetoothProfileConnectionInfo
+                .createHfpInfo();
+        assertEquals(info.getProfile(), BluetoothProfile.HEADSET);
+    }
 }
 

@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.nfc.hce;
 
+import android.app.role.RoleManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.nfc.NfcAdapter;
@@ -37,9 +38,9 @@ public class HceReaderTestActivity extends PassFailButtons.TestListActivity {
         setContentView(R.layout.pass_fail_list);
         setInfoResources(R.string.nfc_test, R.string.nfc_hce_reader_test_info, 0);
         setPassFailButtonClickListeners();
-
+        RoleManager roleManager = getSystemService(RoleManager.class);
         ArrayTestListAdapter adapter = new ArrayTestListAdapter(this);
-
+        boolean isWalletRoleAvailable = roleManager.isRoleAvailable(RoleManager.ROLE_WALLET);
         if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION)) {
             adapter.add(TestListItem.newCategory(this, R.string.nfc_hce_reader_tests));
 
@@ -53,7 +54,8 @@ public class HceReaderTestActivity extends PassFailButtons.TestListActivity {
 
             adapter.add(TestListItem.newTest(this, R.string.nfc_hce_dual_payment_reader,
                     getString(R.string.nfc_hce_dual_payment_reader),
-                    DualPaymentEmulatorActivity.buildReaderIntent(this), null));
+                    DualPaymentEmulatorActivity.buildReaderIntent(this,
+                            isWalletRoleAvailable), null));
 
             adapter.add(TestListItem.newTest(this, R.string.nfc_hce_change_default_reader,
                     getString(R.string.nfc_hce_change_default_reader),
@@ -112,7 +114,8 @@ public class HceReaderTestActivity extends PassFailButtons.TestListActivity {
 
                 adapter.add(TestListItem.newTest(this, R.string.nfc_hce_payment_prefix_aids_reader_2,
                         getString(R.string.nfc_hce_payment_prefix_aids_reader_2),
-                        PrefixPaymentEmulator2Activity.buildReaderIntent(this), null));
+                        PrefixPaymentEmulator2Activity.buildReaderIntent(this,
+                                isWalletRoleAvailable), null));
 
                 adapter.add(TestListItem.newTest(this, R.string.nfc_hce_other_prefix_aids_reader,
                         getString(R.string.nfc_hce_other_prefix_aids_reader),
