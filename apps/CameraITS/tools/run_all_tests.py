@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import glob
+import json
 import logging
 import os
 import os.path
@@ -27,10 +27,12 @@ import types
 import camera_properties_utils
 import capture_request_utils
 import image_processing_utils
+import its_device_utils
 import its_session_utils
+import lighting_control_utils
 import numpy as np
 import yaml
-import lighting_control_utils
+
 
 YAML_FILE_DIR = os.environ['CAMERA_ITS_TOP']
 CONFIG_FILE = os.path.join(YAML_FILE_DIR, 'config.yml')
@@ -50,7 +52,6 @@ PERFORMANCE_KEY = 'performance_metrics'
 SUMMARY_KEY = 'summary'
 RESULT_VALUES = (RESULT_PASS, RESULT_FAIL, RESULT_NOT_EXECUTED)
 CTS_VERIFIER_PACKAGE_NAME = 'com.android.cts.verifier'
-ITS_TEST_ACTIVITY = 'com.android.cts.verifier/.camera.its.ItsTestActivity'
 ACTION_ITS_RESULT = 'com.android.cts.verifier.camera.its.ACTION_ITS_RESULT'
 EXTRA_VERSION = 'camera.its.extra.VERSION'
 CURRENT_ITS_VERSION = '1.0'  # version number to sync with CtsVerifier
@@ -198,12 +199,6 @@ _DST_SCENE_DIR = '/sdcard/Download/'
 MOBLY_TEST_SUMMARY_TXT_FILE = 'test_mobly_summary.txt'
 
 
-def run(cmd):
-  """Replaces os.system call, while hiding stdout+stderr messages."""
-  with open(os.devnull, 'wb') as devnull:
-    subprocess.check_call(cmd.split(), stdout=devnull, stderr=subprocess.STDOUT)
-
-
 def report_result(device_id, camera_id, results):
   """Sends a pass/fail result to the device, via an intent.
 
@@ -214,15 +209,7 @@ def report_result(device_id, camera_id, results):
             current ITS run. See test_report_result unit test for an example.
   """
   adb = f'adb -s {device_id}'
-  initialization_cmds = (
-      f'{adb} shell input keyevent KEYCODE_WAKEUP',
-      f'{adb} shell input keyevent KEYCODE_MENU',
-      (f'{adb} shell am start -n {ITS_TEST_ACTIVITY} '
-       '--activity-brought-to-front')
-  )
-  # Awaken if necessary and start ItsTestActivity to receive test results
-  for cmd in initialization_cmds:
-    run(cmd)
+  its_device_utils.start_its_test_activity(device_id)
   time.sleep(ACTIVITY_START_WAIT)
 
   # Validate/process results argument
@@ -233,15 +220,15 @@ def report_result(device_id, camera_id, results):
       raise ValueError(f'Unknown ITS result for {scene}: {results[RESULT_KEY]}')
     if SUMMARY_KEY in results[scene]:
       device_summary_path = f'/sdcard/its_camera{camera_id}_{scene}.txt'
-      run('%s push %s %s' %
-          (adb, results[scene][SUMMARY_KEY], device_summary_path))
+      its_device_utils.run(
+          f'{adb} push {results[scene][SUMMARY_KEY]} {device_summary_path}')
       results[scene][SUMMARY_KEY] = device_summary_path
 
   json_results = json.dumps(results)
   cmd = (f"{adb} shell am broadcast -a {ACTION_ITS_RESULT} --es {EXTRA_VERSION}"
          f" {CURRENT_ITS_VERSION} --es {EXTRA_CAMERA_ID} {camera_id} --es "
          f"{EXTRA_RESULTS} \'{json_results}\'")
-  run(cmd)
+  its_device_utils.run(cmd)
 
 
 def write_result(testbed_index, device_id, camera_id, results):
@@ -463,7 +450,7 @@ def enable_external_storage(device_id):
   """
   cmd = (f'adb -s {device_id} shell appops '
          'set com.android.cts.verifier MANAGE_EXTERNAL_STORAGE allow')
-  run(cmd)
+  its_device_utils.run(cmd)
 
 
 def get_available_cameras(device_id, camera_id):
