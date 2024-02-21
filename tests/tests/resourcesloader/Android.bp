@@ -35,7 +35,6 @@ android_test {
         "android.test.base",
     ],
     static_libs: [
-        "CtsResourcesLoaderTests_Providers",
         "androidx.test.espresso.core",
         "androidx.test.ext.junit",
         "androidx.test.runner",
@@ -49,19 +48,18 @@ android_test {
         "res",
         "resources/provider_stable/res",
     ],
-    aaptflags: ["-0 .txt"],
+    aaptflags: [
+        "-0 .txt",
+        "-0 .apk",
+        "-0 .arsc",
+    ],
     data: [
         ":CtsResourcesLoaderTests_ProviderOne_Split",
         ":CtsResourcesLoaderTests_ProviderTwo_Split",
         ":CtsResourcesLoaderTests_ProviderThree_Split",
         ":CtsResourcesLoaderTests_ProviderFour_Split",
     ],
-}
-
-java_genrule {
-    name: "CtsResourcesLoaderTests_Providers",
-    tools: ["soong_zip"],
-    srcs: [
+    assets: [
         ":CtsResourcesLoaderTests_ProviderOne",
         ":CtsResourcesLoaderTests_ProviderOne_ARSC",
         ":CtsResourcesLoaderTests_ProviderTwo",
@@ -71,8 +69,4 @@ java_genrule {
         ":CtsResourcesLoaderTests_ProviderFour",
         ":CtsResourcesLoaderTests_ProviderFour_ARSC",
     ],
-    out: ["CtsResourcesLoaderTests_Providers.jar"],
-    cmd: "mkdir -p $(genDir)/assets/ && cp $(in) $(genDir)/assets/ && " +
-        "$(location soong_zip) -o $(out) " +
-        "-L 0 -C $(genDir) -D $(genDir)/assets/",
 }
