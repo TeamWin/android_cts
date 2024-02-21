@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.graphics.pdf.cts;
+package android.graphics.pdf.cts.module;
 
 import static org.junit.Assert.fail;
 
@@ -52,8 +52,8 @@ class Utils {
     static final int A4_WIDTH_PTS = 595;
     static final int A4_HEIGHT_PTS = 841;
 
-    static final int PROTECTED_PDF = android.graphics.pdf.cts.R.raw.sample_test_protected;
-    static final int SAMPLE_PDF = android.graphics.pdf.cts.R.raw.sample_test;
+    static final int PROTECTED_PDF = android.graphics.pdf.cts.module.R.raw.sample_test_protected;
+    static final int SAMPLE_PDF = android.graphics.pdf.cts.module.R.raw.sample_test;
 
     static final LoadParams LOAD_PARAMS = new LoadParams.Builder().setPassword("qwerty").build();
 
@@ -63,8 +63,8 @@ class Utils {
     static final LoadParams INCORRECT_LOAD_PARAMS = new LoadParams.Builder().setPassword(
             "abc-def").build();
 
-    static final int A4_PORTRAIT = android.graphics.pdf.cts.R.raw.a4_portrait_rgbb;
-    static final int A5_PORTRAIT = android.graphics.pdf.cts.R.raw.a5_portrait_rgbb;
+    static final int A4_PORTRAIT = android.graphics.pdf.cts.module.R.raw.a4_portrait_rgbb;
+    static final int A5_PORTRAIT = android.graphics.pdf.cts.module.R.raw.a5_portrait_rgbb;
     private static final String LOG_TAG = "Utils";
     private static final Map<Integer, File> sFiles = new ArrayMap<>();
     private static final Map<Integer, Bitmap> sRenderedBitmaps = new ArrayMap<>();

@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package android.graphics.pdf.cts;
+package android.graphics.pdf.cts.module;
 
 import static android.graphics.pdf.PdfRendererPreV.DOCUMENT_LINEARIZED_TYPE_LINEARIZED;
 import static android.graphics.pdf.PdfRendererPreV.DOCUMENT_LINEARIZED_TYPE_NON_LINEARIZED;
-import static android.graphics.pdf.cts.Utils.A4_HEIGHT_PTS;
-import static android.graphics.pdf.cts.Utils.A4_PORTRAIT;
-import static android.graphics.pdf.cts.Utils.A4_WIDTH_PTS;
-import static android.graphics.pdf.cts.Utils.INCORRECT_LOAD_PARAMS;
-import static android.graphics.pdf.cts.Utils.LOAD_PARAMS;
-import static android.graphics.pdf.cts.Utils.PROTECTED_PDF;
-import static android.graphics.pdf.cts.Utils.SAMPLE_PDF;
-import static android.graphics.pdf.cts.Utils.calculateArea;
-import static android.graphics.pdf.cts.Utils.createPreVRenderer;
-import static android.graphics.pdf.cts.Utils.getFile;
-import static android.graphics.pdf.cts.Utils.getParcelFileDescriptorFromResourceId;
+import static android.graphics.pdf.cts.module.Utils.A4_HEIGHT_PTS;
+import static android.graphics.pdf.cts.module.Utils.A4_PORTRAIT;
+import static android.graphics.pdf.cts.module.Utils.A4_WIDTH_PTS;
+import static android.graphics.pdf.cts.module.Utils.INCORRECT_LOAD_PARAMS;
+import static android.graphics.pdf.cts.module.Utils.LOAD_PARAMS;
+import static android.graphics.pdf.cts.module.Utils.PROTECTED_PDF;
+import static android.graphics.pdf.cts.module.Utils.SAMPLE_PDF;
+import static android.graphics.pdf.cts.module.Utils.calculateArea;
+import static android.graphics.pdf.cts.module.Utils.createPreVRenderer;
+import static android.graphics.pdf.cts.module.Utils.getFile;
+import static android.graphics.pdf.cts.module.Utils.getParcelFileDescriptorFromResourceId;
 
 import static com.google.common.truth.Truth.assertThat;
 
