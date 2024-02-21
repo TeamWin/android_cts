@@ -565,6 +565,8 @@ public class TelephonyManagerTestOnMockModem {
         //Disable Ims to make sure the call would go thorugh with a CS call
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                 sTelephonyManager,  (tm) -> tm.disableIms(slotId));
+        // Sleep 3s to make sure ims is disabled
+        TimeUnit.SECONDS.sleep(3);
 
         // Dial a CS voice call
         Log.d(TAG, "Start dialing call");
