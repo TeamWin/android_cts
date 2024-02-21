@@ -26,17 +26,27 @@ import static android.media.browse.MediaBrowser.MediaItem.FLAG_PLAYABLE;
 import static android.media.cts.Utils.compareRemoteUserInfo;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertThrows;
 
 import android.app.Instrumentation;
 import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.media.MediaDescription;
 import android.media.browse.MediaBrowser;
 import android.media.browse.MediaBrowser.MediaItem;
+import android.media.session.MediaController;
+import android.media.session.MediaSession;
 import android.media.session.MediaSessionManager.RemoteUserInfo;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.Process;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.service.media.MediaBrowserService;
 import android.service.media.MediaBrowserService.BrowserRoot;
 
@@ -45,14 +55,17 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.NonMainlineTest;
+import com.android.media.flags.Flags;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -62,6 +75,12 @@ import java.util.concurrent.TimeUnit;
 @NonMainlineTest
 @RunWith(AndroidJUnit4.class)
 public class MediaBrowserServiceTest {
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+
+    @Rule public final ResourceReleaser mResourceReleaser = new ResourceReleaser();
+
     // The maximum time to wait for an operation.
     private static final long TIME_OUT_MS = 3000L;
     private static final long WAIT_TIME_FOR_NO_RESPONSE_MS = 500L;
@@ -105,6 +124,7 @@ public class MediaBrowserServiceTest {
         }
     };
 
+    private Context mContext;
     private MediaBrowser mMediaBrowser;
     private RemoteUserInfo mBrowserInfo;
     private StubMediaBrowserService mMediaBrowserService;
@@ -116,21 +136,20 @@ public class MediaBrowserServiceTest {
 
     @Before
     public void setUp() throws Exception {
+        mContext = getInstrumentation().getTargetContext();
         mRootHints = new Bundle();
         mRootHints.putBoolean(BrowserRoot.EXTRA_RECENT, true);
         mRootHints.putBoolean(BrowserRoot.EXTRA_OFFLINE, true);
         mRootHints.putBoolean(BrowserRoot.EXTRA_SUGGESTED, true);
-        mBrowserInfo = new RemoteUserInfo(
-                getInstrumentation().getTargetContext().getPackageName(),
-                Process.myPid(),
-                Process.myUid());
+        mBrowserInfo =
+                new RemoteUserInfo(mContext.getPackageName(), Process.myPid(), Process.myUid());
         mOnChildrenLoadedLatch.reset();
         mOnChildrenLoadedWithOptionsLatch.reset();
         mOnItemLoadedLatch.reset();
 
         final CountDownLatch onConnectedLatch = new CountDownLatch(1);
         getInstrumentation().runOnMainSync(()-> {
-            mMediaBrowser = new MediaBrowser(getInstrumentation().getTargetContext(),
+            mMediaBrowser = new MediaBrowser(mContext,
                 TEST_BROWSER_SERVICE, new MediaBrowser.ConnectionCallback() {
                     @Override
                     public void onConnected() {
@@ -322,6 +341,65 @@ public class MediaBrowserServiceTest {
         mMediaBrowserService.removeChildrenFromMap(parentMediaId);
     }
 
+    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_NULL_SESSION_IN_MEDIA_BROWSER_SERVICE)
+    @Test
+    public void testSetNullSessionToken() {
+        MediaBrowserCallbackImpl browserCallback = new MediaBrowserCallbackImpl();
+        ComponentName componentName = new ComponentName(mContext, SimpleMediaBrowserService.class);
+        MediaBrowser browser = createMediaBrowser(browserCallback, componentName);
+        browser.connect();
+        mResourceReleaser.add(browser::disconnect);
+
+        // We establish a browserless connection to keep the service alive after we call
+        // setSessionToken(null). That way we can test that we can re-populate the session
+        // afterwards. Otherwise, we open ourselves to the service being destroyed immediately
+        // after browsers disconnect as a result setting a null session token.
+        Intent intent = new Intent(MediaBrowserService.SERVICE_INTERFACE);
+        intent.setComponent(componentName);
+        PlaceholderServiceConnection connection = new PlaceholderServiceConnection();
+        assertThat(
+                        mContext.bindService(
+                                intent,
+                                connection,
+                                Context.BIND_AUTO_CREATE | Context.BIND_INCLUDE_CAPABILITIES))
+                .isTrue();
+        mResourceReleaser.add(() -> mContext.unbindService(connection));
+
+        assertWithMessage("Browser service not created after connecting a browser.")
+                .that(SimpleMediaBrowserService.sInstanceInitializedCondition.block(TIME_OUT_MS))
+                .isTrue();
+        MediaBrowserService browserService =
+                Objects.requireNonNull(SimpleMediaBrowserService.sInstance.get());
+
+        String firstSessionTag = "tag 1";
+        MediaSession firstSession = new MediaSession(mContext, firstSessionTag);
+        mResourceReleaser.add(firstSession::release);
+        browserService.setSessionToken(firstSession.getSessionToken());
+
+        browserCallback.waitForConnection();
+
+        String tag = new MediaController(mContext, browser.getSessionToken()).getTag();
+        assertThat(tag).isEqualTo(firstSessionTag);
+
+        browserService.setSessionToken(null);
+        assertThat(browserService.getSessionToken()).isNull();
+        browserCallback.waitForDisconnection();
+
+        String secondSessionTag = "tag 2";
+        MediaSession secondSession = new MediaSession(mContext, secondSessionTag);
+        mResourceReleaser.add(secondSession::release);
+
+        browserCallback.reset();
+        browserService.setSessionToken(secondSession.getSessionToken());
+        assertThat(browserService.getSessionToken())
+                .isSameInstanceAs(secondSession.getSessionToken());
+
+        browser.connect();
+        browserCallback.waitForConnection();
+        tag = new MediaController(mContext, browser.getSessionToken()).getTag();
+        assertThat(tag).isEqualTo(secondSessionTag);
+    }
+
     private void assertRootHints(MediaItem item) {
         Bundle rootHints = item.getDescription().getExtras();
         assertThat(rootHints).isNotNull();
@@ -331,6 +409,66 @@ public class MediaBrowserServiceTest {
                 .isEqualTo(mRootHints.getBoolean(BrowserRoot.EXTRA_OFFLINE));
         assertThat(rootHints.getBoolean(BrowserRoot.EXTRA_SUGGESTED))
                 .isEqualTo(mRootHints.getBoolean(BrowserRoot.EXTRA_SUGGESTED));
+    }
+
+    private MediaBrowser createMediaBrowser(
+            MediaBrowserCallbackImpl callback, ComponentName componentName) {
+        MediaBrowser[] browserHolder = new MediaBrowser[1];
+        getInstrumentation()
+                .runOnMainSync(
+                        () ->
+                                browserHolder[0] =
+                                        new MediaBrowser(
+                                                mContext, componentName, callback, mRootHints));
+        return browserHolder[0];
+    }
+
+    private static class MediaBrowserCallbackImpl extends MediaBrowser.ConnectionCallback {
+
+        private final TestCountDownLatch mConnectionLatch;
+        private final TestCountDownLatch mDisonnectionLatch;
+
+        private MediaBrowserCallbackImpl() {
+            mConnectionLatch = new TestCountDownLatch();
+            mDisonnectionLatch = new TestCountDownLatch();
+        }
+
+        public void reset() {
+            mConnectionLatch.reset();
+            mDisonnectionLatch.reset();
+        }
+
+        public void waitForConnection() {
+            assertThat(mConnectionLatch.await(TIME_OUT_MS)).isTrue();
+        }
+
+        public void waitForDisconnection() {
+            assertThat(mDisonnectionLatch.await(TIME_OUT_MS)).isTrue();
+        }
+
+        @Override
+        public void onConnected() {
+            mConnectionLatch.countDown();
+        }
+
+        @Override
+        public void onConnectionFailed() {
+            mDisonnectionLatch.countDown();
+        }
+    }
+
+    /**
+     * A service connection that does nothing.
+     *
+     * <p>Serves the purpose of keeping a service alive.
+     */
+    private static class PlaceholderServiceConnection implements ServiceConnection {
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {}
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {}
     }
 
     private static class TestCountDownLatch {
