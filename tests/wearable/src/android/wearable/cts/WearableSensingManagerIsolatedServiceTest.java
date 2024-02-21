@@ -115,6 +115,12 @@ public class WearableSensingManagerIsolatedServiceTest {
 
     @Before
     public void setUp() throws Exception {
+        // Sleep for 2 seconds to avoid flakiness until b/326256152 is fixed. The bug can cause
+        // CDM to reuse the same associationId previously assigned to WearableSensingSecureChannel
+        // after the previous association is disassociation. If async clean up of the CDM
+        // secure channel for that previous association has not completed, it can affect the new
+        // association with the reused associationId and causes tests to flake.
+        SystemClock.sleep(2000);
         mContext = getInstrumentation().getContext();
         mWearableSensingManager =
                 (WearableSensingManager)
@@ -132,9 +138,12 @@ public class WearableSensingManagerIsolatedServiceTest {
     @After
     public void tearDown() throws Exception {
         clearTestableWearableSensingService();
-        if (mCdmAssociationId != null) {
-            mCompanionDeviceManager.disassociate(mCdmAssociationId);
-        }
+        // Do not call mCompanionDeviceManager.disassociate(mCdmAssociationId) until b/326256152 is
+        // fixed. Calling it can cause the CDM associationId to be reused in
+        // WearableSensingSecureChannel, which causes the async CDM SecureChannel clean up in the
+        // current test to close the WearableSensingSecureChannel used in the next test.
+        // This issue is way more likely to reproduce on a freshly wiped device since CDM persists
+        // association IDs on disk.
         getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
     }
 
@@ -356,6 +365,8 @@ public class WearableSensingManagerIsolatedServiceTest {
                 new CompanionDeviceManager.Callback() {
                     @Override
                     public void onAssociationCreated(AssociationInfo associationInfo) {
+                        Log.d(TAG,
+                                "#onAssociationCreated, associationId: " + associationInfo.getId());
                         associationIdRef.set(associationInfo.getId());
                         mCompanionDeviceManager.addOnTransportsChangedListener(
                                 EXECUTOR,
