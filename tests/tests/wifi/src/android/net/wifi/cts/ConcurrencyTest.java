@@ -1396,7 +1396,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         assertEquals(vendorData, device.getVendorData());
     }
 
-    private class TestWifiP2pListener implements WifiP2pManager.WifiP2pListener {
+    private static class TestWifiP2pListener implements WifiP2pManager.WifiP2pListener {
         final Object mP2pListenerLock;
         int mListenState = -1;
         boolean mP2pGroupCreating = false;
@@ -1417,12 +1417,6 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         public boolean getP2pGroupCreating() {
             synchronized (mP2pListenerLock) {
                 return mP2pGroupCreating;
-            }
-        }
-
-        public boolean getP2pGroupRemoved() {
-            synchronized (mP2pListenerLock) {
-                return mP2pGroupRemoved;
             }
         }
 
@@ -1490,7 +1484,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @Test
-    public void testWifiP2pListener() {
+    public void testWifiP2pListenerListenStateChanged() {
         TestWifiP2pListener p2pListener = new TestWifiP2pListener(mLock);
 
         sWifiP2pManager.registerWifiP2pListener(mExecutor, p2pListener);
@@ -1506,6 +1500,18 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         waitForP2pListenerCallbackCalled(p2pListener);
         assertEquals(WifiP2pManager.WIFI_P2P_LISTEN_STOPPED, p2pListener.getListenState());
 
+        sWifiP2pManager.unregisterWifiP2pListener(p2pListener);
+    }
+
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#registerWifiP2pListener",
+            "android.net.wifi.p2p.WifiP2pManager#unregisterWifiP2pListener"})
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
+    @Test
+    public void testWifiP2pListenerGroupCreated() {
+        TestWifiP2pListener p2pListener = new TestWifiP2pListener(mLock);
+
+        sWifiP2pManager.registerWifiP2pListener(mExecutor, p2pListener);
         resetResponse(MY_RESPONSE);
         sWifiP2pManager.createGroup(sWifiP2pChannel, sActionListener);
         assertTrue(waitForServiceResponse(MY_RESPONSE));
