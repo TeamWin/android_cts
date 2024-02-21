@@ -25,12 +25,14 @@ import static android.media.projection.MediaProjectionConfig.createConfigForDefa
 import static android.media.projection.MediaProjectionConfig.createConfigForUserChoice;
 import static android.media.projection.cts.MediaProjectionPermissionDialogTestActivity.EXTRA_MEDIA_PROJECTION_CONFIG;
 
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
-
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeFalse;
+
+import android.compat.testing.PlatformCompatChangeRule;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionConfig;
 
@@ -42,10 +44,14 @@ import androidx.test.uiautomator.UiObject2;
 
 import com.android.compatibility.common.util.NonMainlineTest;
 
+import libcore.junit.util.compat.CoreCompatChangeRule.DisableCompatChanges;
+import libcore.junit.util.compat.CoreCompatChangeRule.EnableCompatChanges;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
 
 /**
  * Test {@link MediaProjection} compat change dependent logic
@@ -65,6 +71,9 @@ public class MediaProjectionCompatChangeTest {
 
     private String mEntireScreenString;
     private String mSingleAppString;
+
+    @Rule
+    public TestRule compatChangeRule = new PlatformCompatChangeRule();
 
     @Rule
     public ActivityTestRule<MediaProjectionPermissionDialogTestActivity> mActivityRule =
@@ -91,11 +100,8 @@ public class MediaProjectionCompatChangeTest {
     // per-app override is enabled, that the MediaProjectionConfig is overridden, and the single app
     // option is enabled and the default option.
     @Test
+    @EnableCompatChanges({OVERRIDE_DISABLE_MEDIA_PROJECTION_SINGLE_APP_OPTION})
     public void testMediaProjectionPermissionDialog_overrideDefaultDisplayConfig() {
-        runShellCommand("am compat enable --no-kill "
-                + OVERRIDE_DISABLE_MEDIA_PROJECTION_SINGLE_APP_OPTION + " "
-                + mContext.getPackageName());
-
         testMediaProjectionPermissionDialog(createConfigForDefaultDisplay(), mSingleAppString);
     }
 
@@ -103,18 +109,16 @@ public class MediaProjectionCompatChangeTest {
     // enabled and be the default option. This test ensures that when the per-app override is
     // enabled, this behaviour is not changed.
     @Test
+    @EnableCompatChanges({OVERRIDE_DISABLE_MEDIA_PROJECTION_SINGLE_APP_OPTION})
     public void testMediaProjectionPermissionDialog_overrideUserChoiceConfig() {
-        runShellCommand("am compat enable --no-kill "
-                + OVERRIDE_DISABLE_MEDIA_PROJECTION_SINGLE_APP_OPTION + " "
-                + mContext.getPackageName());
-
-        testMediaProjectionPermissionDialog(createConfigForDefaultDisplay(), mSingleAppString);
+        testMediaProjectionPermissionDialog(createConfigForUserChoice(), mSingleAppString);
     }
 
     // MediaProjectionConfig#createConfigForDefaultDisplay should cause the single app option to be
     // disabled and entire screen to be the default option. This test ensures that this behaviour is
     // not changed.
     @Test
+    @DisableCompatChanges({OVERRIDE_DISABLE_MEDIA_PROJECTION_SINGLE_APP_OPTION})
     public void testMediaProjectionPermissionDialog_defaultDisplayConfig() {
         testMediaProjectionPermissionDialog(createConfigForDefaultDisplay(), mEntireScreenString);
     }
@@ -122,31 +126,31 @@ public class MediaProjectionCompatChangeTest {
     // MediaProjectionConfig#createConfigForUserChoice should cause the single app option to be
     // enabled and be the default option. This test ensures that this behaviour is not changed.
     @Test
+    @DisableCompatChanges({OVERRIDE_DISABLE_MEDIA_PROJECTION_SINGLE_APP_OPTION})
     public void testMediaProjectionPermissionDialog_userChoiceConfig() {
         testMediaProjectionPermissionDialog(createConfigForUserChoice(), mSingleAppString);
     }
 
     private void testMediaProjectionPermissionDialog(
             MediaProjectionConfig config, String expectedSpinnerString) {
+        assumeFalse(mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH));
+
         Intent testActivityIntent = new Intent().putExtra(
                 EXTRA_MEDIA_PROJECTION_CONFIG, config);
         mActivityRule.launchActivity(testActivityIntent);
         mDevice.waitForIdle();
 
         // check if we can find a spinner which is has the expected default option
-        assertThat(mDevice.hasObject(
+        boolean foundSpinnerString = mDevice.hasObject(
                 By.res(SPINNER_RESOURCE_ID)
                         .hasChild(
-                                By.text(expectedSpinnerString)))).isTrue();
+                                By.text(expectedSpinnerString)));
+
 
         // close the dialog so it doesn't linger for subsequent tests
         UiObject2 cancelButton = mDevice.findObject(By.res(CANCEL_RESOURCE_ID));
         cancelButton.click();
 
-        // disable compat flag for subsequent tests
-        runShellCommand("am compat disable --no-kill "
-                + OVERRIDE_DISABLE_MEDIA_PROJECTION_SINGLE_APP_OPTION + " "
-                + mContext.getPackageName());
-
+        assertThat(foundSpinnerString).isTrue();
     }
 }
