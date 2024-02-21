@@ -232,14 +232,8 @@ public class BiometricSecurityTests extends BiometricTestBase {
             assertTrue(state.toString(), state.mSensorStates.sensorStates.get(sensorId).isBusy());
 
             // Auth should work
-            successfullyAuthenticate(session, userId);
-            mInstrumentation.waitForIdleSync();
-            callbackState = getCallbackState(journal);
-            assertNotNull(callbackState);
+            successfullyAuthenticate(session, userId, journal);
             assertEquals(callbackState.toString(), 0, callbackState.mNumAuthRejected);
-            assertEquals(callbackState.toString(), 1, callbackState.mNumAuthAccepted);
-            assertEquals(callbackState.toString(), 0, callbackState.mAcquiredReceived.size());
-            assertEquals(callbackState.toString(), 0, callbackState.mErrorsReceived.size());
         }
     }
 
@@ -397,7 +391,6 @@ public class BiometricSecurityTests extends BiometricTestBase {
             final TestJournal journal =
                     TestJournalContainer.get(activitySession.getComponentName());
 
-            BiometricCallbackHelper.State callbackState;
             BiometricServiceState state;
 
             // Downgrade the biometric strength to the target strength
@@ -423,14 +416,7 @@ public class BiometricSecurityTests extends BiometricTestBase {
                         state.mSensorStates.sensorStates.get(sensorId).isBusy());
 
                 // Auth should work
-                successfullyAuthenticate(session, userId);
-                mInstrumentation.waitForIdleSync();
-                callbackState = getCallbackState(journal);
-                assertNotNull(callbackState);
-                assertEquals(callbackState.toString(), 0, callbackState.mNumAuthRejected);
-                assertEquals(callbackState.toString(), 1, callbackState.mNumAuthAccepted);
-                assertEquals(callbackState.toString(), 0, callbackState.mAcquiredReceived.size());
-                assertEquals(callbackState.toString(), 0, callbackState.mErrorsReceived.size());
+                successfullyAuthenticate(session, userId, journal);
             } else {
                 Log.d(TAG, "The targetStrength is not strong enough");
                 // Error code should be returned
@@ -445,7 +431,7 @@ public class BiometricSecurityTests extends BiometricTestBase {
 
                 // Auth shouldn't work and error code should be returned
                 mInstrumentation.waitForIdleSync();
-                callbackState = getCallbackState(journal);
+                BiometricCallbackHelper.State callbackState = getCallbackState(journal);
                 assertNotNull(callbackState);
                 assertEquals(callbackState.toString(), 0, callbackState.mNumAuthRejected);
                 assertEquals(callbackState.toString(), 0, callbackState.mNumAuthAccepted);
