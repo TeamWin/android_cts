@@ -775,13 +775,13 @@ public class CardEmulationTest {
         ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
         frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
                 HexFormat.of().parseHex(annotationStringHex)));
-        Assert.assertTrue(adapter.setTransactionAllowed(false));
+        Assert.assertTrue(adapter.setObserveModeEnabled(true));
         Assert.assertTrue(adapter.isObserveModeEnabled());
         notifyPollingLoopAndWait(frames, CustomHostApduService.class.getName());
         Assert.assertFalse(adapter.isObserveModeEnabled());
         adapter.notifyHceDeactivated();
         Assert.assertTrue(adapter.isObserveModeEnabled());
-        adapter.setTransactionAllowed(true);
+        adapter.setObserveModeEnabled(false);
     }
 
     @Test
@@ -802,13 +802,13 @@ public class CardEmulationTest {
             ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
             frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
                     HexFormat.of().parseHex(annotationStringHex)));
-            Assert.assertTrue(adapter.setTransactionAllowed(false));
+            Assert.assertTrue(adapter.setObserveModeEnabled(true));
             Assert.assertTrue(adapter.isObserveModeEnabled());
             notifyPollingLoopAndWait(frames, CustomHostApduService.class.getName());
             Assert.assertFalse(adapter.isObserveModeEnabled());
             adapter.notifyHceDeactivated();
             Assert.assertTrue(adapter.isObserveModeEnabled());
-            adapter.setTransactionAllowed(true);
+            adapter.setObserveModeEnabled(false);
         });
         setMockService();
     }
