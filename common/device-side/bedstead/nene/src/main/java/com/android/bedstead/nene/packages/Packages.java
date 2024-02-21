@@ -761,16 +761,17 @@ public final class Packages {
             resolvedActivity = pm.resolveActivity(toResolve, MATCH_DEFAULT_ONLY);
         }
 
-        Set<String> possibleBrowserPackageName = possibleActivities.stream()
+        Set<String> possibleBrowserPackageNames = possibleActivities.stream()
                 .map(Packages::extractPackageName)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        Log.e("SettingTest", "possibleBrowserPackageNames: " + possibleBrowserPackageName);
+        Log.i(LOG_TAG, "possibleBrowserPackageNames: " + possibleBrowserPackageNames);
 
         String resolvedBrowserPackageName = extractPackageName(resolvedActivity);
+        Log.i(LOG_TAG, "defaultBrowserPackageName: " + resolvedBrowserPackageName);
         if (resolvedBrowserPackageName == null
-                || !possibleBrowserPackageName.contains(resolvedBrowserPackageName)) {
+                || !possibleBrowserPackageNames.contains(resolvedBrowserPackageName)) {
             return null;
         }
 
