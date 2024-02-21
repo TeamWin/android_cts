@@ -44,6 +44,7 @@ java_test_helper_library {
     srcs: [
         "src/android/server/wm/Condition.java",
         "src/android/server/wm/ComponentNameUtils.java",
+        "src/android/server/wm/CtsWindowInfoUtils.java",
         "src/android/server/wm/ProtoExtractors.java",
         "src/android/server/wm/StateLogger.java",
         "src/android/server/wm/WaitForValidActivityState.java",
