@@ -32,6 +32,7 @@ import android.telephony.Annotation;
 import android.telephony.BarringInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
+import android.telephony.cts.util.TelephonyUtils;
 import android.telephony.ims.feature.ConnectionFailureInfo;
 import android.telephony.ims.feature.MmTelFeature;
 import android.telephony.ims.stub.ImsRegistrationImplBase;
@@ -1101,5 +1102,28 @@ public class MockModemManager {
             int multiSimPolicy) {
         mMockModemService.getIRadioSim().updateCarrierRestrictionRules(
                 carrierRestrictionRules, multiSimPolicy);
+    }
+
+    /**
+     * Triggers an incoming SMS.
+     *
+     * @param slotId the Id of logical sim slot.
+     * @return {@code true} if the operation succeeds otherwise false.
+     */
+    public boolean triggerIncomingSms(int slotId) {
+        Log.d(TAG, "triggerIncomingSms[" + slotId + "]");
+
+        boolean result = false;
+        try {
+            String pdu = "07916164260220F0040B914151245584F600006060605130308A04D4F29C0E";
+            mMockModemService.getIRadioMessaging((byte) slotId)
+                    .newSms(TelephonyUtils.hexStringToByteArray(pdu));
+
+            waitForTelephonyFrameworkDone(1);
+            result = true;
+        } catch (Exception e) {
+            Log.e(TAG, "triggerIncomingSms e=" + e);
+        }
+        return result;
     }
 }
