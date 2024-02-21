@@ -93,6 +93,8 @@ public class PermissionPolicyTest {
 
     private static final String OBSERVE_APP_USAGE_PERMISSION =
             "android.permission.OBSERVE_APP_USAGE";
+    private static final String SET_THEME_OVERLAY_CONTROLLER_READY_PERMISSION =
+            "android.permission.SET_THEME_OVERLAY_CONTROLLER_READY";
     private static final String MODIFY_DAY_NIGHT_MODE_PERMISSION =
             "android.permission.MODIFY_DAY_NIGHT_MODE";
 
@@ -522,6 +524,7 @@ public class PermissionPolicyTest {
         switch (permissionName) {
             case SYNC_FLAGS_PERMISSION:
             case WRITE_FLAGS_PERMISSION:
+            case SET_THEME_OVERLAY_CONTROLLER_READY_PERMISSION:
                 return true;  // Added in u-qpr.
             case HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PERMISSION:
                 return parseDate(SECURITY_PATCH).before(HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PATCH_DATE);
