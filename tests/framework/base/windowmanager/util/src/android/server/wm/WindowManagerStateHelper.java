@@ -44,10 +44,12 @@ import static org.junit.Assume.assumeTrue;
 import android.content.ComponentName;
 import android.graphics.Rect;
 import android.util.SparseArray;
+import android.view.InputEvent;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -447,6 +449,24 @@ public class WindowManagerStateHelper extends WindowManagerState {
             fail("Timed out waiting for focus on app "
                     + appPackageName + ", last was " + focusedAppName);
         }).setRetryIntervalMs(100).setRetryLimit((int) waitTime / 100));
+    }
+
+    /**
+     * Waits until the given activity is ready for input, this is only needed when directly
+     * injecting input on screen via
+     * {@link android.hardware.input.InputManager#injectInputEvent(InputEvent, int)}.
+     */
+    public <T extends android.app.Activity> void waitUntilActivityReadyForInputInjection(T activity,
+            String tag, String windowDumpErrMsg) throws InterruptedException {
+        // If we requested an orientation change, just waiting for the window to be visible is not
+        // sufficient. We should first wait for the transitions to stop, and the for app's UI thread
+        // to process them before making sure the window is visible.
+        CtsWindowInfoUtils.waitForStableWindowGeometry(5, TimeUnit.SECONDS);
+        if (activity.getWindow() != null
+                && !CtsWindowInfoUtils.waitForWindowOnTop(activity.getWindow())) {
+            CtsWindowInfoUtils.dumpWindowsOnScreen(tag, windowDumpErrMsg);
+            fail("Activity window did not become visible: " + activity);
+        }
     }
 
     /**
