@@ -173,7 +173,7 @@ public class NfcPreferredPaymentTest {
     @Test
     @RequiresFlagsEnabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
     public void testAidsForPreferredPaymentService_walletRoleEnabled() {
-        WalletRoleTestUtils.runWithRole(mContext, WalletRoleTestUtils.CTS_PACKAGE_NAME,
+        WalletRoleTestUtils.runWithRole(mContext, WalletRoleTestUtils.WALLET_HOLDER_PACKAGE_NAME,
                 () -> {
                     try {
                         List<String> aids = mCardEmulation.getAidsForPreferredPaymentService();
@@ -182,7 +182,7 @@ public class NfcPreferredPaymentTest {
                         }
 
                         assertTrue("Retrieve incorrect preferred payment aid list",
-                                mAids.equals(aids));
+                                WalletRoleTestUtils.WALLET_HOLDER_AIDS.equals(aids));
                     } catch (Exception e) {
                         fail("Unexpected Exception " + e);
                     }
