@@ -345,6 +345,7 @@ public class ContactKeysManagerTest {
         assertThat(newSelfKey.getDeviceId()).isEqualTo(DEVICE_ID);
         assertThat(newSelfKey.getAccountId()).isEqualTo(ACCOUNT_ID);
         assertThat(newSelfKey.getKeyValue()).isEqualTo(KEY_VALUE);
+        assertThat(newSelfKey.getOwnerPackageName()).isEqualTo(OWNER_PACKAGE_NAME);
     }
 
     @Test
