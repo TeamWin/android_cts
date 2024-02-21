@@ -254,4 +254,15 @@
             column="23"/>
     </issue>
 
+    <issue
+        id="NewApi"
+        message="Class requires API level 35 (current min is 29): `android.service.persistentdata.PersistentDataBlockManager`"
+        errorLine1="        sServiceMapping.put(Context.PERSISTENT_DATA_BLOCK_SERVICE, PersistentDataBlockManager.class);"
+        errorLine2="                                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="cts/common/device-side/bedstead/nene/src/main/java/com/android/bedstead/nene/services/Services.java"
+            line="256"
+            column="68"/>
+    </issue>
+
 </issues>
