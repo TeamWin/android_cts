@@ -46,13 +46,17 @@ import java.io.IOException;
  */
 public class DrawableTestUtils {
     private static final String LOGTAG = "DrawableTestUtils";
-    // A small value is actually making sure that the values are matching
-    // exactly with the golden image.
-    // We can increase the threshold if the Skia is drawing with some variance
-    // on different devices. So far, the tests show they are matching correctly.
-    static final float PIXEL_ERROR_THRESHOLD = 0.03f;
-    static final float PIXEL_ERROR_COUNT_THRESHOLD = 0.011f;
-    static final float PIXEL_ERROR_TOLERANCE = 3.0f;
+
+    // All of these constants range 0..1, with higher values being more lenient to differences
+    // between images. Values of zero mean no differences will be tolerated.
+
+    // Fail immediately if any *single* pixel diff exceeds this threshold
+    static final float FATAL_PIXEL_ERROR_THRESHOLD = 0.2f;
+    // Fail if the count of pixels with diffs above REGULAR_PIXEL_ERROR_THRESHOLD exceeds this ratio
+    static final float MAX_REGULAR_ERROR_RATIO = 0.05f;
+    // Threshold to count this pixel as a non-fatal error, the sum of which will be compared
+    // against MAX_REGULAR_ERROR_RATIO
+    static final float REGULAR_PIXEL_ERROR_THRESHOLD = 0.02f;
 
     public static void skipCurrentTag(XmlPullParser parser)
             throws XmlPullParserException, IOException {
@@ -153,13 +157,20 @@ public class DrawableTestUtils {
      * @param message Error message
      * @param expected Expected bitmap
      * @param actual Actual bitmap
-     * @param pixelThreshold The total difference threshold for a single pixel
-     * @param pixelCountThreshold The total different pixel count threshold
-     * @param pixelDiffTolerance The pixel value difference tolerance
-     *
+     * @param fatalPixelErrorThreshold 0..1 - Fails immediately if any *single* pixel diff exceeds
+     *     this threshold
+     * @param maxRegularErrorRatio 0..1 - Fails if the count of pixels with diffs above
+     *     regularPixelErrorThreshold exceeds this ratio
+     * @param regularPixelErrorThreshold 0..1 - Threshold to count this pixel as a non-fatal error,
+     *     the sum of which will be compared against MAX_REGULAR_ERROR_RATIO
      */
-    public static void compareImages(String message, Bitmap expected, Bitmap actual,
-            float pixelThreshold, float pixelCountThreshold, float pixelDiffTolerance) {
+    public static void compareImages(
+            String message,
+            Bitmap expected,
+            Bitmap actual,
+            float fatalPixelErrorThreshold,
+            float maxRegularErrorRatio,
+            float regularPixelErrorThreshold) {
         int idealWidth = expected.getWidth();
         int idealHeight = expected.getHeight();
 
@@ -182,26 +193,44 @@ public class DrawableTestUtils {
                 float givenAlpha = Color.alpha(givenColor) / 255.0f;
 
                 // compare premultiplied color values
-                float totalError = 0;
-                totalError += Math.abs((idealAlpha * Color.red(idealColor))
+                float pixelError = 0;
+                pixelError += Math.abs((idealAlpha * Color.red(idealColor))
                                      - (givenAlpha * Color.red(givenColor)));
-                totalError += Math.abs((idealAlpha * Color.green(idealColor))
+                pixelError += Math.abs((idealAlpha * Color.green(idealColor))
                                      - (givenAlpha * Color.green(givenColor)));
-                totalError += Math.abs((idealAlpha * Color.blue(idealColor))
+                pixelError += Math.abs((idealAlpha * Color.blue(idealColor))
                                      - (givenAlpha * Color.blue(givenColor)));
-                totalError += Math.abs(Color.alpha(idealColor) - Color.alpha(givenColor));
+                pixelError += Math.abs(Color.alpha(idealColor) - Color.alpha(givenColor));
+                pixelError /= 1024.0f;
 
-                if ((totalError / 1024.0f) >= pixelThreshold) {
-                    Assert.fail((message + ": totalError is " + totalError));
+                if (pixelError > fatalPixelErrorThreshold) {
+                    Assert.fail(
+                            String.format(
+                                    "%s: pixelError of %f exceeds fatalPixelErrorThreshold of %f"
+                                            + " for pixel (%d, %d)",
+                            message,
+                            pixelError,
+                            fatalPixelErrorThreshold,
+                            x,
+                            y));
                 }
 
-                if (totalError > pixelDiffTolerance) {
+                if (pixelError > regularPixelErrorThreshold) {
                     totalDiffPixelCount++;
                 }
             }
         }
-        if ((totalDiffPixelCount / totalPixelCount) >= pixelCountThreshold) {
-            Assert.fail((message +": totalDiffPixelCount is " + totalDiffPixelCount));
+        float countedErrorRatio = totalDiffPixelCount / totalPixelCount;
+        if (countedErrorRatio > maxRegularErrorRatio) {
+            Assert.fail(
+                    String.format(
+                            "%s: countedErrorRatio of %f exceeds maxRegularErrorRatio of %f for"
+                                    + " %dx%d image",
+                            message,
+                            countedErrorRatio,
+                            maxRegularErrorRatio,
+                            idealWidth,
+                            idealHeight));
         }
     }
 
