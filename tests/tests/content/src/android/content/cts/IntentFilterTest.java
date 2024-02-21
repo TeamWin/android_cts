@@ -1322,7 +1322,8 @@ public class IntentFilterTest {
         XmlPullParser parser = null;
         ActivityInfo ai = null;
 
-        final ComponentName mComponentName = new ComponentName(mContext, MockActivity.class);
+        final ComponentName mComponentName = new ComponentName(
+                "android.content.cts", "android.content.cts.MockActivity");
         final PackageManager pm = mContext.getPackageManager();
         ai = pm.getActivityInfo(mComponentName, PackageManager.GET_META_DATA);
 

@@ -21,7 +21,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
-import android.platform.test.annotations.AppModeSdkSandbox;
+import android.platform.test.annotations.AppModeNonSdkSandbox;
 import android.test.AndroidTestCase;
 
 import java.io.File;
@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
+@AppModeNonSdkSandbox(reason = "SDK sandboxes cannot use an intent with these intent actions.")
 public class ReadableUriExtraToClipDataTest extends AndroidTestCase {
     private static final List<String> FILE_NAMES = Arrays.asList("testFile1.txt", "testFile2.txt");
     private static final List<File> mTestFiles = new ArrayList<File>();
