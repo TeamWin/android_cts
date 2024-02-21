@@ -44,6 +44,7 @@ public class PropertyUtil {
     private static final String CAMERAX_EXTENSIONS_ENABLED = "ro.camerax.extensions.enabled";
     private static final String MANUFACTURER_PROPERTY = "ro.product.manufacturer";
     private static final String TAG_DEV_KEYS = "dev-keys";
+    private static final String TAG_TEST_KEYS = "test-keys";
     private static final String VNDK_VERSION = "ro.vndk.version";
 
     public static final String GOOGLE_SETTINGS_QUERY =
@@ -62,12 +63,12 @@ public class PropertyUtil {
 
     /** Returns whether this build is built with dev-keys */
     public static boolean isDevKeysBuild() {
-        for (String tag : Build.TAGS.split(",")) {
-            if (TAG_DEV_KEYS.equals(tag.trim())) {
-                return true;
-            }
-        }
-        return false;
+        return isBuildWithKeyType(TAG_DEV_KEYS);
+    }
+
+    /** Returns whether this build is built with test-keys */
+    public static boolean isTestKeysBuild() {
+        return isBuildWithKeyType(TAG_TEST_KEYS);
     }
 
     /**
@@ -296,5 +297,20 @@ public class PropertyUtil {
                 scanner.close();
             }
         }
+    }
+
+    /**
+     * Checks if the current build uses a specific type of key.
+     *
+     * @param keyType The type of key to check for (e.g., "dev-keys", "test-keys")
+     * @return true if the build uses the specified key type, false otherwise
+    */
+    private static boolean isBuildWithKeyType(String keyType) {
+        for (String tag : Build.TAGS.split(",")) {
+            if (keyType.equals(tag.trim())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
