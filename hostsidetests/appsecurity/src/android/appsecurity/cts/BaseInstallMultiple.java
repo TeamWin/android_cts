@@ -199,6 +199,12 @@ public class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
         return (T) this;
     }
 
+    T bypassLowTargetSdkBlock() {
+        addArg("--bypass-low-target-sdk-block");
+        return (T) this;
+    }
+
+
     protected String deriveRemoteName(String originalName, int index) {
         return index + "_" + originalName;
     }
