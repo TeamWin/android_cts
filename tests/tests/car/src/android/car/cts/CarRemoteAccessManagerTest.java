@@ -231,8 +231,9 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
         InVehicleTaskScheduler taskScheduler = mCarRemoteAccessManager.getInVehicleTaskScheduler();
         // Schedule the task to be executed 30s later.
         long startTimeInEpochSeconds = System.currentTimeMillis() / 1000 + 30;
-        ScheduleInfo scheduleInfo = new ScheduleInfo.Builder(TEST_SCHEDULE_ID_1, TEST_TASK_DATA,
-                startTimeInEpochSeconds).build();
+        ScheduleInfo scheduleInfo = new ScheduleInfo.Builder(TEST_SCHEDULE_ID_1,
+                CarRemoteAccessManager.TASK_TYPE_CUSTOM, startTimeInEpochSeconds)
+                .setTaskData(TEST_TASK_DATA).build();
         try {
             taskScheduler.scheduleTask(scheduleInfo);
         } catch (InVehicleTaskSchedulerException e) {
@@ -259,8 +260,9 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
         InVehicleTaskScheduler taskScheduler = mCarRemoteAccessManager.getInVehicleTaskScheduler();
         // Schedule the task to be executed 30s later.
         long startTimeInEpochSeconds = System.currentTimeMillis() / 1000 + 30;
-        ScheduleInfo scheduleInfo = new ScheduleInfo.Builder(TEST_SCHEDULE_ID_1, TEST_TASK_DATA,
-                startTimeInEpochSeconds).build();
+        ScheduleInfo scheduleInfo = new ScheduleInfo.Builder(TEST_SCHEDULE_ID_1,
+                CarRemoteAccessManager.TASK_TYPE_CUSTOM, startTimeInEpochSeconds)
+                .setTaskData(TEST_TASK_DATA).build();
         try {
             taskScheduler.scheduleTask(scheduleInfo);
         } catch (InVehicleTaskSchedulerException e) {
@@ -295,8 +297,9 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
         InVehicleTaskScheduler taskScheduler = mCarRemoteAccessManager.getInVehicleTaskScheduler();
         // Schedule the task to be executed 30s later.
         long startTimeInEpochSeconds = System.currentTimeMillis() / 1000 + 30;
-        ScheduleInfo scheduleInfo = new ScheduleInfo.Builder(TEST_SCHEDULE_ID_1, TEST_TASK_DATA,
-                startTimeInEpochSeconds).build();
+        ScheduleInfo scheduleInfo = new ScheduleInfo.Builder(TEST_SCHEDULE_ID_1,
+                CarRemoteAccessManager.TASK_TYPE_CUSTOM, startTimeInEpochSeconds)
+                .setTaskData(TEST_TASK_DATA).build();
         try {
             taskScheduler.scheduleTask(scheduleInfo);
         } catch (InVehicleTaskSchedulerException e) {
@@ -332,10 +335,13 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
         InVehicleTaskScheduler taskScheduler = mCarRemoteAccessManager.getInVehicleTaskScheduler();
         // Schedule the task to be executed 30s later.
         long startTimeInEpochSeconds = System.currentTimeMillis() / 1000 + 30;
-        ScheduleInfo scheduleInfo1 = new ScheduleInfo.Builder(TEST_SCHEDULE_ID_1, TEST_TASK_DATA,
-                startTimeInEpochSeconds).build();
-        ScheduleInfo scheduleInfo2 = new ScheduleInfo.Builder(TEST_SCHEDULE_ID_2, TEST_TASK_DATA,
-                startTimeInEpochSeconds).setCount(2).setPeriodic(Duration.ofSeconds(30)).build();
+        ScheduleInfo scheduleInfo1 = new ScheduleInfo.Builder(TEST_SCHEDULE_ID_1,
+                CarRemoteAccessManager.TASK_TYPE_CUSTOM, startTimeInEpochSeconds)
+                .setTaskData(TEST_TASK_DATA).build();
+        ScheduleInfo scheduleInfo2 = new ScheduleInfo.Builder(TEST_SCHEDULE_ID_2,
+                CarRemoteAccessManager.TASK_TYPE_CUSTOM, startTimeInEpochSeconds)
+                .setTaskData(TEST_TASK_DATA).setCount(2).setPeriodic(Duration.ofSeconds(30))
+                .build();
 
         try {
             taskScheduler.unscheduleAllTasks();
@@ -395,10 +401,13 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
         InVehicleTaskScheduler taskScheduler = mCarRemoteAccessManager.getInVehicleTaskScheduler();
         // Schedule the task to be executed 30s later.
         long startTimeInEpochSeconds = System.currentTimeMillis() / 1000 + 30;
-        ScheduleInfo scheduleInfo1 = new ScheduleInfo.Builder(TEST_SCHEDULE_ID_1, TEST_TASK_DATA,
-                startTimeInEpochSeconds).build();
-        ScheduleInfo scheduleInfo2 = new ScheduleInfo.Builder(TEST_SCHEDULE_ID_2, TEST_TASK_DATA,
-                startTimeInEpochSeconds).setCount(2).setPeriodic(Duration.ofSeconds(30)).build();
+        ScheduleInfo scheduleInfo1 = new ScheduleInfo.Builder(TEST_SCHEDULE_ID_1,
+                CarRemoteAccessManager.TASK_TYPE_CUSTOM, startTimeInEpochSeconds)
+                .setTaskData(TEST_TASK_DATA).build();
+        ScheduleInfo scheduleInfo2 = new ScheduleInfo.Builder(TEST_SCHEDULE_ID_2,
+                CarRemoteAccessManager.TASK_TYPE_CUSTOM, startTimeInEpochSeconds)
+                .setTaskData(TEST_TASK_DATA).setCount(2).setPeriodic(Duration.ofSeconds(30))
+                .build();
 
         try {
             taskScheduler.unscheduleAllTasks();
@@ -417,6 +426,8 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
             ScheduleInfo info = scheduleInfo.get(0);
             expectWithMessage("Got expected scheduleId").that(info.getScheduleId())
                     .isEqualTo(TEST_SCHEDULE_ID_1);
+            expectWithMessage("Got expected task data").that(info.getTaskType()).isEqualTo(
+                    CarRemoteAccessManager.TASK_TYPE_CUSTOM);
             expectWithMessage("Got expected task data").that(info.getTaskData()).isEqualTo(
                     TEST_TASK_DATA);
             expectWithMessage("Got expected count").that(info.getCount()).isEqualTo(1);
