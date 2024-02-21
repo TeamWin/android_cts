@@ -78,6 +78,7 @@ _STR_VALUE_STR = 'strValue'
 _TAG_STR = 'tag'
 _CAMERA_ID_STR = 'cameraId'
 _USE_CASE_CROPPED_RAW = 6
+_EXTRA_TIMEOUT_FACTOR = 10
 
 
 def validate_tablet_brightness(tablet_name, brightness):
@@ -735,7 +736,6 @@ class ItsSession(object):
     if data[_TAG_STR] != 'recordingResponse':
       raise error_util.CameraItsError(
           f'Invalid response for command: {cmd[_CMD_NAME_STR]}')
-    logging.debug('VideoRecordingObject: %s', data)
     return data[_OBJ_VALUE_STR]
 
   def _execute_preview_recording(self, cmd):
@@ -761,7 +761,8 @@ class ItsSession(object):
       }
     """
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
-    timeout = self.SOCK_TIMEOUT_PREVIEW + self.EXTRA_SOCK_TIMEOUT
+    timeout = (self.SOCK_TIMEOUT_PREVIEW +
+               self.EXTRA_SOCK_TIMEOUT * _EXTRA_TIMEOUT_FACTOR)
     self.sock.settimeout(timeout)
 
     data, _ = self.__read_response_from_socket()
@@ -856,6 +857,7 @@ class ItsSession(object):
     cmd['zoomEnd'] = zoom_end
     cmd['stepSize'] = step_size
     cmd['stepDuration'] = step_duration
+    cmd['hlg10Enabled'] = False
     if ae_target_fps_min and ae_target_fps_max:
       cmd['aeTargetFpsMin'] = ae_target_fps_min
       cmd['aeTargetFpsMax'] = ae_target_fps_max
