@@ -24,6 +24,7 @@ import android.graphics.Rect;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.os.SystemProperties;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.Window;
@@ -516,4 +517,17 @@ public class CtsWindowInfoUtils {
         return true;
     }
 
+    public static void dumpWindowsOnScreen(String tag, String message)
+            throws InterruptedException {
+        waitForWindowInfos(windowInfos -> {
+            if (windowInfos.size() == 0) {
+                return false;
+            }
+            Log.d(tag, "Dumping windows on screen for test " + message);
+            for (var windowInfo : windowInfos) {
+                Log.d(tag, "     " + windowInfo);
+            }
+            return true;
+        }, 5L * HW_TIMEOUT_MULTIPLIER, TimeUnit.SECONDS);
+    }
 }
