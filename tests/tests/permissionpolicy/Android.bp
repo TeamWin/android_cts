@@ -25,8 +25,6 @@ android_test {
     test_suites: [
         "cts",
         "general-tests",
-        "mts-permission",
-        "mcts-permission",
     ],
     libs: ["android.test.base"],
     static_libs: [
