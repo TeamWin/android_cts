@@ -52,6 +52,8 @@ import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeSdkSandbox;
 import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -120,6 +122,9 @@ public class AudioFocusTest {
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     public void setUp() throws Exception {
@@ -636,7 +641,7 @@ public class AudioFocusTest {
     @RequireNotAutomotive(reason = "Auto has its own focus policy")
     @RequireDoesNotHaveFeature(value = PackageManager.FEATURE_PC) // not required for Desktop
     @AppModeFull(reason = "Instant apps cannot hold permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED")
-    @RequiresFlagsEnabled(value = Flags.FLAG_FOCUS_EXCLUSIVE_WITH_RECORDING)
+    @RequiresFlagsEnabled(Flags.FLAG_FOCUS_EXCLUSIVE_WITH_RECORDING)
     public void testAudioFocusExclusive() throws Exception {
         Log.i(TAG, "testAudioFocusExclusive start");
         if (!mDeflakeApisAvailable) {
@@ -695,7 +700,7 @@ public class AudioFocusTest {
     @RequireDoesNotHaveFeature(value = PackageManager.FEATURE_PC) // not required for Desktop
     @RequireFeature(value = PackageManager.FEATURE_MICROPHONE)
     @AppModeFull(reason = "Instant apps cannot hold permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED")
-    @RequiresFlagsEnabled(value = Flags.FLAG_FOCUS_EXCLUSIVE_WITH_RECORDING)
+    @RequiresFlagsEnabled(Flags.FLAG_FOCUS_EXCLUSIVE_WITH_RECORDING)
     public void testAudioFocusExclusiveAndRecording() throws Exception {
         Log.i(TAG, "testAudioFocusExclusiveAndRecording start");
         if (!mDeflakeApisAvailable) {
