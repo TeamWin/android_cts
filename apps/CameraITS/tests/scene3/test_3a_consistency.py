@@ -40,6 +40,11 @@ _ISO_EXP_TOL = 0.16  # TOL used w/ postRawCapabilityBoost available
 _NUM_TEST_ITERATIONS = 3
 
 
+def _write_imgs(imgs, filename):
+  for i, img in enumerate(imgs):
+    image_processing_utils.write_image(img, f'{filename}_{i}.png')
+
+
 class ConsistencyTest(its_base_test.ItsBaseTest):
   """Basic test for 3A consistency.
 
@@ -52,14 +57,13 @@ class ConsistencyTest(its_base_test.ItsBaseTest):
   """
 
   def test_3a_consistency(self):
-    logging.debug('Starting %s', _NAME)
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
         camera_id=self.camera_id,
         hidden_physical_id=self.hidden_physical_id) as cam:
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
-      debug = self.debug_mode
+      name_with_log_path = f'{os.path.join(self.log_path, _NAME)}'
 
       # Load chart for scene
       its_session_utils.load_scene(
@@ -70,7 +74,7 @@ class ConsistencyTest(its_base_test.ItsBaseTest):
           camera_properties_utils.read_3a(props))
       mono_camera = camera_properties_utils.mono_camera(props)
 
-      # Set postRawSensitivityBoost to minimum if available.
+      # Set postRawSensitivityBoost to minimum if available
       req = capture_request_utils.auto_capture_request()
       if camera_properties_utils.post_raw_sensitivity_boost(props):
         min_iso_boost, _ = props['android.control.postRawSensitivityBoostRange']
@@ -83,9 +87,10 @@ class ConsistencyTest(its_base_test.ItsBaseTest):
       iso_exps = []
       g_gains = []
       fds = []
+      imgs = []
       cam.do_3a()  # do 3A 1x up front to 'prime the pump'
-      # Do 3A _NUM_TEST_ITERATIONS times and save data.
-      for i in range(_NUM_TEST_ITERATIONS):
+      # Do 3A _NUM_TEST_ITERATIONS times and save data
+      for _ in range(_NUM_TEST_ITERATIONS):
         try:
           iso, exposure, awb_gains, awb_transform, focus_distance = cam.do_3a(
               get_results=True, mono_camera=mono_camera)
@@ -97,12 +102,9 @@ class ConsistencyTest(its_base_test.ItsBaseTest):
           req = capture_request_utils.manual_capture_request(
               iso, exposure, focus_distance)
           cap = cam.do_capture(req, cam.CAP_YUV)
-          if debug:
-            img = image_processing_utils.convert_capture_to_rgb_image(cap)
-            image_processing_utils.write_image(
-                img, f'{os.path.join(self.log_path, _NAME)}_{i}.jpg')
+          imgs.append(image_processing_utils.convert_capture_to_rgb_image(cap))
 
-          # Extract and save metadata.
+          # Extract and save metadata
           iso_result = cap['metadata']['android.sensor.sensitivity']
           exposure_result = cap['metadata']['android.sensor.exposureTime']
           awb_gains_result = cap['metadata']['android.colorCorrection.gains']
@@ -121,24 +123,28 @@ class ConsistencyTest(its_base_test.ItsBaseTest):
         except error_util.CameraItsError:
           logging.debug('FAIL')
 
-      # Check for correct behavior.
+      # Check for correct behavior
       if len(iso_exps) != _NUM_TEST_ITERATIONS:
+        _write_imgs(imgs, f'{name_with_log_path}_num')
         raise AssertionError(f'number of captures: {len(iso_exps)}, '
                              f'NUM_TEST_ITERATIONS: {_NUM_TEST_ITERATIONS}.')
       iso_exp_min = np.amin(iso_exps)
       iso_exp_max = np.amax(iso_exps)
       if not math.isclose(iso_exp_max, iso_exp_min, rel_tol=iso_exp_tol):
+        _write_imgs(imgs, f'{name_with_log_path}_iso_exp')
         raise AssertionError(f'ISO*exp min: {iso_exp_min}, max: {iso_exp_max}, '
-                             f'TOL:{iso_exp_tol}')
+                             f'RTOL:{iso_exp_tol}')
       g_gain_min = np.amin(g_gains)
       g_gain_max = np.amax(g_gains)
       if not math.isclose(g_gain_max, g_gain_min, rel_tol=_GGAIN_TOL):
+        _write_imgs(imgs, f'{name_with_log_path}_g_gain')
         raise AssertionError(f'G gain min: {g_gain_min}, max: {g_gain_min}, '
-                             f'TOL: {_GGAIN_TOL}')
+                             f'RTOL: {_GGAIN_TOL}')
       fd_min = np.amin(fds)
       fd_max = np.amax(fds)
       if not math.isclose(fd_max, fd_min, rel_tol=_FD_TOL):
-        raise AssertionError(f'FD min: {fd_min}, max: {fd_max} TOL: {_FD_TOL}')
+        _write_imgs(imgs, f'{name_with_log_path}_fd')
+        raise AssertionError(f'FD min: {fd_min}, max: {fd_max} RTOL: {_FD_TOL}')
       for g in awb_gains:
         if np.isnan(g):
           raise AssertionError('AWB gain entry is not a number.')
