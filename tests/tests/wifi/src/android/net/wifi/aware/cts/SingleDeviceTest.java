@@ -793,7 +793,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
      * Verify that {@link WifiAwareManager#attach(ConfigRequest, Handler, AttachCallback,
      * IdentityChangedListener)} can be called successfully.
      */
-    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
             codeName = "VanillaIceCream")
     public void testAttachDiscoveryWithConfigRequest() throws Exception {
@@ -1233,7 +1233,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
     }
 
     private static boolean isVendorDataSupported() {
-        return SdkLevel.isAtLeastV() && Flags.vendorParcelableParameters();
+        return SdkLevel.isAtLeastV() && Flags.androidVWifiApi();
     }
 
     private static OuiKeyedData generateOuiKeyedData(int oui) {

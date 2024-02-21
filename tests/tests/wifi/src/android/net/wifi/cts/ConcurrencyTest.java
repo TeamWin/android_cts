@@ -680,7 +680,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
     }
 
     @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pGroup#setVendorData"})
-    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
             codeName = "VanillaIceCream")
     @Test
@@ -828,7 +828,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
     @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#setWifiP2pChannels",
             "android.net.wifi.p2p.WifiP2pManager#startListening",
             "android.net.wifi.p2p.WifiP2pManager#stopListening"})
-    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
             codeName = "VanillaIceCream")
     @Test
@@ -1061,7 +1061,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
      * WifiP2pManager.Channel, WifiP2pDiscoveryConfig, WifiP2pManager.ActionListener)}
      */
     @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#discoverPeersWithConfigParams"})
-    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
             codeName = "VanillaIceCream")
     @Test
@@ -1147,7 +1147,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
     }
 
     @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pConfig.Builder#setVendorData"})
-    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
             codeName = "VanillaIceCream")
     @Test
@@ -1349,7 +1349,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
     /**
      * Tests that we can properly get/set fields in {@link WifiP2pDiscoveryConfig}.
      */
-    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @Test
     public void testWifiP2pDiscoveryConfig() {
         int scanType = WifiP2pManager.WIFI_P2P_SCAN_SINGLE_FREQ;
@@ -1365,7 +1365,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
      * Tests that we can properly get/set fields in {@link WifiP2pDiscoveryConfig},
      * including the Vendor Data.
      */
-    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
             codeName = "VanillaIceCream")
     @Test
@@ -1385,7 +1385,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
     /**
      * Tests that we can properly set/get vendor data in {@link WifiP2pDevice}.
      */
-    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
             codeName = "VanillaIceCream")
     @Test

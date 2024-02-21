@@ -157,7 +157,7 @@ public class WifiP2pConfigTest extends AndroidTestCase {
         assertTrue(config.isJoinExistingGroup());
     }
 
-    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
             codeName = "VanillaIceCream")
     public void testWifiP2pConfigBuilderWithVendorData() {

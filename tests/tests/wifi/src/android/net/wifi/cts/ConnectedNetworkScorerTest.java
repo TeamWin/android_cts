@@ -380,7 +380,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                             } catch (NoSuchElementException e) {
                                 // pass - Device does not support the field.
                             }
-                            if (sFeatureFlags.addChannelStatsPerLink()) {
+                            if (sFeatureFlags.androidVWifiApi()) {
                                 assertThat(
                                         statsEntry.getTotalCcaBusyFreqTimeMillis(link)).isAtLeast(
                                         0L);
