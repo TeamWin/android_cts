@@ -2805,8 +2805,6 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                                 " Preview size is " + previewSize + ", repeating is " + repeating);
                     }
                     requestBuilder.set(CaptureRequest.SCALER_CROP_REGION, cropRegions[i]);
-                    requestBuilder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                            CameraMetadata.CONTROL_VIDEO_STABILIZATION_MODE_OFF);
                     requests[i] = requestBuilder.build();
                     if (VERBOSE) {
                         Log.v(TAG, "submit crop region " + cropRegions[i]);
@@ -2841,46 +2839,50 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                         }
                     }
 
-                    /*
-                     * Validate resulting crop regions
-                     */
-                    if (previousCrop != null) {
-                        Rect currentCrop = cropRegion;
-                        mCollector.expectTrue(String.format(
-                                "Crop region should shrink or stay the same " +
-                                        "(previous = %s, current = %s)",
-                                        previousCrop, currentCrop),
-                                previousCrop.equals(currentCrop) ||
-                                    (previousCrop.width() > currentCrop.width() &&
-                                     previousCrop.height() > currentCrop.height()));
-                    }
+                    if (CameraTestUtils.isStabilizationOff(requests[i])) {
+                        /*
+                         * Validate resulting crop regions
+                         */
+                        if (previousCrop != null) {
+                            Rect currentCrop = cropRegion;
+                            mCollector.expectTrue(String.format(
+                                    "Crop region should shrink or stay the same "
+                                            + "(previous = %s, current = %s)",
+                                            previousCrop, currentCrop),
+                                    previousCrop.equals(currentCrop)
+                                        || (previousCrop.width() > currentCrop.width()
+                                         && previousCrop.height() > currentCrop.height()));
+                        }
 
-                    if (mStaticInfo.isHardwareLevelAtLeastLimited()) {
-                        mCollector.expectRectsAreSimilar(
-                                "Request and result crop region should be similar",
-                                cropRegions[i], cropRegion, CROP_REGION_ERROR_PERCENT_DELTA);
-                    }
+                        if (mStaticInfo.isHardwareLevelAtLeastLimited()) {
+                            mCollector.expectRectsAreSimilar(
+                                    "Request and result crop region should be similar",
+                                    cropRegions[i], cropRegion, CROP_REGION_ERROR_PERCENT_DELTA);
+                        }
 
-                    if (croppingType == SCALER_CROPPING_TYPE_CENTER_ONLY) {
-                        mCollector.expectRectCentered(
-                                "Result crop region should be centered inside the active array",
-                                new Size(activeArraySize.width(), activeArraySize.height()),
-                                cropRegion, CROP_REGION_ERROR_PERCENT_CENTERED);
-                    }
+                        if (croppingType == SCALER_CROPPING_TYPE_CENTER_ONLY) {
+                            mCollector.expectRectCentered(
+                                    "Result crop region should be centered inside the active array",
+                                    new Size(activeArraySize.width(), activeArraySize.height()),
+                                    cropRegion, CROP_REGION_ERROR_PERCENT_CENTERED);
+                        }
 
-                    /*
-                     * Validate resulting metering regions
-                     */
+                        /*
+                         * Validate resulting metering regions
+                         */
 
-                    // Use the actual reported crop region to calculate the resulting metering region
-                    expectRegions[i] = getExpectedOutputRegion(
-                            /*requestRegion*/meteringRect,
-                            /*cropRect*/     cropRegion);
+                        // Use the actual reported crop region to calculate the resulting
+                        // metering region
+                        expectRegions[i] = getExpectedOutputRegion(
+                                /*requestRegion*/meteringRect,
+                                /*cropRect*/     cropRegion);
 
-                    // Verify Output 3A region is intersection of input 3A region and crop region
-                    for (int algo = 0; algo < NUM_ALGORITHMS; algo++) {
-                        validate3aRegion(result, partialResults, algo, expectRegions[i],
-                                false/*scaleByZoomRatio*/, mStaticInfo);
+                        // Verify Output 3A region is intersection of input 3A region and
+                        // crop region
+                        for (int algo = 0; algo < NUM_ALGORITHMS; algo++) {
+                            validate3aRegion(result, partialResults, algo, expectRegions[i],
+                                    false/*scaleByZoomRatio*/, mStaticInfo);
+                        }
                     }
 
                     previousCrop = cropRegion;
@@ -2953,8 +2955,6 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
             }
             requestBuilder.set(CaptureRequest.CONTROL_ZOOM_RATIO, zoomFactor);
             requestBuilder.set(CaptureRequest.SCALER_CROP_REGION, defaultCropRegion);
-            requestBuilder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                    CameraMetadata.CONTROL_VIDEO_STABILIZATION_MODE_OFF);
             CaptureRequest request = requestBuilder.build();
             for (int j = 0; j < captureSubmitRepeat; ++j) {
                 mSession.capture(request, listener, mHandler);
@@ -2995,40 +2995,42 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                     Math.abs(previousRatio - resultZoomRatio) < ZOOM_ERROR_MARGIN ||
                         (previousRatio < resultZoomRatio));
 
-            mCollector.expectTrue(String.format(
-                    "Request and result zoom ratio should be similar " +
-                    "(requested = %f, result = %f", zoomFactor, resultZoomRatio),
-                    Math.abs(zoomFactor - resultZoomRatio)/zoomFactor <= ZOOM_ERROR_MARGIN);
+            if (CameraTestUtils.isStabilizationOff(request)) {
+                mCollector.expectTrue(String.format(
+                        "Request and result zoom ratio should be similar "
+                        + "(requested = %f, result = %f", zoomFactor, resultZoomRatio),
+                        Math.abs(zoomFactor - resultZoomRatio) / zoomFactor <= ZOOM_ERROR_MARGIN);
 
-            //In case zoom ratio is converted to crop region at HAL, due to error magnification
-            //when converting to post-zoom crop region, scale the error threshold for crop region
-            //check.
-            float errorMultiplier = Math.max(1.0f, zoomFactor);
-            if (mStaticInfo.isHardwareLevelAtLeastLimited()) {
-                mCollector.expectRectsAreSimilar(
-                        "Request and result crop region should be similar",
-                        defaultCropRegion, cropRegion,
-                        CROP_REGION_ERROR_PERCENT_DELTA * errorMultiplier);
-            }
+                //In case zoom ratio is converted to crop region at HAL, due to error magnification
+                //when converting to post-zoom crop region, scale the error threshold for crop
+                //region check.
+                float errorMultiplier = Math.max(1.0f, zoomFactor);
+                if (mStaticInfo.isHardwareLevelAtLeastLimited()) {
+                    mCollector.expectRectsAreSimilar(
+                            "Request and result crop region should be similar",
+                            defaultCropRegion, cropRegion,
+                            CROP_REGION_ERROR_PERCENT_DELTA * errorMultiplier);
+                }
 
-            mCollector.expectRectCentered(
-                    "Result crop region should be centered inside the active array",
-                    new Size(activeArraySize.width(), activeArraySize.height()),
-                    cropRegion, CROP_REGION_ERROR_PERCENT_CENTERED * errorMultiplier);
+                mCollector.expectRectCentered(
+                        "Result crop region should be centered inside the active array",
+                        new Size(activeArraySize.width(), activeArraySize.height()),
+                        cropRegion, CROP_REGION_ERROR_PERCENT_CENTERED * errorMultiplier);
 
-            /*
-             * Validate resulting metering regions
-             */
-            // Use the actual reported crop region to calculate the resulting metering region
-            expectRegions[i] = getExpectedOutputRegion(
-                    /*requestRegion*/defaultMeteringRect,
-                    /*cropRect*/     cropRegion);
+                /*
+                 * Validate resulting metering regions
+                 */
+                // Use the actual reported crop region to calculate the resulting metering region
+                expectRegions[i] = getExpectedOutputRegion(
+                        /*requestRegion*/defaultMeteringRect,
+                        /*cropRect*/     cropRegion);
 
-            // Verify Output 3A region is intersection of input 3A region and crop region
-            boolean scaleByZoomRatio = zoomFactor > 1.0f;
-            for (int algo = 0; algo < NUM_ALGORITHMS; algo++) {
-                validate3aRegion(result, partialResults, algo, expectRegions[i], scaleByZoomRatio,
-                        mStaticInfo);
+                // Verify Output 3A region is intersection of input 3A region and crop region
+                boolean scaleByZoomRatio = zoomFactor > 1.0f;
+                for (int algo = 0; algo < NUM_ALGORITHMS; algo++) {
+                    validate3aRegion(result, partialResults, algo, expectRegions[i],
+                            scaleByZoomRatio, mStaticInfo);
+                }
             }
 
             previousRatio = resultZoomRatio;
@@ -3198,8 +3200,6 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         Size maxPreviewSize = mOrderedPreviewSizes.get(0);
         CaptureRequest.Builder requestBuilder =
                 mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-        requestBuilder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                CameraMetadata.CONTROL_VIDEO_STABILIZATION_MODE_OFF);
 
         for (Capability cap : extendedSceneModeCaps) {
             int mode = cap.getMode();
@@ -3222,8 +3222,10 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 verifyCaptureResultForKey(CaptureResult.CONTROL_EXTENDED_SCENE_MODE,
                         mode, listener, NUM_FRAMES_VERIFIED);
                 float zoomRatioDelta = ZOOM_RATIO_ERROR_PERCENT_DELTA * ratio;
-                verifyCaptureResultForKey(CaptureResult.CONTROL_ZOOM_RATIO,
-                        ratio, listener, NUM_FRAMES_VERIFIED, zoomRatioDelta);
+                if (CameraTestUtils.isStabilizationOff(requestBuilder.build())) {
+                    verifyCaptureResultForKey(CaptureResult.CONTROL_ZOOM_RATIO,
+                            ratio, listener, NUM_FRAMES_VERIFIED, zoomRatioDelta);
+                }
             }
         }
     }
