@@ -18,7 +18,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="android.icu.cts">
 
-    <application>
+    <!-- b/323694623 RBBIMonkeyTest needs a larger heap. -->
+    <application android:largeHeap="true">
         <uses-library android:name="android.test.runner" />
     </application>
 
