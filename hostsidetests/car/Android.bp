@@ -51,6 +51,7 @@ java_test_host {
         "flag-junit-host",
     ],
     data: [
+        ":CtsStatsdAtomApp",
         ":CtsCarApp",
         ":CtsCarWatchdogSharedApp",
         ":CtsCarWatchdogSecondSharedApp",
