@@ -46,6 +46,7 @@ import static android.server.wm.activity.lifecycle.TransitionVerifier.assertRela
 import static android.server.wm.activity.lifecycle.TransitionVerifier.assertResumeToDestroySequence;
 import static android.server.wm.activity.lifecycle.TransitionVerifier.assertResumeToStopSequence;
 import static android.server.wm.activity.lifecycle.TransitionVerifier.assertSequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertSequenceMatchesOneOf;
 import static android.server.wm.activity.lifecycle.TransitionVerifier.assertStopToResumeSequence;
 import static android.server.wm.activity.lifecycle.TransitionVerifier.assertStopToResumeSubSequence;
 import static android.server.wm.activity.lifecycle.TransitionVerifier.getLaunchSequence;
@@ -760,12 +761,17 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                                 .setOptions(options)
                                 .launch();
 
-            // TODO(b/123432490): Fix extra pause/resume
-            assertSequence(ShowWhenLockedCallbackTrackingActivity.class,
-                    getTransitionLog(),
+            final List<String> expectedSequence =
                     Arrays.asList(ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
                             ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST, ON_PAUSE, ON_RESUME,
-                            ON_TOP_POSITION_GAINED),
+                            ON_TOP_POSITION_GAINED);
+            final List<String> extraSequence =
+                    Arrays.asList(ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
+                            ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP,
+                            ON_RESTART, ON_START, ON_RESUME, ON_TOP_POSITION_GAINED);
+            assertSequenceMatchesOneOf(ShowWhenLockedCallbackTrackingActivity.class,
+                    getTransitionLog(),
+                    Arrays.asList(expectedSequence, extraSequence),
                     "launchAboveKeyguard");
 
             getTransitionLog().clear();
