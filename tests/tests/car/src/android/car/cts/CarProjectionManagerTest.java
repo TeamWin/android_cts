@@ -17,6 +17,7 @@
 package android.car.cts;
 
 import static android.bluetooth.BluetoothProfile.A2DP_SINK;
+import static android.car.cts.utils.ShellPermissionUtils.runWithShellPermissionIdentity;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -260,11 +261,11 @@ public final class CarProjectionManagerTest extends AbstractCarTestCase {
 
     @After
     public void tearDown() {
-        mCarProjectionManager.releaseBluetoothProfileInhibit(mBluetoothDevice, A2DP_SINK);
+        runWithShellPermissionIdentity(() ->
+                mCarProjectionManager.releaseBluetoothProfileInhibit(mBluetoothDevice, A2DP_SINK));
         waitForAdapterOff();
         mContext.unregisterReceiver(mBluetoothAdapterReceiver);
     }
-
 
     @ApiTest(apis = {
             "android.car.CarProjectionManager#isBluetoothProfileInhibited"})
@@ -274,8 +275,9 @@ public final class CarProjectionManagerTest extends AbstractCarTestCase {
         assertNotNull(mBluetoothAdapter);
         waitForProfileConnected();
 
-        assertThat(mCarProjectionManager.isBluetoothProfileInhibited(mBluetoothDevice,
-                A2DP_SINK)).isFalse();
+        runWithShellPermissionIdentity(() ->
+                assertThat(mCarProjectionManager.isBluetoothProfileInhibited(mBluetoothDevice,
+                        A2DP_SINK)).isFalse());
     }
 
     @ApiTest(apis = {
@@ -286,13 +288,15 @@ public final class CarProjectionManagerTest extends AbstractCarTestCase {
     public void testIsBluetoothProfileInhibited_inhibitRequested_isInhibited() {
         assertNotNull(mBluetoothAdapter);
         waitForProfileConnected();
-        assertThat(mCarProjectionManager.requestBluetoothProfileInhibit(mBluetoothDevice,
-                A2DP_SINK)).isTrue();
 
-        assertThat(mCarProjectionManager.isBluetoothProfileInhibited(mBluetoothDevice,
-                A2DP_SINK)).isTrue();
+        runWithShellPermissionIdentity(() -> {
+            assertThat(mCarProjectionManager.requestBluetoothProfileInhibit(mBluetoothDevice,
+                    A2DP_SINK)).isTrue();
+
+            assertThat(mCarProjectionManager.isBluetoothProfileInhibited(mBluetoothDevice,
+                    A2DP_SINK)).isTrue();
+        });
     }
-
 
     @ApiTest(apis = {
             "android.car.CarProjectionManager#requestBluetoothProfileInhibit",
@@ -303,12 +307,14 @@ public final class CarProjectionManagerTest extends AbstractCarTestCase {
     public void testIsBluetoothProfileInhibited_inhibitReleased_isNotInhibited() {
         assertNotNull(mBluetoothAdapter);
         waitForProfileConnected();
-        assertThat(mCarProjectionManager.requestBluetoothProfileInhibit(mBluetoothDevice,
-                A2DP_SINK)).isTrue();
-        assertThat(mCarProjectionManager.releaseBluetoothProfileInhibit(mBluetoothDevice,
-                A2DP_SINK)).isTrue();
+        runWithShellPermissionIdentity(() -> {
+            assertThat(mCarProjectionManager.requestBluetoothProfileInhibit(mBluetoothDevice,
+                    A2DP_SINK)).isTrue();
+            assertThat(mCarProjectionManager.releaseBluetoothProfileInhibit(mBluetoothDevice,
+                    A2DP_SINK)).isTrue();
 
-        assertThat(mCarProjectionManager.isBluetoothProfileInhibited(mBluetoothDevice,
-                A2DP_SINK)).isFalse();
+            assertThat(mCarProjectionManager.isBluetoothProfileInhibited(mBluetoothDevice,
+                    A2DP_SINK)).isFalse();
+        });
     }
 }
