@@ -25,12 +25,16 @@ import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_UNSPECIFIED
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.FEATURE_SECURE_LOCK_SCREEN;
 
+import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeFalse;
 import static org.testng.Assert.assertThrows;
 
+import android.app.admin.DevicePolicyManager;
 import android.content.Intent;
+import android.stats.devicepolicy.EventId;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -40,6 +44,7 @@ import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.PasswordComplexity;
+import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.utils.Assert;
@@ -569,4 +574,29 @@ public final class PasswordComplexityTest { // Skipped checking on headless beca
                 () -> TestApis.users().instrumented().setPassword(password));
         assertThat(ex).hasMessageThat().contains("doesn't satisfy admin policies");
     }
+
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = PasswordComplexity.class)
+    public void setRequiredPasswordComplexity_isLogged() {
+        int initialPasswordComplexity =
+                sDeviceState.dpc().devicePolicyManager().getRequiredPasswordComplexity();
+
+        try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create()) {
+
+            sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
+                    DevicePolicyManager.PASSWORD_COMPLEXITY_HIGH);
+
+            assertThat(
+                    metrics.query()
+                            .whereType().isEqualTo(EventId.SET_PASSWORD_COMPLEXITY_VALUE)
+                            .whereAdminPackageName().isEqualTo(sDeviceState.dpc().packageName())
+                            .whereInteger().isEqualTo(DevicePolicyManager.PASSWORD_COMPLEXITY_HIGH)
+                            .whereBoolean().isEqualTo(sDeviceState.dpc().isParentInstance())
+            ).wasLogged();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
+                    initialPasswordComplexity);
+        }
+    }
+
 }

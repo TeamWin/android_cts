@@ -73,6 +73,7 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.SoftApCapability;
 import android.net.wifi.SoftApConfiguration;
 import android.net.wifi.SoftApInfo;
+import android.net.wifi.SoftApState;
 import android.net.wifi.UriParserResults;
 import android.net.wifi.WifiAvailableChannel;
 import android.net.wifi.WifiClient;
@@ -94,9 +95,9 @@ import android.net.wifi.hotspot2.PasspointConfiguration;
 import android.net.wifi.hotspot2.ProvisioningCallback;
 import android.net.wifi.hotspot2.pps.Credential;
 import android.net.wifi.hotspot2.pps.HomeSp;
-import android.net.wifi.twt.TwtCallback;
 import android.net.wifi.twt.TwtRequest;
 import android.net.wifi.twt.TwtSession;
+import android.net.wifi.twt.TwtSessionCallback;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -871,7 +872,8 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     }
 
     public class TestSoftApCallback implements WifiManager.SoftApCallback {
-        Object softApLock;
+        final Object mSoftApLock;
+        SoftApState mCurrentSoftApState;
         int currentState;
         int currentFailureReason;
         List<SoftApInfo> apInfoList = new ArrayList<>();
@@ -882,6 +884,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
         MacAddress lastBlockedClientMacAddress;
         int lastBlockedClientReason;
         boolean onStateChangedCalled = false;
+        boolean mOnSoftApStateChangedCalled = false;
         boolean onSoftApCapabilityChangedCalled = false;
         boolean onConnectedClientCalled = false;
         boolean onConnectedClientChangedWithInfoCalled = false;
@@ -890,102 +893,120 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
         int onSoftapInfoChangedWithListCalledCount = 0;
 
         TestSoftApCallback(Object lock) {
-            softApLock = lock;
+            mSoftApLock = lock;
         }
 
         public boolean getOnStateChangedCalled() {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 return onStateChangedCalled;
             }
         }
 
+        /**
+         * Returns {@code true} if #onStateChanged(SoftApstate) was called, else {@code false}.
+         */
+        public boolean getOnSoftApStateChangedCalled() {
+            synchronized (mSoftApLock) {
+                return mOnSoftApStateChangedCalled;
+            }
+        }
+
         public int getOnSoftapInfoChangedCalledCount() {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 return onSoftapInfoChangedCalledCount;
             }
         }
 
         public int getOnSoftApInfoChangedWithListCalledCount() {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 return onSoftapInfoChangedWithListCalledCount;
             }
         }
 
         public boolean getOnSoftApCapabilityChangedCalled() {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 return onSoftApCapabilityChangedCalled;
             }
         }
 
         public boolean getOnConnectedClientChangedWithInfoCalled() {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 return onConnectedClientChangedWithInfoCalled;
             }
         }
 
         public boolean getOnConnectedClientCalled() {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 return onConnectedClientCalled;
             }
         }
 
         public boolean getOnBlockedClientConnectingCalled() {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 return onBlockedClientConnectingCalled;
             }
         }
 
+        /**
+         * Returns the latest SoftApState passed into #onStateChanged(SoftApState).
+         */
+        public SoftApState getCurrentSoftApState() {
+            synchronized (mSoftApLock) {
+                return mCurrentSoftApState;
+            }
+        }
+
         public int getCurrentState() {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 return currentState;
             }
         }
 
         public int getCurrentStateFailureReason() {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 return currentFailureReason;
             }
         }
 
         public List<WifiClient> getCurrentClientList() {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 return new ArrayList<>(currentClientList);
             }
         }
 
         public SoftApInfo getCurrentSoftApInfo() {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 return apInfoOnSingleApMode;
             }
         }
 
         public List<SoftApInfo> getCurrentSoftApInfoList() {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 return new ArrayList<>(apInfoList);
             }
         }
 
         public SoftApCapability getCurrentSoftApCapability() {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 return currentSoftApCapability;
             }
         }
 
         public MacAddress getLastBlockedClientMacAddress() {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 return lastBlockedClientMacAddress;
             }
         }
 
         public int getLastBlockedClientReason() {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 return lastBlockedClientReason;
             }
         }
 
         @Override
         public void onStateChanged(int state, int failureReason) {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 currentState = state;
                 currentFailureReason = failureReason;
                 onStateChangedCalled = true;
@@ -993,8 +1014,16 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
         }
 
         @Override
+        public void onStateChanged(SoftApState state) {
+            synchronized (mSoftApLock) {
+                mCurrentSoftApState = state;
+                mOnSoftApStateChangedCalled = true;
+            }
+        }
+
+        @Override
         public void onConnectedClientsChanged(List<WifiClient> clients) {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 currentClientList = new ArrayList<>(clients);
                 onConnectedClientCalled = true;
             }
@@ -1002,7 +1031,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
 
         @Override
         public void onConnectedClientsChanged(SoftApInfo info, List<WifiClient> clients) {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 apInfoClients.put(info, clients);
                 onConnectedClientChangedWithInfoCalled = true;
             }
@@ -1010,7 +1039,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
 
         @Override
         public void onInfoChanged(List<SoftApInfo> infoList) {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 apInfoList = new ArrayList<>(infoList);
                 onSoftapInfoChangedWithListCalledCount++;
             }
@@ -1018,7 +1047,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
 
         @Override
         public void onInfoChanged(SoftApInfo softApInfo) {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 apInfoOnSingleApMode = softApInfo;
                 onSoftapInfoChangedCalledCount++;
             }
@@ -1026,7 +1055,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
 
         @Override
         public void onCapabilityChanged(SoftApCapability softApCapability) {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 currentSoftApCapability = softApCapability;
                 onSoftApCapabilityChangedCalled = true;
             }
@@ -1034,7 +1063,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
 
         @Override
         public void onBlockedClientConnecting(WifiClient client, int blockedReason) {
-            synchronized(softApLock) {
+            synchronized (mSoftApLock) {
                 lastBlockedClientMacAddress = client.getMacAddress();
                 lastBlockedClientReason = blockedReason;
                 onBlockedClientConnectingCalled = true;
@@ -3081,6 +3110,67 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
                     sTetheringManager.stopTethering(ConnectivityManager.TETHERING_WIFI);
                     verifyBridgedModeSoftApCallback(executor, callback,
                             shouldFallbackToSingleAp, false /* disabled */);
+                }
+            } finally {
+                sWifiManager.unregisterSoftApCallback(callback);
+                uiAutomation.dropShellPermissionIdentity();
+            }
+        }, false /* run with disabled */);
+    }
+
+    /**
+     * Test startTetheringRequest() starts a soft AP and relays the TetheringRequest object back via
+     * SoftApCallback.
+     * @throws Exception
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @Test
+    public void testStartTetheredHotspotWithTetheringRequest() throws Exception {
+        // check that softap  is supported by the device
+        if (!sWifiManager.isPortableHotspotSupported()) {
+            return;
+        }
+        runWithScanning(() -> {
+            UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation();
+            TestExecutor executor = new TestExecutor();
+            TestSoftApCallback callback = new TestSoftApCallback(mLock);
+            try {
+                uiAutomation.adoptShellPermissionIdentity();
+
+                // start tethering which used to verify startTetheredHotspot
+                TetheringManager.TetheringRequest request =
+                        new TetheringManager.TetheringRequest.Builder(
+                                TetheringManager.TETHERING_WIFI).build();
+                sWifiManager.startTetheredHotspotRequest(request);
+                PollingCheck.check("startTetheredHotspot turn on failed!", TEST_WAIT_DURATION_MS,
+                        () -> {
+                            executor.runAll();
+                            return callback.getOnSoftApStateChangedCalled()
+                                    && callback.getCurrentSoftApState().getState()
+                                    == WifiManager.WIFI_AP_STATE_ENABLED;
+                        });
+                if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.VANILLA_ICE_CREAM)) {
+                    assertThat(callback.getCurrentSoftApState().getTetheringRequest())
+                            .isEqualTo(request);
+                } else {
+                    assertThat(callback.getCurrentSoftApState().getTetheringRequest()).isNull();
+                }
+
+                // stop tethering which used to verify stopSoftAp
+                sTetheringManager.stopTethering(ConnectivityManager.TETHERING_WIFI);
+                PollingCheck.check("startTetheredHotspot turn on failed!", TEST_WAIT_DURATION_MS,
+                        () -> {
+                            executor.runAll();
+                            return callback.getOnSoftApStateChangedCalled()
+                                    && callback.getCurrentSoftApState().getState()
+                                    == WifiManager.WIFI_AP_STATE_DISABLED;
+                        });
+                if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.VANILLA_ICE_CREAM)) {
+                    assertThat(callback.getCurrentSoftApState().getTetheringRequest())
+                            .isEqualTo(request);
+                } else {
+                    assertThat(callback.getCurrentSoftApState().getTetheringRequest()).isNull();
                 }
             } finally {
                 sWifiManager.unregisterSoftApCallback(callback);
@@ -7064,7 +7154,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
                 }
             }
         };
-        class TestTwtCallback implements TwtCallback {
+        class TestTwtSessionCallback implements TwtSessionCallback {
             final AtomicReference<TwtSession> mTwtSession = new AtomicReference<>();
             final AtomicInteger mTwtTeardownReasonCode = new AtomicInteger(-1);
             final AtomicInteger mTwtErrorCode = new AtomicInteger(-1);
@@ -7092,7 +7182,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
                 }
             }
         }
-        TestTwtCallback testTwtCallback = new TestTwtCallback();
+        TestTwtSessionCallback testTwtSessionCallback = new TestTwtSessionCallback();
         TestActionListener actionListener = new TestActionListener(mLock);
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
 
@@ -7140,23 +7230,24 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
                                     WifiManager.TWT_CAPABILITIES_KEY_LONG_MIN_WAKE_INTERVAL_MICROS),
                             twtCapabilities.get().getLong(
                                     WifiManager.TWT_CAPABILITIES_KEY_LONG_MAX_WAKE_INTERVAL_MICROS)).build(),
-                    mExecutor, testTwtCallback);
+                    mExecutor, testTwtSessionCallback);
             synchronized (mLock) {
                 now = System.currentTimeMillis();
                 deadline = now + TEST_WAIT_DURATION_MS;
-                while (testTwtCallback.mTwtSession.get() == null && now < deadline) {
+                while (testTwtSessionCallback.mTwtSession.get() == null && now < deadline) {
                     mLock.wait(deadline - now);
                     now = System.currentTimeMillis();
                 }
             }
-            assertNotNull("setupTwtSession() timed out !", testTwtCallback.mTwtSession.get());
-            assertTrue(testTwtCallback.mTwtSession.get().getWakeDurationMicros() > 0);
-            assertTrue(testTwtCallback.mTwtSession.get().getWakeIntervalMicros() > 0);
-            assertTrue(testTwtCallback.mTwtSession.get().getMloLinkId()
+            assertNotNull("setupTwtSession() timed out !",
+                    testTwtSessionCallback.mTwtSession.get());
+            assertTrue(testTwtSessionCallback.mTwtSession.get().getWakeDurationMicros() > 0);
+            assertTrue(testTwtSessionCallback.mTwtSession.get().getWakeIntervalMicros() > 0);
+            assertTrue(testTwtSessionCallback.mTwtSession.get().getMloLinkId()
                     == MloLink.INVALID_MLO_LINK_ID);
 
             // Verify TWT session get stats
-            testTwtCallback.mTwtSession.get().getStats(mExecutor, twtStatsCallback);
+            testTwtSessionCallback.mTwtSession.get().getStats(mExecutor, twtStatsCallback);
             synchronized (mLock) {
                 now = System.currentTimeMillis();
                 deadline = now + TEST_WAIT_DURATION_MS;
@@ -7179,25 +7270,141 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
                             >= 0);
             assertTrue(twtStats.get().getInt(TwtSession.TWT_STATS_KEY_INT_EOSP_COUNT) >= 0);
 
-            // Verify TWT session teardown
-            testTwtCallback.mTwtSession.get().teardown();
+            // Verify TWT session close
+            testTwtSessionCallback.mTwtSession.get().close();
             synchronized (mLock) {
                 now = System.currentTimeMillis();
                 deadline = now + TEST_WAIT_DURATION_MS;
-                while (testTwtCallback.mTwtTeardownReasonCode.get() == -1 && now < deadline) {
+                while (testTwtSessionCallback.mTwtTeardownReasonCode.get() == -1
+                        && now < deadline) {
                     mLock.wait(deadline - now);
                     now = System.currentTimeMillis();
                 }
             }
             assertNotEquals("TwtSession#teardown() timed out !", -1,
-                    testTwtCallback.mTwtTeardownReasonCode.get());
-            assertTrue(testTwtCallback.mTwtTeardownReasonCode.get()
-                    == TwtCallback.TWT_REASON_CODE_LOCALLY_REQUESTED);
+                    testTwtSessionCallback.mTwtTeardownReasonCode.get());
+            assertTrue(testTwtSessionCallback.mTwtTeardownReasonCode.get()
+                    == TwtSessionCallback.TWT_REASON_CODE_LOCALLY_REQUESTED);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
     }
 
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM, codeName =
+            "VanillaIceCream")
+    @Test
+    public void testTwtSessionAutoCloseable() throws Exception {
+        AtomicReference<Bundle> twtCapabilities = new AtomicReference<>();
+        long now, deadline;
+        Consumer<Bundle> twtCapabilityCallback = new Consumer<Bundle>() {
+            @Override
+            public void accept(Bundle capabilities) {
+                synchronized (mLock) {
+                    twtCapabilities.set(capabilities);
+                    mLock.notify();
+                }
+            }
+        };
+        class TestTwtSessionCallback implements TwtSessionCallback {
+            final AtomicReference<TwtSession> mTwtSession = new AtomicReference<>();
+            final AtomicInteger mTwtTeardownReasonCode = new AtomicInteger(-1);
+            final AtomicInteger mTwtErrorCode = new AtomicInteger(-1);
+
+            @Override
+            public void onFailure(int errorCode) {
+                synchronized (mLock) {
+                    mTwtErrorCode.set(errorCode);
+                    mLock.notify();
+                }
+            }
+
+            @Override
+            public void onTeardown(int reasonCode) {
+                synchronized (mLock) {
+                    mTwtTeardownReasonCode.set(reasonCode);
+                    mLock.notify();
+                }
+            }
+
+            @Override
+            public void onCreate(TwtSession twtSession) {
+                synchronized (mLock) {
+                    mTwtSession.set(twtSession);
+                }
+            }
+        }
+        TestTwtSessionCallback testTwtSessionCallback = new TestTwtSessionCallback();
+        TestActionListener actionListener = new TestActionListener(mLock);
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            sWifiManager.getTwtCapabilities(mExecutor, twtCapabilityCallback);
+            synchronized (mLock) {
+                now = System.currentTimeMillis();
+                deadline = now + TEST_WAIT_DURATION_MS;
+                while (twtCapabilities.get() == null && now < deadline) {
+                    mLock.wait(deadline - now);
+                    now = System.currentTimeMillis();
+                }
+            }
+            assertNotNull("getTwtCapabilities() timed out !", twtCapabilities.get());
+            // Assume device is a TWT requester
+            assumeTrue(twtCapabilities.get().getBoolean(
+                    WifiManager.TWT_CAPABILITIES_KEY_BOOLEAN_TWT_REQUESTER));
+
+            // Connect to an available TWT responder network
+            List<WifiConfiguration> savedNetworks = sWifiManager.getConfiguredNetworks();
+            WifiConfiguration twtNetwork = TestHelper.findFirstAvailableSavedNetwork(sWifiManager,
+                    savedNetworks, TestHelper.AP_CAPABILITY_BIT_TWT_RESPONDER);
+            assumeTrue("Unable to locate TWT capable networks in range.\n", twtNetwork != null);
+            sWifiManager.disconnect();
+            waitForDisconnection();
+            sWifiManager.connect(twtNetwork.networkId, actionListener);
+            waitForConnection();
+
+            // Verify TWT session setup
+            sWifiManager.setupTwtSession(new TwtRequest.Builder(twtCapabilities.get().getInt(
+                            WifiManager.TWT_CAPABILITIES_KEY_INT_MIN_WAKE_DURATION_MICROS),
+                            twtCapabilities.get().getInt(
+                                    WifiManager.TWT_CAPABILITIES_KEY_INT_MAX_WAKE_DURATION_MICROS),
+                            twtCapabilities.get().getLong(
+                                    WifiManager.TWT_CAPABILITIES_KEY_LONG_MIN_WAKE_INTERVAL_MICROS),
+                            twtCapabilities.get().getLong(
+                                    WifiManager.TWT_CAPABILITIES_KEY_LONG_MAX_WAKE_INTERVAL_MICROS)).build(),
+                    mExecutor, testTwtSessionCallback);
+            synchronized (mLock) {
+                now = System.currentTimeMillis();
+                deadline = now + TEST_WAIT_DURATION_MS;
+                while (testTwtSessionCallback.mTwtSession.get() == null && now < deadline) {
+                    mLock.wait(deadline - now);
+                    now = System.currentTimeMillis();
+                }
+            }
+            assertNotNull("setupTwtSession() timed out !",
+                    testTwtSessionCallback.mTwtSession.get());
+
+        } finally {
+            // Test Twt Session, if setup, closes automatically
+            if (testTwtSessionCallback.mTwtSession.get() != null) {
+                synchronized (mLock) {
+                    now = System.currentTimeMillis();
+                    deadline = now + TEST_WAIT_DURATION_MS;
+                    while (testTwtSessionCallback.mTwtTeardownReasonCode.get() == -1
+                            && now < deadline) {
+                        mLock.wait(deadline - now);
+                        now = System.currentTimeMillis();
+                    }
+                }
+                assertNotEquals("TwtSession auto close timed out !", -1,
+                        testTwtSessionCallback.mTwtTeardownReasonCode.get());
+                assertEquals(testTwtSessionCallback.mTwtTeardownReasonCode.get(),
+                        TwtSessionCallback.TWT_REASON_CODE_LOCALLY_REQUESTED);
+            }
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
     /**
      * Tests {@link WifiManager#isD2dSupportedWhenInfraStaDisabled()},
      * {@link WifiManager#setD2dAllowedWhenInfraStaDisabled()} and

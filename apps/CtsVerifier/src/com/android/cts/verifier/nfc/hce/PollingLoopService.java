@@ -18,7 +18,7 @@ package com.android.cts.verifier.nfc.hce;
 
 import android.content.ComponentName;
 import android.content.Intent;
-import android.os.Bundle;
+import android.nfc.cardemulation.PollingFrame;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,12 +53,12 @@ public class PollingLoopService extends HceService {
     }
 
     @Override
-    public void processPollingFrames(List<Bundle> frames) {
+    public void processPollingFrames(List<PollingFrame> frames) {
         Intent pollingFrameIntent = new Intent(POLLING_FRAME_ACTION);
         pollingFrameIntent.putExtra(HceUtils.EXTRA_COMPONENT, getComponent());
         pollingFrameIntent.putExtra(HceUtils.EXTRA_DURATION,
                 System.currentTimeMillis() - mStartTime);
-        pollingFrameIntent.putExtra(POLLING_FRAME_EXTRA, new ArrayList<Bundle>(frames));
+        pollingFrameIntent.putExtra(POLLING_FRAME_EXTRA, new ArrayList<PollingFrame>(frames));
         sendBroadcast(pollingFrameIntent);
     }
 }

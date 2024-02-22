@@ -176,6 +176,7 @@ class IntentTest : PackageInstallerTestBase() {
 
     @Test
     @RequireAdbRoot
+    @Ignore("b/322830652: Test suite runs on non-rooted devices only.")
     fun disallowInstallApps_installFails() {
         try {
             TestApis.devicePolicy().userRestrictions().set(DISALLOW_INSTALL_APPS, true)

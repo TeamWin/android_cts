@@ -136,6 +136,12 @@ open class NotificationTemplateTestBase {
     protected fun NotificationHostActivity.requireViewWithText(text: String): TextView =
             findViewWithText(text) ?: throw RuntimeException("Unable to find view with text: $text")
 
+    protected fun NotificationHostActivity.requireViewWithTextContaining(
+        substring: String
+    ): TextView =
+        findViewWithTextContaining(substring)
+            ?: throw RuntimeException("Unable to find view with text containing: $substring")
+
     protected fun NotificationHostActivity.findViewWithText(text: String): TextView? {
         val views: MutableList<TextView> = ArrayList()
         collectViews(notificationRoot, TextView::class, views) { it.text?.toString() == text }
@@ -143,6 +149,20 @@ open class NotificationTemplateTestBase {
             0 -> return null
             1 -> return views[0]
             else -> throw RuntimeException("Found multiple views with text: $text")
+        }
+    }
+
+    protected fun NotificationHostActivity.findViewWithTextContaining(
+        substring: String
+    ): TextView? {
+        val views: MutableList<TextView> = ArrayList()
+        collectViews(notificationRoot, TextView::class, views) {
+            (it.text?.toString() ?: "").contains(substring)
+        }
+        when (views.size) {
+            0 -> return null
+            1 -> return views[0]
+            else -> throw RuntimeException("Found multiple views with text containing: $substring")
         }
     }
 

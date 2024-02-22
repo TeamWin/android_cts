@@ -1,6 +1,7 @@
 package android.nfc.cts;
 
 import android.content.Intent;
+import android.nfc.cardemulation.PollingFrame;
 import android.os.Bundle;
 import android.os.Looper;
 import android.platform.test.annotations.RequiresFlagsEnabled;
@@ -56,8 +57,9 @@ public class HostApduServiceTest {
     @Test
   @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP)
   public void testProcessPollingFrame() {
-        ArrayList<Bundle> frames = new ArrayList<Bundle>();
-        Bundle frame = new Bundle();
+        ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>();
+        PollingFrame frame =
+                new PollingFrame(PollingFrame.POLLING_LOOP_TYPE_A, new byte[0], 0, 0);
         frames.add(frame);
         service.processPollingFrames(frames);
     }

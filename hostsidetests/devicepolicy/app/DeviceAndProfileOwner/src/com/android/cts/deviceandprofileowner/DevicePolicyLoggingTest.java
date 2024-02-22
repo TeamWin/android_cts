@@ -21,8 +21,6 @@ import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_FEATURES_NO
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_FINGERPRINT;
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_SECURE_CAMERA;
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_TRUST_AGENTS;
-import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_HIGH;
-import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_UNSPECIFIED;
 import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT;
 import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_DENIED;
 import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED;
@@ -32,7 +30,6 @@ import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_PROMPT;
 import static android.provider.Settings.Secure.DEFAULT_INPUT_METHOD;
 import static android.provider.Settings.Secure.SKIP_FIRST_USE_HINTS;
 
-import android.app.admin.DevicePolicyManager;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.os.UserManager;
@@ -49,21 +46,6 @@ public class DevicePolicyLoggingTest extends BaseDeviceAdminTest {
 
     public static final String PACKAGE_NAME = "com.android.cts.permissionapp";
     public static final String PARAM_APP_TO_ENABLE = "app_to_enable";
-
-    public void testPasswordMethodsLogged() {
-        mDevicePolicyManager.setPasswordQuality(ADMIN_RECEIVER_COMPONENT,
-                DevicePolicyManager.PASSWORD_QUALITY_COMPLEX);
-        mDevicePolicyManager.setPasswordMinimumLength(ADMIN_RECEIVER_COMPONENT, 13);
-        mDevicePolicyManager.setPasswordMinimumNumeric(ADMIN_RECEIVER_COMPONENT, 14);
-        mDevicePolicyManager.setPasswordMinimumNonLetter(ADMIN_RECEIVER_COMPONENT, 15);
-        mDevicePolicyManager.setPasswordMinimumLetters(ADMIN_RECEIVER_COMPONENT, 16);
-        mDevicePolicyManager.setPasswordMinimumLowerCase(ADMIN_RECEIVER_COMPONENT, 17);
-        mDevicePolicyManager.setPasswordMinimumUpperCase(ADMIN_RECEIVER_COMPONENT, 18);
-        mDevicePolicyManager.setPasswordMinimumSymbols(ADMIN_RECEIVER_COMPONENT, 19);
-        mDevicePolicyManager.setPasswordQuality(ADMIN_RECEIVER_COMPONENT,
-                PASSWORD_QUALITY_UNSPECIFIED);
-        mDevicePolicyManager.setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_HIGH);
-    }
 
     public void testSetKeyguardDisabledFeaturesLogged() {
         mDevicePolicyManager.setKeyguardDisabledFeatures(

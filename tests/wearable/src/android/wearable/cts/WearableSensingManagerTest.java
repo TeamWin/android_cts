@@ -230,6 +230,33 @@ public class WearableSensingManagerTest {
     // CtsWearableSensingServiceDeviceTest
 
     @Test
+    @RequiresFlagsEnabled({
+            Flags.FLAG_ENABLE_DATA_REQUEST_OBSERVER_API,
+            Flags.FLAG_ENABLE_UNSUPPORTED_OPERATION_STATUS_CODE})
+    public void registerDataRequestObserver_defaultWssImpl_receivesUnsupportedOperationStatus()
+            throws Exception {
+        getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.MANAGE_WEARABLE_SENSING_SERVICE);
+        CtsWearableSensingService.configureMethodsToCallParentAndReturn();
+        AtomicInteger statusCodeRef = new AtomicInteger(WearableSensingManager.STATUS_UNKNOWN);
+        CountDownLatch statusLatch = new CountDownLatch(1);
+
+        mWearableSensingManager.registerDataRequestObserver(
+                PLACEHOLDER_DATA_TYPE,
+                mDataRequestObserverPendingIntent,
+                EXECUTOR,
+                (status) -> {
+                    statusCodeRef.set(status);
+                    statusLatch.countDown();
+                });
+
+        assertThat(statusLatch.await(3, SECONDS)).isTrue();
+        assertThat(statusCodeRef.get())
+                .isEqualTo(WearableSensingManager.STATUS_UNSUPPORTED_OPERATION);
+    }
+
+    @Test
     @RequiresFlagsEnabled(Flags.FLAG_ENABLE_DATA_REQUEST_OBSERVER_API)
     public void registerDataRequestObserver_withPermission_success() throws Exception {
         getInstrumentation()
@@ -313,6 +340,35 @@ public class WearableSensingManagerTest {
     }
 
     @Test
+    @RequiresFlagsEnabled({
+            Flags.FLAG_ENABLE_DATA_REQUEST_OBSERVER_API,
+            Flags.FLAG_ENABLE_UNSUPPORTED_OPERATION_STATUS_CODE})
+    public void unregisterDataRequestObserver_defaultWssImpl_receivesUnsupportedOperationStatus()
+            throws Exception {
+        getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.MANAGE_WEARABLE_SENSING_SERVICE);
+        CtsWearableSensingService.configureMethodsToCallParentAndReturn();
+        mWearableSensingManager.registerDataRequestObserver(
+                PLACEHOLDER_DATA_TYPE, mDataRequestObserverPendingIntent, EXECUTOR, (status) -> {});
+        AtomicInteger statusCodeRef = new AtomicInteger(WearableSensingManager.STATUS_UNKNOWN);
+        CountDownLatch statusLatch = new CountDownLatch(1);
+
+        mWearableSensingManager.unregisterDataRequestObserver(
+                PLACEHOLDER_DATA_TYPE,
+                mDataRequestObserverPendingIntent,
+                EXECUTOR,
+                (status) -> {
+                    statusCodeRef.set(status);
+                    statusLatch.countDown();
+                });
+
+        assertThat(statusLatch.await(3, SECONDS)).isTrue();
+        assertThat(statusCodeRef.get())
+                .isEqualTo(WearableSensingManager.STATUS_UNSUPPORTED_OPERATION);
+    }
+
+    @Test
     @RequiresFlagsEnabled(Flags.FLAG_ENABLE_DATA_REQUEST_OBSERVER_API)
     public void unregisterDataRequestObserver_withPermission_unregistersObserverFromWSS() {
         getInstrumentation()
@@ -382,6 +438,31 @@ public class WearableSensingManagerTest {
     // Tests for the other hotword APIs are put in
     // android.voiceinteraction.cts.HotwordDetectionServiceBasicTest so that we can test their
     // interactions with voice interaction components
+    @Test
+    @RequiresFlagsEnabled({
+            Flags.FLAG_ENABLE_HOTWORD_WEARABLE_SENSING_API,
+            Flags.FLAG_ENABLE_UNSUPPORTED_OPERATION_STATUS_CODE})
+    public void stopHotwordRecognition_defaultWssImpl_receivesUnsupportedOperationStatus()
+            throws Exception {
+        getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.MANAGE_WEARABLE_SENSING_SERVICE);
+        CtsWearableSensingService.configureMethodsToCallParentAndReturn();
+        AtomicInteger statusCodeRef = new AtomicInteger(WearableSensingManager.STATUS_UNKNOWN);
+        CountDownLatch statusLatch = new CountDownLatch(1);
+
+        mWearableSensingManager.stopHotwordRecognition(
+                EXECUTOR,
+                (status) -> {
+                    statusCodeRef.set(status);
+                    statusLatch.countDown();
+                });
+
+        assertThat(statusLatch.await(3, SECONDS)).isTrue();
+        assertThat(statusCodeRef.get())
+                .isEqualTo(WearableSensingManager.STATUS_UNSUPPORTED_OPERATION);
+    }
+
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_ENABLE_HOTWORD_WEARABLE_SENSING_API)
     public void stopHotwordRecognition_callsOnStopHotwordRecognitionInWearableSensingService() {

@@ -457,7 +457,7 @@ public class CameraExtensionCharacteristicsTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_CAMERA_EXTENSIONS_CHARACTERISTICS_GET)
-    public void testStreamConfigurationMap() throws Exception {
+    public void testGetUnsupportedCharacteristics() throws Exception {
         for (String id : mTestRule.getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
@@ -486,50 +486,16 @@ public class CameraExtensionCharacteristicsTest {
             for (Integer extension : supportedExtensions) {
                 int[] availableCapabilities =
                         chars.get(extension, CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
-                if (availableCapabilities == null) {
-                    continue;
-                }
-
-                for (int c : availableCapabilities) {
-                    assertFalse("Capabilitiy is not supported by extensions",
-                            unsupportedCapabilities.contains(c));
-                }
-
-                StreamConfigurationMap map = chars.get(extension,
-                        CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-                if (map == null) {
-                    continue;
-                }
-                for (int format : map.getOutputFormats()) {
-                    if (format == ImageFormat.PRIVATE) {
-                        List<Size> extensionSurfaceTextureSizes =
-                                chars.getExtensionSupportedSizes(extension, SurfaceTexture.class);
-                        List<Size> extensionSurfaceViewSizes =
-                                chars.getExtensionSupportedSizes(extension, SurfaceView.class);
-                        assertStreamConfigurationSizesEqualExtensionSizes(
-                                extensionSurfaceTextureSizes,
-                                map.getOutputSizes(SurfaceTexture.class));
-                        assertStreamConfigurationSizesEqualExtensionSizes(
-                                extensionSurfaceViewSizes,
-                                map.getOutputSizes(SurfaceHolder.class));
-                    } else {
-                        List<Size> extensionSizes =
-                                chars.getExtensionSupportedSizes(extension, format);
-                        assertStreamConfigurationSizesEqualExtensionSizes(extensionSizes,
-                                map.getOutputSizes(format));
+                if (availableCapabilities != null) {
+                    for (int c : availableCapabilities) {
+                        assertFalse("Capabilitiy is not supported by extensions",
+                                unsupportedCapabilities.contains(c));
                     }
                 }
+                StreamConfigurationMap map = chars.get(extension,
+                        CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+                assertNull("StreamConfigurationMap must not be present in get", map);
             }
         }
-    }
-
-    private void assertStreamConfigurationSizesEqualExtensionSizes(List<Size> extensionSizes,
-            Size[] streamConfigSizes) {
-        List<Size> sizes = streamConfigSizes == null
-                ? Collections.emptyList() : Arrays.asList(streamConfigSizes);
-        assertTrue("Stream configuration sizes must match extension supported sizes",
-                extensionSizes.size() == sizes.size()
-                && extensionSizes.containsAll(sizes));
-
     }
 }

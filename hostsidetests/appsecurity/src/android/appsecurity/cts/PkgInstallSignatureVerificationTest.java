@@ -71,6 +71,8 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
             SERVICE_TEST_PKG + ".SignatureQueryServiceInstrumentationTest";
     private static final String TEST_APK_RESOURCE_PREFIX = "/pkgsigverify/";
     private static final String INSTALL_ARG_FORCE_QUERYABLE = "--force-queryable";
+    private static final String INSTALL_ARG_BYPASS_LOW_TARGET_SDK_BLOCK =
+            "--bypass-low-target-sdk-block";
 
     private static final String[] DSA_KEY_NAMES = {"1024", "2048", "3072"};
     private static final String[] EC_KEY_NAMES = {"p256", "p384", "p521"};
@@ -1966,7 +1968,8 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
         File apk = buildHelper.getTestFile(apkName);
         try {
-            return getDevice().installPackage(apk, true, INSTALL_ARG_FORCE_QUERYABLE);
+            return getDevice().installPackage(apk, true, INSTALL_ARG_FORCE_QUERYABLE,
+                    INSTALL_ARG_BYPASS_LOW_TARGET_SDK_BLOCK);
         } finally {
             getDevice().deleteFile("/data/local/tmp/" + apk.getName());
         }
@@ -1982,9 +1985,10 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
             apkFile = getFileFromResource(apkFilenameInResources);
             if (ephemeral) {
                 return getDevice().installPackage(apkFile, true, "--ephemeral",
-                        INSTALL_ARG_FORCE_QUERYABLE);
+                        INSTALL_ARG_FORCE_QUERYABLE, INSTALL_ARG_BYPASS_LOW_TARGET_SDK_BLOCK);
             } else {
-                return getDevice().installPackage(apkFile, true, INSTALL_ARG_FORCE_QUERYABLE);
+                return getDevice().installPackage(apkFile, true, INSTALL_ARG_FORCE_QUERYABLE,
+                        INSTALL_ARG_BYPASS_LOW_TARGET_SDK_BLOCK);
             }
         } finally {
             cleanUpFile(apkFile);
@@ -2042,6 +2046,7 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
             installer.addRemoteFile(remoteApkPath + ".idsig");
         }
         return installer
+            .bypassLowTargetSdkBlock()
             .forceQueryable()
             .addRemoteFile(remoteApkPath)
             .runForResult();

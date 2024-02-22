@@ -19,7 +19,7 @@ package android.nfc.cts;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
+import android.nfc.cardemulation.PollingFrame;
 
 import java.util.List;
 
@@ -32,7 +32,8 @@ public class PollingLoopBroadcastReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (CardEmulationTest.sCurrentPollLoopReceiver != null) {
             String className = intent.getStringExtra(CLASS_NAME_KEY);
-            List<Bundle> frames = intent.getParcelableArrayListExtra(FRAMES_KEY, Bundle.class);
+            List<PollingFrame> frames = intent.getParcelableArrayListExtra(FRAMES_KEY,
+                    PollingFrame.class);
             CardEmulationTest.sCurrentPollLoopReceiver.notifyPollingLoop(className, frames);
         }
     }

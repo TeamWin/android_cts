@@ -15,15 +15,14 @@
  */
 package android.nfc.cts;
 
-
-import android.os.Bundle;
+import android.nfc.cardemulation.PollingFrame;
 
 import java.util.List;
 
 public class CustomHostApduService extends CtsMyHostApduService {
 
     @Override
-    public void processPollingFrames(List<Bundle> frames) {
+    public void processPollingFrames(List<PollingFrame> frames) {
         if (CardEmulationTest.sCurrentPollLoopReceiver != null) {
             CardEmulationTest.sCurrentPollLoopReceiver.notifyPollingLoop(this.getClass().getName(),
                     frames);

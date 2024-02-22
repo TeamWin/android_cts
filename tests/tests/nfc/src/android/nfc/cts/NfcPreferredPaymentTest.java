@@ -16,8 +16,6 @@
 
 package android.nfc.cts;
 
-import static android.nfc.cts.WalletRoleTestUtils.setDefaultWalletRoleHolder;
-
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -28,6 +26,10 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.nfc.NfcAdapter;
 import android.nfc.cardemulation.CardEmulation;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.Settings;
 import android.util.Log;
 
@@ -35,6 +37,7 @@ import androidx.test.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -51,6 +54,9 @@ public class NfcPreferredPaymentTest {
                                                             "A000000004101013");
     private static final ComponentName CtsNfcTestService =
             new ComponentName("android.nfc.cts", "android.nfc.cts.CtsMyHostApduService");
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private NfcAdapter mAdapter;
     private CardEmulation mCardEmulation;
@@ -78,17 +84,14 @@ public class NfcPreferredPaymentTest {
         Settings.Secure.putString(mContext.getContentResolver(),
                 NFC_PAYMENT_DEFAULT_COMPONENT,
                 CtsNfcTestService.flattenToString());
-        mRoleContext = new WalletRoleTestUtils.RoleContext(mContext);
-        setDefaultWalletRoleHolder(mContext);
     }
 
     @After
-    public void tearDown() throws Exception {
-        mRoleContext.clear();
-    }
+    public void tearDown() throws Exception {}
 
     /** Tests getAidsForPreferredPaymentService API */
     @Test
+    @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
     public void testAidsForPreferredPaymentService() {
         try {
             List<String> aids = mCardEmulation.getAidsForPreferredPaymentService();
@@ -104,6 +107,7 @@ public class NfcPreferredPaymentTest {
 
     /** Tests getRouteDestinationForPreferredPaymentService API */
     @Test
+    @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
     public void testRouteDestinationForPreferredPaymentService() {
         try {
             String routeDestination =
@@ -119,6 +123,7 @@ public class NfcPreferredPaymentTest {
 
     /** Tests getDescriptionForPreferredPaymentService API */
     @Test
+    @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
     public void testDescriptionForPreferredPaymentService() {
         try {
             CharSequence description = mCardEmulation.getDescriptionForPreferredPaymentService();
@@ -134,6 +139,7 @@ public class NfcPreferredPaymentTest {
     /** Tests getSelectionModeForCategory API
      *  CardEmulation.CATEGORY_PAYMENT */
     @Test
+    @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
     public void testGetSelectionModeForCategoryPayment() {
         try {
             int mode = mCardEmulation.getSelectionModeForCategory(CardEmulation.CATEGORY_PAYMENT);
@@ -148,7 +154,9 @@ public class NfcPreferredPaymentTest {
 
     /** Tests getSelectionModeForCategory API
      *  CardEmulation.CATEGORY_OTHER */
+
     @Test
+    @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
     public void testGetSelectionModeForCategoryOther() {
         try {
             int mode = mCardEmulation.getSelectionModeForCategory(CardEmulation.CATEGORY_OTHER);
@@ -159,5 +167,106 @@ public class NfcPreferredPaymentTest {
         } catch (Exception e) {
             fail("Unexpected Exception " + e);
         }
+    }
+
+    /** Tests getAidsForPreferredPaymentService API */
+    @Test
+    @RequiresFlagsEnabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
+    public void testAidsForPreferredPaymentService_walletRoleEnabled() {
+        WalletRoleTestUtils.runWithRole(mContext, WalletRoleTestUtils.CTS_PACKAGE_NAME,
+                () -> {
+                    try {
+                        List<String> aids = mCardEmulation.getAidsForPreferredPaymentService();
+                        for (String aid :aids) {
+                            Log.i(mTag, "AidsForPreferredPaymentService: " + aid);
+                        }
+
+                        assertTrue("Retrieve incorrect preferred payment aid list",
+                                mAids.equals(aids));
+                    } catch (Exception e) {
+                        fail("Unexpected Exception " + e);
+                    }
+                });
+
+    }
+
+    /** Tests getRouteDestinationForPreferredPaymentService API */
+    @Test
+    @RequiresFlagsEnabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
+    public void testRouteDestinationForPreferredPaymentService_walletRoleEnabled() {
+        WalletRoleTestUtils.runWithRole(mContext, WalletRoleTestUtils.CTS_PACKAGE_NAME,
+                () -> {
+                    try {
+                        String routeDestination =
+                                mCardEmulation.getRouteDestinationForPreferredPaymentService();
+                        Log.i(mTag, "RouteDestinationForPreferredPaymentService: "
+                                + routeDestination);
+
+                        assertTrue("Retrieve incorrect preferred payment route destination",
+                                routeDestination.equals(mRouteDestination));
+                    } catch (Exception e) {
+                        fail("Unexpected Exception " + e);
+                    }
+                });
+    }
+
+    /** Tests getDescriptionForPreferredPaymentService API */
+    @Test
+    @RequiresFlagsEnabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
+    public void testDescriptionForPreferredPaymentService_walletRoleEnabled() {
+        WalletRoleTestUtils.runWithRole(mContext, WalletRoleTestUtils.CTS_PACKAGE_NAME,
+                () -> {
+                    try {
+                        CharSequence description =
+                                mCardEmulation.getDescriptionForPreferredPaymentService();
+                        Log.i(mTag, "DescriptionForPreferredPaymentService: "
+                                + description.toString());
+
+                        assertTrue("Retrieve incorrect preferred payment description",
+                                description.toString().equals(mDescription.toString()));
+                    } catch (Exception e) {
+                        fail("Unexpected Exception " + e);
+                    }
+                });
+    }
+
+    /** Tests getSelectionModeForCategory API
+     *  CardEmulation.CATEGORY_PAYMENT */
+    @Test
+    @RequiresFlagsEnabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
+    public void testGetSelectionModeForCategoryPayment_walletRoleEnabled() {
+        WalletRoleTestUtils.runWithRole(mContext, WalletRoleTestUtils.CTS_PACKAGE_NAME,
+                () -> {
+                    try {
+                        int mode = mCardEmulation
+                                .getSelectionModeForCategory(CardEmulation.CATEGORY_PAYMENT);
+                        Log.i(mTag, "getSelectionModeForCategory for Payment: " + mode);
+
+                        assertTrue("Retrieve incorrect SelectionMode for Payment",
+                                CardEmulation.SELECTION_MODE_PREFER_DEFAULT == mode);
+                    } catch (Exception e) {
+                        fail("Unexpected Exception " + e);
+                    }
+                });
+    }
+
+    /** Tests getSelectionModeForCategory API
+     *  CardEmulation.CATEGORY_OTHER */
+    @RequiresFlagsEnabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
+    @Test
+    public void testGetSelectionModeForCategoryOther_walletRoleEnabled() {
+        WalletRoleTestUtils.runWithRole(mContext, WalletRoleTestUtils.CTS_PACKAGE_NAME,
+                () -> {
+                    try {
+                        int mode = mCardEmulation
+                                .getSelectionModeForCategory(CardEmulation.CATEGORY_OTHER);
+                        Log.i(mTag, "getSelectionModeForCategory for Other: " + mode);
+
+                        assertTrue("Retrieve incorrect SelectionMode for Other",
+                                CardEmulation.SELECTION_MODE_ASK_IF_CONFLICT == mode);
+                    } catch (Exception e) {
+                        fail("Unexpected Exception " + e);
+                    }
+                });
     }
 }

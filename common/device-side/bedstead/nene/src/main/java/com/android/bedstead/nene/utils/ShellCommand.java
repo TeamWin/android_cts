@@ -248,13 +248,29 @@ public final class ShellCommand {
          * command executed successfully.
          */
         public String executeUntilValid() throws InterruptedException, AdbException {
+            int maxWaitUntilAttempts = MAX_WAIT_UNTIL_ATTEMPTS;
+            long waitUntilDelayMillis = WAIT_UNTIL_DELAY_MILLIS;
+            return executeUntilValid(maxWaitUntilAttempts, waitUntilDelayMillis);
+        }
+
+        /**
+         * Execute the command and check that the output meets a given criteria. Run the
+         * command repeatedly until the output meets the criteria.
+         *
+         * @param maxWaitUntilAttempts maximum number of attempts
+         * @param waitUntilDelayMillis minimum interval between calls in milliseconds
+         * <p>{@code outputSuccessChecker} should return {@code true} if the output indicates the
+         * command executed successfully.
+         */
+        public String executeUntilValid(int maxWaitUntilAttempts, long waitUntilDelayMillis) throws
+                InterruptedException, AdbException {
             int attempts = 0;
-            while (attempts++ < MAX_WAIT_UNTIL_ATTEMPTS) {
+            while (attempts++ < maxWaitUntilAttempts) {
                 try {
                     return execute();
                 } catch (AdbException e) {
                     // ignore, will retry
-                    Thread.sleep(WAIT_UNTIL_DELAY_MILLIS);
+                    Thread.sleep(waitUntilDelayMillis);
                 }
             }
             return execute();

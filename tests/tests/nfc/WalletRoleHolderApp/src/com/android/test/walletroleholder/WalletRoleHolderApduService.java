@@ -19,6 +19,7 @@ package com.android.test.walletroleholder;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.nfc.cardemulation.HostApduService;
+import android.nfc.cardemulation.PollingFrame;
 import android.os.Bundle;
 
 import java.util.ArrayList;
@@ -31,8 +32,8 @@ public class WalletRoleHolderApduService extends HostApduService {
     }
 
     @Override
-    public void processPollingFrames(List<Bundle> frames) {
-        ArrayList<Bundle> framesArrayList = new ArrayList<>(frames);
+    public void processPollingFrames(List<PollingFrame> frames) {
+        ArrayList<PollingFrame> framesArrayList = new ArrayList<>(frames);
         final Intent intent = new Intent();
         intent.setAction("com.cts.PollingLoopFired");
         intent.putExtra("class_name", this.getClass().getName());

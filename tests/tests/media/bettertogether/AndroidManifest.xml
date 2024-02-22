@@ -65,6 +65,12 @@
                 <action android:name="android.media.browse.MediaBrowserService"/>
             </intent-filter>
         </service>
+        <service android:name="android.media.bettertogether.cts.SimpleMediaBrowserService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService"/>
+            </intent-filter>
+        </service>
         <service android:name="android.media.bettertogether.cts.StubMediaSession2Service"
              android:permission="android.media.bettertogether.cts"
              android:exported="true">

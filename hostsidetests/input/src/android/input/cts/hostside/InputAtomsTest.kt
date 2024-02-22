@@ -146,6 +146,8 @@ class InputAtomsTest : DeviceTestCase() {
 
         val touchpadUsage = getTouchpadUsageAtom()
         assertThat(touchpadUsage, Matchers.allOf<TouchpadUsage>(
+                member("vendorId", { vendorId }, equalTo(0x18d1)),
+                member("productId", { productId }, equalTo(0xabcd)),
                 member("fingerCount", { fingerCount }, equalTo(3)),
                 member("palmCount", { palmCount }, equalTo(2)),
         ))
