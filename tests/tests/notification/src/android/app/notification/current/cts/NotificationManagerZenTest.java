@@ -117,8 +117,6 @@ import com.android.compatibility.common.util.ScreenUtils;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.modules.utils.build.SdkLevel;
 
-import com.android.modules.utils.build.SdkLevel;
-
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 
@@ -2056,10 +2054,11 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
                 InstrumentationRegistry.getInstrumentation(), true);
 
         // Setup: no contacts, so nobody counts as "priority" in terms of senders.
-        // Construct a policy that doesn't specify anything about channels; apply it via zen rule
+        // Construct a policy that doesn't allow anything except priority channels through;
+        // apply it via zen rule
         AutomaticZenRule rule = createRule("test_channel_bypass",
                 INTERRUPTION_FILTER_PRIORITY);
-        rule.setZenPolicy(new ZenPolicy.Builder().build());
+        rule.setZenPolicy(new ZenPolicy.Builder().disallowAllSounds().build());
         String id = mNotificationManager.addAutomaticZenRule(rule);
 
         // enable rule
