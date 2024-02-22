@@ -109,11 +109,17 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest">
         <option name="package" value="android.server.wm.cts"/>
         <option name="runtime-hint" value="1h"/>
+        <option name="device-listeners" value="android.tools.collectors.DefaultUITraceListener"/>
+        <!-- DefaultUITraceListener args -->
+        <option name="instrumentation-arg" key="skip_test_success_metrics" value="true"/>
+        <option name="instrumentation-arg" key="per_class" value="true"/>
     </test>
 
     <!-- Collect the files from DumpOnFailure. -->
     <metrics_collector class="com.android.tradefed.device.metric.FilePullerLogCollector">
+        <option name="pull-pattern-keys" value="perfetto_file_path*"/>
         <option name="directory-keys" value="/sdcard/DumpOnFailure" />
+        <option name="directory-keys" value="/data/user/0/android.server.wm.cts/files" />
         <option name="collect-on-run-ended-only" value="true" />
     </metrics_collector>
 
