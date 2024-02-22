@@ -327,6 +327,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         extraArgs.add("-t");
         // Make the test app queryable by other apps via PackageManager APIs.
         extraArgs.add("--force-queryable");
+        extraArgs.add("--bypass-low-target-sdk-block");
         if (dontKillApp) extraArgs.add("--dont-kill");
         String result = getDevice().installPackageForUser(
                 buildHelper.getTestFile(appFileName), true, grantPermissions, userId,
