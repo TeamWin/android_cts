@@ -23,7 +23,6 @@ import android.graphics.Color;
 import android.graphics.ComposeShader;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
-import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.RadialGradient;
 import android.graphics.RuntimeShader;
@@ -32,7 +31,9 @@ import android.graphics.SweepGradient;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
-import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
+import android.uirendering.cts.R;
+import android.uirendering.cts.bitmapcomparers.MSSIMComparer;
+import android.uirendering.cts.bitmapverifiers.GoldenImageVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 
 import androidx.test.filters.MediumTest;
@@ -73,15 +74,8 @@ public class ShaderClippingTests extends ActivityTestBase {
 
                     clipAndDraw(canvas, width, height, s, true);
                 })
-                .runWithVerifier(new SamplePointVerifier(
-                        new Point[] {
-                            new Point(11, 11),
-                            new Point(33, 33),
-                        },
-                        new int[] {
-                            Color.WHITE,
-                            Color.BLUE,
-                        }));
+                .runWithVerifier(new GoldenImageVerifier(getActivity(),
+                        R.drawable.clipshadertest_bitmapshader, new MSSIMComparer(0.7)));
     }
 
     @RequiresFlagsEnabled(Flags.FLAG_CLIP_SHADER)
@@ -95,14 +89,8 @@ public class ShaderClippingTests extends ActivityTestBase {
 
                     clipAndDraw(canvas, width, height, s, true);
                 })
-                // TODO(jmbetancourt): replace with golden verifier
-                .runWithVerifier(new SamplePointVerifier(
-                        new Point[] {
-                            new Point(0, 0),
-                        },
-                        new int[] {
-                            Color.WHITE,
-                        }));
+                .runWithVerifier(new GoldenImageVerifier(getActivity(),
+                        R.drawable.clipshadertest_lineargradient, new MSSIMComparer(0.7)));
     }
 
     @RequiresFlagsEnabled(Flags.FLAG_CLIP_SHADER)
@@ -119,14 +107,8 @@ public class ShaderClippingTests extends ActivityTestBase {
 
                     clipAndDraw(canvas, width, height, s, true);
                 })
-                // TODO(jmbetancourt): replace with golden verifier
-                .runWithVerifier(new SamplePointVerifier(
-                        new Point[] {
-                                new Point(0, 0),
-                        },
-                        new int[] {
-                                Color.WHITE,
-                        }));
+                .runWithVerifier(new GoldenImageVerifier(getActivity(),
+                        R.drawable.clipshadertest_composeshader, new MSSIMComparer(0.7)));
     }
 
     @RequiresFlagsEnabled(Flags.FLAG_CLIP_SHADER)
@@ -139,14 +121,8 @@ public class ShaderClippingTests extends ActivityTestBase {
 
                     clipAndDraw(canvas, width, height, s, true);
                 })
-                // TODO(jmbetancourt): replace with golden verifier
-                .runWithVerifier(new SamplePointVerifier(
-                        new Point[] {
-                                new Point(0, 0),
-                        },
-                        new int[] {
-                                Color.WHITE,
-                        }));
+                .runWithVerifier(new GoldenImageVerifier(getActivity(),
+                        R.drawable.clipshadertest_radialgradient, new MSSIMComparer(0.7)));
     }
 
     @RequiresFlagsEnabled(Flags.FLAG_CLIP_SHADER)
@@ -163,14 +139,8 @@ public class ShaderClippingTests extends ActivityTestBase {
 
                     clipAndDraw(canvas, width, height, s, true);
                 })
-                // TODO(jmbetancourt): replace with golden verifier
-                .runWithVerifier(new SamplePointVerifier(
-                        new Point[] {
-                                new Point(0, 0),
-                        },
-                        new int[] {
-                                Color.WHITE,
-                        }));
+                .runWithVerifier(new GoldenImageVerifier(getActivity(),
+                        R.drawable.clipshadertest_runtimeshader, new MSSIMComparer(0.7)));
     }
 
     @RequiresFlagsEnabled(Flags.FLAG_CLIP_SHADER)
@@ -183,14 +153,8 @@ public class ShaderClippingTests extends ActivityTestBase {
 
                     clipAndDraw(canvas, width, height, s, true);
                 })
-                // TODO(jmbetancourt): replace with golden verifier
-                .runWithVerifier(new SamplePointVerifier(
-                        new Point[] {
-                                new Point(0, 0),
-                        },
-                        new int[] {
-                                Color.WHITE,
-                        }));
+                .runWithVerifier(new GoldenImageVerifier(getActivity(),
+                        R.drawable.clipshadertest_sweetgradient, new MSSIMComparer(0.7)));
     }
 
     @RequiresFlagsEnabled(Flags.FLAG_CLIP_SHADER)
@@ -204,14 +168,8 @@ public class ShaderClippingTests extends ActivityTestBase {
 
                     clipAndDraw(canvas, width, height, s, false);
                 })
-                // TODO(jmbetancourt): replace with golden verifier
-                .runWithVerifier(new SamplePointVerifier(
-                        new Point[] {
-                                new Point(0, 0),
-                        },
-                        new int[] {
-                                Color.WHITE,
-                        }));
+                .runWithVerifier(new GoldenImageVerifier(getActivity(),
+                        R.drawable.clipshadertest_clipout, new MSSIMComparer(0.7)));
     }
 
     /**
