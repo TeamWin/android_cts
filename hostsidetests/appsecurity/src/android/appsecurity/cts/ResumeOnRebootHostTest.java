@@ -69,6 +69,7 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
     private static final String FEATURE_DEVICE_ADMIN = "feature:android.software.device_admin";
     private static final String FEATURE_SECURE_LOCK_SCREEN =
             "feature:android.software.secure_lock_screen";
+    private static final String FEATURE_WATCH = "android.hardware.type.watch";
 
     private static final long SHUTDOWN_TIME_MS = TimeUnit.SECONDS.toMillis(30);
     private static final int USER_SYSTEM = 0;
@@ -107,6 +108,11 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         getDevice().setSetting("global", "verifier_verify_adb_installs", "0");
         removeTestPackages();
         deviceSetupServerBasedParameter();
+        if (getDevice().hasFeature(FEATURE_WATCH)) {
+            // Prevent charging screen from causing keyguard to report as occluded when device is
+            // locked.
+            unplugBattery();
+        }
     }
 
     @After
@@ -119,6 +125,7 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
                     mOriginalVerifyAdbInstallerSetting);
         }
         setScreenStayOnValue(false);
+        resetBatteryOverride();
     }
 
     @Test
@@ -575,6 +582,22 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         if (result.getStatus() != CommandStatus.SUCCESS) {
             CLog.w("Could not set screen stay-on value. " + generateErrorStringFromCommandResult(
                     result));
+        }
+    }
+
+    private void unplugBattery() throws DeviceNotAvailableException {
+        CommandResult result = getDevice().executeShellV2Command("cmd battery unplug");
+        if (result.getStatus() != CommandStatus.SUCCESS) {
+            CLog.w("Could not set device to battery-unplugged state"
+                    + generateErrorStringFromCommandResult(result));
+        }
+    }
+
+    private void resetBatteryOverride() throws DeviceNotAvailableException {
+        CommandResult result = getDevice().executeShellV2Command("cmd battery reset");
+        if (result.getStatus() != CommandStatus.SUCCESS) {
+            fail("Could not reset device battery state override: "
+                    + generateErrorStringFromCommandResult(result));
         }
     }
 
