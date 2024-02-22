@@ -43,7 +43,7 @@ public class CVE_2023_40086 extends NonRootSecurityTestCase {
             ITestDevice device = getDevice();
 
             // Install test app in device
-            installPackage("CVE-2023-40086.apk");
+            installPackage("CVE-2023-40086.apk", "-g");
 
             // Create new user and save a screenshot in that user
             final int currentUserId = device.getCurrentUser();
