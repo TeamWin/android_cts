@@ -349,9 +349,9 @@
     <option name="compatibility:exclude-filter" value="CtsAppOpsTestCases android.app.appops.cts.AppOpEventCollectionTest#noteFromTwoProxiesAndVerifyProxyInfo" />
     <option name="compatibility:exclude-filter" value="CtsAppOpsTestCases android.app.appops.cts.AppOpEventCollectionTest#startStopTrustedProxyVerifyRunningAndTime" />
     <option name="compatibility:exclude-filter" value="CtsAppOpsTestCases android.app.appops.cts.AppOpEventCollectionTest#startStopTrustedAndUntrustedProxyVerifyProxyInfo" />
-    <option name="compatibility:exclude-filter" value="CtsAttributionSourceTestCases android.attributionsource.cts.RuntimePermissionsAppOpTrackingTest#testTrustedAccessSmsAttributeToAnother" />
-    <option name="compatibility:exclude-filter" value="CtsAttributionSourceTestCases android.attributionsource.cts.RuntimePermissionsAppOpTrackingTest#testTrustedAccessCallLogAttributeToAnother" />
-    <option name="compatibility:exclude-filter" value="CtsAttributionSourceTestCases android.attributionsource.cts.RuntimePermissionsAppOpTrackingTest#testTrustedAccessContactsAttributeToAnother" />
-    <option name="compatibility:exclude-filter" value="CtsAttributionSourceTestCases android.attributionsource.cts.RuntimePermissionsAppOpTrackingTest#testTrustedAccessCalendarAttributeToAnother" />
+    <option name="compatibility:exclude-filter" value="CtsPermission5TestCases android.permission5.cts.RuntimePermissionsAppOpTrackingTest#testTrustedAccessSmsAttributeToAnother" />
+    <option name="compatibility:exclude-filter" value="CtsPermission5TestCases android.permission5.cts.RuntimePermissionsAppOpTrackingTest#testTrustedAccessCallLogAttributeToAnother" />
+    <option name="compatibility:exclude-filter" value="CtsPermission5TestCases android.permission5.cts.RuntimePermissionsAppOpTrackingTest#testTrustedAccessContactsAttributeToAnother" />
+    <option name="compatibility:exclude-filter" value="CtsPermission5TestCases android.permission5.cts.RuntimePermissionsAppOpTrackingTest#testTrustedAccessCalendarAttributeToAnother" />
 
 </configuration>
