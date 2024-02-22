@@ -23,11 +23,9 @@ import static android.content.res.Configuration.SCREENLAYOUT_SIZE_LARGE;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_MASK;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_NORMAL;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_XLARGE;
-import static android.server.wm.ActivityManagerTestBase.isTablet;
 import static android.view.WindowInsets.Type.displayCutout;
 import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.systemBars;
-
 import static android.server.wm.ActivityManagerTestBase.isTablet;
 
 import android.app.Activity;
@@ -84,6 +82,8 @@ public class ConfigurationScreenLayoutTest
         try (IgnoreOrientationRequestSession session =
                      new IgnoreOrientationRequestSession(false /* enable */)) {
 
+            final int screenLayoutFromDisplay = computeScreenLayoutFromDisplay();
+
             // Check that all four orientations report the same configuration value.
             for (int orientation : ORIENTATIONS) {
                 Activity activity = startOrientationActivity(orientation);
@@ -92,7 +92,9 @@ public class ConfigurationScreenLayoutTest
                     tearDown();
                     return;
                 }
-                final int expectedLayout = computeScreenLayout(activity);
+
+                final int expectedLayout = computeScreenLayoutFromTask(activity,
+                        screenLayoutFromDisplay);
                 final int expectedSize = expectedLayout & SCREENLAYOUT_SIZE_MASK;
                 final int expectedLong = expectedLayout & SCREENLAYOUT_LONG_MASK;
 
@@ -126,23 +128,39 @@ public class ConfigurationScreenLayoutTest
         return getActivity();
     }
 
-    // Logic copied from Configuration#reduceScreenLayout(int, int, int)
     /**
-     * Returns expected value of {@link Configuration#screenLayout} with the
-     *         {@link Configuration#SCREENLAYOUT_LONG_MASK} and
-     *         {@link Configuration#SCREENLAYOUT_SIZE_MASK} defined
+     * Calculates the screenLayout from display, which use the display size excluding nav bar and
+     * cutout area.
+     *
+     * @return The screen layout.
      */
-    private int computeScreenLayout(Activity activity) {
+    private int computeScreenLayoutFromDisplay() throws Exception {
+        int screenLayout = BIGGEST_LAYOUT;
+
+        for (int orientation : ORIENTATIONS) {
+            Activity activity = startOrientationActivity(orientation);
+            final WindowInsets windowInsets = activity.getWindowManager().getCurrentWindowMetrics()
+                    .getWindowInsets();
+            Insets insets = windowInsets.getInsets(navigationBars() | displayCutout());
+            screenLayout = reduceScreenLayout(activity, insets, screenLayout);
+
+            tearDown();
+        }
+        return screenLayout;
+    }
+
+    /**
+     * Calculates the screenLayout from Task, which use the bounds excluding all system bars
+     * and cutout area.
+     *
+     * @return The screen layout.
+     */
+    private int computeScreenLayoutFromTask(Activity activity, int screenLayoutFromDisplay) {
         final WindowInsets windowInsets = activity.getWindowManager().getCurrentWindowMetrics()
                 .getWindowInsets();
-        // 1. Calculate the screenLayout from display, which use the display size excluding nav bar
-        //    and cutout area.
-        Insets insets = windowInsets.getInsets(navigationBars() | displayCutout());
-        int screenLayout = reduceScreenLayout(activity, insets, BIGGEST_LAYOUT);
-        // 2. Calculate the screenLayout from Task, which use the bounds excluding all system bars
-        //    and cutout area.
-        insets = windowInsets.getInsets(systemBars() | displayCutout());
-        return reduceScreenLayout(activity, insets, screenLayout);
+
+        Insets insets = windowInsets.getInsets(systemBars() | displayCutout());
+        return reduceScreenLayout(activity, insets, screenLayoutFromDisplay);
     }
 
     private int reduceScreenLayout(Activity activity, Insets excludeInsets, int screenLayout) {
