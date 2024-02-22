@@ -504,7 +504,7 @@ public class CardEmulationTest {
         }.getClass().getEnclosingMethod().getName();
         String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
         Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(customServiceName,
-                annotationStringHex));
+                annotationStringHex, false));
         ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
         frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
                 HexFormat.of().parseHex(annotationStringHex)));
@@ -534,11 +534,11 @@ public class CardEmulationTest {
             }.getClass().getEnclosingMethod().getName();
             String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
             Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(customServiceName,
-                    annotationStringHex));
+                    annotationStringHex, false));
             Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(
-                    backgroundServiceName, annotationStringHex));
+                    backgroundServiceName, annotationStringHex, false));
             Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(ctsMyServiceName,
-                    annotationStringHex));
+                    annotationStringHex, false));
             ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
             frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
                     HexFormat.of().parseHex(annotationStringHex)));
@@ -569,9 +569,9 @@ public class CardEmulationTest {
             }.getClass().getEnclosingMethod().getName();
             String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
             Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(ctsServiceName,
-                    annotationStringHex));
+                    annotationStringHex, false));
             Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(
-                    backgroundServiceName, annotationStringHex));
+                    backgroundServiceName, annotationStringHex, false));
             ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
             frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
                     HexFormat.of().parseHex(annotationStringHex)));
@@ -605,9 +605,9 @@ public class CardEmulationTest {
             }.getClass().getEnclosingMethod().getName();
             String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
             Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(customServiceName,
-                    annotationStringHex));
+                    annotationStringHex, false));
             Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(
-                    backgroundServiceName, annotationStringHex));
+                    backgroundServiceName, annotationStringHex, false));
             ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
             frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
                     HexFormat.of().parseHex(annotationStringHex)));
@@ -771,7 +771,6 @@ public class CardEmulationTest {
         String testName = new Object() {
         }.getClass().getEnclosingMethod().getName();
         String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
-        android.util.Log.i("PLF", annotationStringHex);
         ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
         frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
                 HexFormat.of().parseHex(annotationStringHex)));
@@ -798,7 +797,6 @@ public class CardEmulationTest {
             String testName = new Object() {
             }.getClass().getEnclosingMethod().getName();
             String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
-            android.util.Log.i("PLF", annotationStringHex);
             ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
             frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
                     HexFormat.of().parseHex(annotationStringHex)));
@@ -812,6 +810,70 @@ public class CardEmulationTest {
         });
         setMockService();
     }
+
+
+    @Test
+    @RequiresFlagsEnabled({android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP,
+            Flags.FLAG_NFC_OBSERVE_MODE})
+    @RequiresFlagsDisabled(android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED)
+    public void testAutoTransactDynamic() {
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        assumeTrue(adapter.isObserveModeSupported());
+        adapter.notifyHceDeactivated();
+        createAndResumeActivity();
+        String testName = new Object() {
+        }.getClass().getEnclosingMethod().getName();
+        String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
+        CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
+        ComponentName customServiceName = new ComponentName(mContext, CustomHostApduService.class);
+        Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(customServiceName,
+                annotationStringHex, true));
+        ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
+        frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
+                HexFormat.of().parseHex(annotationStringHex)));
+        Assert.assertTrue(adapter.setObserveModeEnabled(true));
+        Assert.assertTrue(adapter.isObserveModeEnabled());
+        notifyPollingLoopAndWait(frames, CustomHostApduService.class.getName());
+        Assert.assertFalse(adapter.isObserveModeEnabled());
+        adapter.notifyHceDeactivated();
+        Assert.assertTrue(adapter.isObserveModeEnabled());
+        adapter.setObserveModeEnabled(false);
+    }
+
+    @Test
+    @RequiresFlagsEnabled({android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP,
+            Flags.FLAG_NFC_OBSERVE_MODE,
+            android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED})
+    public void testAutoTransactDynamic_walletRoleEnabled() throws NoSuchFieldException {
+        restoreOriginalService();
+        runWithRole(mContext, CTS_PACKAGE_NAME, () -> {
+            NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+            assumeTrue(adapter.isObserveModeSupported());
+            adapter.notifyHceDeactivated();
+            createAndResumeActivity();
+            String testName = new Object() {
+            }.getClass().getEnclosingMethod().getName();
+            String annotationStringHex = HexFormat.of().toHexDigits(testName.hashCode());
+            CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
+            ComponentName customServiceName = new ComponentName(mContext,
+                    CustomHostApduService.class);
+            Assert.assertTrue(cardEmulation.registerPollingLoopFilterForService(customServiceName,
+                    annotationStringHex, true));
+            ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(1);
+            frames.add(createFrameWithData(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
+                    HexFormat.of().parseHex(annotationStringHex)));
+            Assert.assertTrue(adapter.setObserveModeEnabled(true));
+            Assert.assertTrue(adapter.isObserveModeEnabled());
+            notifyPollingLoopAndWait(frames, CustomHostApduService.class.getName());
+            Assert.assertFalse(adapter.isObserveModeEnabled());
+            adapter.notifyHceDeactivated();
+            Assert.assertTrue(adapter.isObserveModeEnabled());
+            adapter.setObserveModeEnabled(false);
+        });
+        setMockService();
+    }
+
+
 
     static void ensureUnlocked() {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
