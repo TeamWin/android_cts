@@ -80,4 +80,8 @@ public class VideoEncoderInput {
         }
         return RES_YUV_MAP.get(key);
     }
+
+    public static RawResource getRawResource(CompressedResource cRes) {
+        return RES_YUV_MAP.get(cRes.uniqueLabel());
+    }
 }

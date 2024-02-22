@@ -16,11 +16,8 @@
 
 package android.videocodec.cts;
 
-import static android.media.MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR;
-import static android.media.MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR;
-import static android.videocodec.cts.VideoEncoderInput.BIRTHDAY_FULLHD_LANDSCAPE;
-import static android.videocodec.cts.VideoEncoderValidationTestBase.DIAGNOSTICS;
-import static android.videocodec.cts.VideoEncoderValidationTestBase.logAllFilesInCacheDir;
+import static android.videocodec.cts.VideoEncoderInput.RES_YUV_MAP;
+import static android.videocodec.cts.VideoEncoderInput.getRawResource;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -29,7 +26,6 @@ import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.mediav2.common.cts.CompareStreams;
-import android.mediav2.common.cts.DecodeStreamToYuv;
 import android.mediav2.common.cts.EncoderConfigParams;
 import android.mediav2.common.cts.RawResource;
 import android.util.Log;
@@ -43,39 +39,32 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.function.Predicate;
 
 /**
  * Wrapper class for testing quality regression.
  */
 public class VideoEncoderQualityRegressionTestBase {
-    private static final String LOG_TAG =
-            VideoEncoderQualityRegressionTestBase.class.getSimpleName();
-    private static final VideoEncoderInput.CompressedResource RES =
-            BIRTHDAY_FULLHD_LANDSCAPE;
-    private static final int WIDTH = 1920;
-    private static final int HEIGHT = 1080;
-    protected static final int[] BIT_RATES =
-            {2000000, 4000000, 6000000, 8000000, 10000000, 12000000};
-    protected static final int[] BIT_RATE_MODES = {BITRATE_MODE_CBR, BITRATE_MODE_VBR};
-    protected static final int[] B_FRAMES = {0, 1};
-    private static final int FRAME_RATE = 30;
-    private static final int KEY_FRAME_INTERVAL = 1;
-    private static final int FRAME_LIMIT = 300;
-    protected static RawResource sActiveRawRes = null;
+    private static final String TAG = VideoEncoderQualityRegressionTestBase.class.getSimpleName();
+    private static final ArrayList<String> mTmpFiles = new ArrayList<>();
+    protected static ArrayList<VideoEncoderInput.CompressedResource> RESOURCES = new ArrayList<>();
+
     protected final String mCodecName;
     protected final String mMediaType;
-    protected final int mBitRateMode;
-    protected final ArrayList<String> mTmpFiles = new ArrayList<>();
+    protected final VideoEncoderInput.CompressedResource mCRes;
+    protected final String mAllTestParams;
 
     static {
         System.loadLibrary("ctsvideoqualityutils_jni");
     }
 
-    VideoEncoderQualityRegressionTestBase(String encoder, String mediaType, int bitRateMode,
-            String allTestParams) {
+    VideoEncoderQualityRegressionTestBase(String encoder, String mediaType,
+            VideoEncoderInput.CompressedResource cRes, String allTestParams) {
         mCodecName = encoder;
         mMediaType = mediaType;
-        mBitRateMode = bitRateMode;
+        mCRes = cRes;
+        mAllTestParams = allTestParams;
     }
 
     /**
@@ -83,17 +72,8 @@ public class VideoEncoderQualityRegressionTestBase {
      * in the cache.
      */
     @BeforeClass
-    public static void decodeResourceToYuv() {
-        logAllFilesInCacheDir(true);
-        try {
-            DecodeStreamToYuv yuv = new DecodeStreamToYuv(RES.mMediaType, RES.mResFile,
-                    FRAME_LIMIT, LOG_TAG);
-            sActiveRawRes = yuv.getDecodedYuv();
-        } catch (Exception e) {
-            DIAGNOSTICS.append(String.format("\nWhile decoding the resource : %s,"
-                    + " encountered exception :  %s was thrown", RES, e));
-            logAllFilesInCacheDir(false);
-        }
+    public static void decodeResourcesToYuv() {
+        VideoEncoderValidationTestBase.decodeStreamsToYuv(RESOURCES, RES_YUV_MAP, TAG);
     }
 
     /**
@@ -101,15 +81,13 @@ public class VideoEncoderQualityRegressionTestBase {
      */
     @AfterClass
     public static void cleanUpResources() {
-        if (sActiveRawRes != null) {
-            new File(sActiveRawRes.mFileName).delete();
-            sActiveRawRes = null;
-        }
+        VideoEncoderValidationTestBase.cleanUpResources();
     }
 
     @Before
     public void setUp() {
-        assumeNotNull("no raw resource found for testing : ", sActiveRawRes);
+        assumeNotNull("no raw resource found for testing : "
+                + VideoEncoderValidationTestBase.DIAGNOSTICS, getRawResource(mCRes));
     }
 
     @After
@@ -121,15 +99,16 @@ public class VideoEncoderQualityRegressionTestBase {
         mTmpFiles.clear();
     }
 
-    protected static EncoderConfigParams getVideoEncoderCfgParams(String mediaType, int bitRate,
-            int bitRateMode, int maxBFrames) {
+    protected static EncoderConfigParams getVideoEncoderCfgParams(String mediaType, int width,
+            int height, int bitRate, int bitRateMode, int keyFrameInterval, int frameRate,
+            int maxBFrames) {
         return new EncoderConfigParams.Builder(mediaType)
-                .setWidth(WIDTH)
-                .setHeight(HEIGHT)
+                .setWidth(width)
+                .setHeight(height)
                 .setBitRate(bitRate)
                 .setBitRateMode(bitRateMode)
-                .setKeyFrameInterval(KEY_FRAME_INTERVAL)
-                .setFrameRate(FRAME_RATE)
+                .setKeyFrameInterval(keyFrameInterval)
+                .setFrameRate(frameRate)
                 .setMaxBFrames(maxBFrames)
                 .build();
     }
@@ -138,28 +117,30 @@ public class VideoEncoderQualityRegressionTestBase {
             double[] ratesB, boolean selBdSnr, StringBuilder retMsg);
 
     protected void getQualityRegressionForCfgs(List<EncoderConfigParams[]> cfgsUnion,
-            String[] encoderNames,
-            double minGain) throws IOException, InterruptedException {
+            VideoEncoderValidationTestBase[] testInstances, String[] encoderNames, RawResource res,
+            int frameLimit, int frameRate, boolean setLoopBack, Predicate<Double> predicate)
+            throws IOException, InterruptedException {
+        assertEquals("Quality comparison is done between two sets", 2, cfgsUnion.size());
+        assertTrue("Minimum of 4 points are required for polynomial curve fitting",
+                cfgsUnion.get(0).length >= 4);
         double[][] psnrs = new double[cfgsUnion.size()][cfgsUnion.get(0).length];
         double[][] rates = new double[cfgsUnion.size()][cfgsUnion.get(0).length];
         for (int i = 0; i < cfgsUnion.size(); i++) {
             EncoderConfigParams[] cfgs = cfgsUnion.get(i);
             String mediaType = cfgs[0].mMediaType;
-            VideoEncoderValidationTestBase vevtb = new VideoEncoderValidationTestBase(null,
-                    mediaType, null, null);
-            vevtb.setLoopBack(true);
+            testInstances[i].setLoopBack(setLoopBack);
             for (int j = 0; j < cfgs.length; j++) {
-                vevtb.encodeToMemory(encoderNames[i], cfgs[j], sActiveRawRes, FRAME_LIMIT, true,
+                testInstances[i].encodeToMemory(encoderNames[i], cfgs[j], res, frameLimit, true,
                         true);
-                mTmpFiles.add(vevtb.getMuxedOutputFilePath());
-                assertEquals("encoder did not encode the requested number of frames \n",
-                        FRAME_LIMIT, vevtb.getOutputCount());
-                int outSize = vevtb.getOutputManager().getOutStreamSize();
-                double achievedBitRate = ((double) outSize * 8 * FRAME_RATE) / (1000 * FRAME_LIMIT);
+                mTmpFiles.add(testInstances[i].getMuxedOutputFilePath());
+                assertEquals("encoder did not encode the requested number of frames \n", frameLimit,
+                        testInstances[i].getOutputCount());
+                int outSize = testInstances[i].getOutputManager().getOutStreamSize();
+                double achievedBitRate = ((double) outSize * 8 * frameRate) / (1000 * frameLimit);
                 CompareStreams cs = null;
                 try {
-                    cs = new CompareStreams(sActiveRawRes, mediaType,
-                            vevtb.getMuxedOutputFilePath(), true, true);
+                    cs = new CompareStreams(res, mediaType,
+                            testInstances[i].getMuxedOutputFilePath(), true, true);
                     final double[] globalPSNR = cs.getGlobalPSNR();
                     double weightedPSNR = (6 * globalPSNR[0] + globalPSNR[1] + globalPSNR[2]) / 8;
                     psnrs[i][j] = weightedPSNR;
@@ -167,7 +148,7 @@ public class VideoEncoderQualityRegressionTestBase {
                 } finally {
                     if (cs != null) cs.cleanUp();
                 }
-                vevtb.deleteMuxedFile();
+                testInstances[i].deleteMuxedFile();
             }
         }
         StringBuilder retMsg = new StringBuilder();
@@ -179,9 +160,8 @@ public class VideoEncoderQualityRegressionTestBase {
                 retMsg.append(String.format("{%f, %f},\n", rates[i][j], psnrs[i][j]));
             }
         }
-        retMsg.append(String.format("bd rate %f not < %f", bdRate, minGain));
-        Log.d(LOG_TAG, retMsg.toString());
-        // assuming set B encoding is superior to set A,
-        assumeTrue(retMsg.toString(), bdRate < minGain);
+        retMsg.append(String.format(Locale.getDefault(), "bd rate: %f", bdRate));
+        Log.d(TAG, retMsg.toString());
+        assumeTrue(retMsg.toString(), predicate.test(bdRate));
     }
 }
