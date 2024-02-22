@@ -20,5 +20,10 @@
         <item name="android:windowBackground">@drawable/base_color_drawable</item>
         <item name="android:navigationBarColor">@color/navigation_bar_color</item>
         <item name="android:statusBarColor">@color/status_bar_color</item>
+
+        <!--
+            TODO(b/309578419): Move the test to a targetSdk which is lower than V.
+        -->
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
 </resources>

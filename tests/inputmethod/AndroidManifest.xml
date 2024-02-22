@@ -45,6 +45,7 @@
         <!-- TestActivity etc are merged from util/AndroidManifest.xml -->
         <activity
             android:name="android.view.inputmethod.ctstestapp.MainActivity"
+            android:theme="@style/AppTheme"
             android:exported="true"
             android:label="CtsInputMethodStandaloneTestActivity"
             android:windowSoftInputMode="stateAlwaysHidden"/>

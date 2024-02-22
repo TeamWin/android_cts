@@ -779,6 +779,10 @@ public final class MockIme extends InputMethodService {
         }
 
         getTracer().onCreate(() -> {
+
+            // TODO(b/309578419): Remove this when the MockIme can handle insets properly.
+            setTheme(R.style.MockImeTheme);
+
             super.onCreate();
             mHandlerThread.start();
             mHandlerThreadHandler = new Handler(mHandlerThread.getLooper());

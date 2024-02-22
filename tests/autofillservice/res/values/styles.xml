@@ -17,4 +17,11 @@
     <style name="MyAutofilledHighlight">
         <item name="android:autofilledHighlight">@drawable/my_drawable</item>
     </style>
+
+    <!--
+        TODO(b/309578419): Make activities handle insets properly and then remove this.
+    -->
+    <style name="OptOutEdgeToEdge">
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+    </style>
 </resources>
