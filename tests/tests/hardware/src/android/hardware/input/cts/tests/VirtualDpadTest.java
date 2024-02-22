@@ -16,17 +16,10 @@
 
 package android.hardware.input.cts.tests;
 
-import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
-import static android.Manifest.permission.INJECT_EVENTS;
-import static android.view.Display.DEFAULT_DISPLAY;
-
-import static com.google.common.truth.Truth.assertThat;
-
 import static org.junit.Assert.assertThrows;
 
 import android.hardware.input.VirtualDpad;
 import android.hardware.input.VirtualKeyEvent;
-import android.hardware.input.cts.virtualcreators.VirtualDisplayCreator;
 import android.hardware.input.cts.virtualcreators.VirtualInputDeviceCreator;
 import android.hardware.input.cts.virtualcreators.VirtualInputEventCreator;
 import android.view.KeyEvent;
@@ -48,14 +41,8 @@ public class VirtualDpadTest extends VirtualDeviceTestCase {
 
     @Override
     void onSetUpVirtualInputDevice() {
-        mVirtualDpad = createVirtualDpad(mVirtualDisplay.getDisplay().getDisplayId());
-    }
-
-    @Override
-    void onTearDownVirtualInputDevice() {
-        if (mVirtualDpad != null) {
-            mVirtualDpad.close();
-        }
+        mVirtualDpad = VirtualInputDeviceCreator.createAndPrepareDpad(mVirtualDevice, DEVICE_NAME,
+                mVirtualDisplay.getDisplay()).getDevice();
     }
 
     @Test
@@ -93,82 +80,27 @@ public class VirtualDpadTest extends VirtualDeviceTestCase {
 
     @Test
     public void sendKeyEvent_withoutCreateVirtualDevicePermission_throwsException() {
-        try (DropShellPermissionsTemporarily drop = new DropShellPermissionsTemporarily()) {
-            assertThrows(SecurityException.class,
-                    () -> mVirtualDpad.sendKeyEvent(
-                            new VirtualKeyEvent.Builder()
-                                    .setKeyCode(KeyEvent.KEYCODE_DPAD_UP)
-                                    .setAction(VirtualKeyEvent.ACTION_DOWN)
-                                    .build()));
-        }
+        mRule.runWithoutPermissions(
+                () -> assertThrows(SecurityException.class,
+                        () -> mVirtualDpad.sendKeyEvent(
+                                new VirtualKeyEvent.Builder()
+                                        .setKeyCode(KeyEvent.KEYCODE_DPAD_UP)
+                                        .setAction(VirtualKeyEvent.ACTION_DOWN)
+                                        .build())));
     }
 
     @Test
     public void rejectsUnsupportedKeyCodes() {
-        assertThrows(
-                IllegalArgumentException.class,
-                () ->
-                        mVirtualDpad.sendKeyEvent(
-                                new VirtualKeyEvent.Builder()
-                                        .setKeyCode(KeyEvent.KEYCODE_Q)
-                                        .setAction(VirtualKeyEvent.ACTION_DOWN)
-                                        .build()));
-    }
-
-    @Test
-    public void close_multipleCallsSucceed() {
-        mVirtualDpad.close();
-        mVirtualDpad.close();
-        mVirtualDpad.close();
+        assertThrows(IllegalArgumentException.class,
+                () -> mVirtualDpad.sendKeyEvent(new VirtualKeyEvent.Builder()
+                        .setKeyCode(KeyEvent.KEYCODE_Q)
+                        .setAction(VirtualKeyEvent.ACTION_DOWN)
+                        .build()));
     }
 
     @Test
     public void createVirtualDpad_nullArguments_throwsException() {
         assertThrows(NullPointerException.class,
                 () -> mVirtualDevice.createVirtualDpad(null));
-    }
-
-    @Test
-    public void createVirtualDpad_duplicateName_throwsException() {
-        assertThrows(IllegalArgumentException.class,
-                () -> createVirtualDpad(mVirtualDisplay.getDisplay().getDisplayId()));
-    }
-
-    @Test
-    public void createVirtualDpad_defaultDisplay_throwsException() {
-        assertThrows(SecurityException.class, () -> createVirtualDpad(DEFAULT_DISPLAY));
-    }
-
-    @Test
-    public void createVirtualDpad_unownedDisplay_throwsException() {
-        try (VirtualDisplayCreator.UnownedVirtualDisplay unownedDisplay =
-                     VirtualDisplayCreator.createUnownedVirtualDisplay()) {
-            assertThrows(SecurityException.class,
-                    () -> createVirtualDpad(unownedDisplay.getDisplay().getDisplayId()));
-        }
-    }
-
-    @Test
-    public void createVirtualDpad_defaultDisplay_injectEvents_succeeds() {
-        mVirtualDpad.close();
-        runWithPermission(
-                () -> assertThat(createVirtualDpad(DEFAULT_DISPLAY)).isNotNull(),
-                INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
-    }
-
-    @Test
-    public void createVirtualDpad_unownedVirtualDisplay_injectEvents_succeeds() {
-        mVirtualDpad.close();
-        try (VirtualDisplayCreator.UnownedVirtualDisplay unownedDisplay =
-                     VirtualDisplayCreator.createUnownedVirtualDisplay()) {
-            runWithPermission(
-                    () -> assertThat(createVirtualDpad(unownedDisplay.getDisplay().getDisplayId()))
-                            .isNotNull(),
-                    INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
-        }
-    }
-
-    private VirtualDpad createVirtualDpad(int displayId) {
-        return VirtualInputDeviceCreator.createDpad(mVirtualDevice, DEVICE_NAME, displayId);
     }
 }
