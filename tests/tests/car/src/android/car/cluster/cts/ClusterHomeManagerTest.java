@@ -15,7 +15,10 @@
  */
 package android.car.cluster.cts;
 
+import static android.car.CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION;
 import static android.car.feature.Flags.FLAG_CLUSTER_HEALTH_MONITORING;
+
+import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeTrue;
 
@@ -23,11 +26,17 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.car.Car;
+import android.car.CarAppFocusManager;
+import android.car.CarAppFocusManager.OnAppFocusOwnershipCallback;
 import android.car.cluster.ClusterHomeManager;
+import android.car.cluster.ClusterHomeManager.ClusterNavigationStateListener;
+import android.car.cluster.navigation.NavigationState.NavigationStateProto;
 import android.car.cts.utils.DumpUtils;
+import android.car.navigation.CarNavigationStatusManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
@@ -50,22 +59,46 @@ public final class ClusterHomeManagerTest {
     private static final String DUMP_TPL_COUNT = "mTrustedPresentationListenerCount";
     private static final String DUMP_CLUSTER_SURFACE = "mClusterActivitySurface";
     private static final String DUMP_CLUSTER_VISIBLE = "mClusterActivityVisible";
+    private static final String NAV_STATE_PROTO_BUNDLE_KEY = "navstate2";
+    private static final NavigationStateProto NAVIGATION_STATE_1 =
+            NavigationStateProto.newBuilder().setServiceStatus(
+                    NavigationStateProto.ServiceStatus.NORMAL).build();;
+    private static final NavigationStateProto NAVIGATION_STATE_2 =
+            NavigationStateProto.newBuilder().setServiceStatus(
+                    NavigationStateProto.ServiceStatus.REROUTING).build();
+    private static final Bundle NAVIGATION_STATE_BUNDLE_1 = new Bundle();
+    private static final Bundle NAVIGATION_STATE_BUNDLE_2 = new Bundle();
 
-    private final Instrumentation mInstrumentation =
-            InstrumentationRegistry.getInstrumentation();
+    static {
+        NAVIGATION_STATE_BUNDLE_1.putByteArray(
+                NAV_STATE_PROTO_BUNDLE_KEY, NAVIGATION_STATE_1.toByteArray());
+        NAVIGATION_STATE_BUNDLE_2.putByteArray(
+                NAV_STATE_PROTO_BUNDLE_KEY, NAVIGATION_STATE_2.toByteArray());
+    }
+
+    private final Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
     private final Context mContext = mInstrumentation.getContext();
     private final Context mTargetContext = mInstrumentation.getTargetContext();
     private final UiAutomation mUiAutomation = mInstrumentation.getUiAutomation();
     private final ComponentName mTestActivityName =
             new ComponentName(mTargetContext, ClusterHomeManagerTest.TestActivity.class);
+    private ClusterHomeManager mClusterHomeManager;
+    private CarAppFocusManager mCarAppFocusManager;
+    private CarNavigationStatusManager mCarNavigationStatusManager;
     private TestActivity mTestActivity;
 
     @Before
     public void setUp() {
+        mUiAutomation.adoptShellPermissionIdentity(
+                Car.PERMISSION_CAR_INSTRUMENT_CLUSTER_CONTROL,
+                Car.PERMISSION_CAR_MONITOR_CLUSTER_NAVIGATION_STATE,
+                Car.PERMISSION_CAR_NAVIGATION_MANAGER);
+
         Car car = Car.createCar(mContext);
-        ClusterHomeManager clusterHomeManager = car.getCarManager(ClusterHomeManager.class);
-        assumeTrue(clusterHomeManager != null);
-        mUiAutomation.adoptShellPermissionIdentity(Car.PERMISSION_CAR_INSTRUMENT_CLUSTER_CONTROL);
+        mClusterHomeManager = car.getCarManager(ClusterHomeManager.class);
+        assumeTrue(mClusterHomeManager != null);
+        mCarAppFocusManager = car.getCarManager(CarAppFocusManager.class);
+        mCarNavigationStatusManager = car.getCarManager(CarNavigationStatusManager.class);
     }
 
     @After
@@ -125,6 +158,75 @@ public final class ClusterHomeManagerTest {
                     .get(DUMP_CLUSTER_SURFACE);
             return monitoringSurface.equals("null");
         });
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.car.cluster.ClusterHomeManager#registerClusterNavigationStateListener",
+            "android.car.cluster.ClusterHomeManager#unregisterClusterNavigationStateListener"})
+    public void testRegisterAndUnregisterClusterNavigationStateListener() {
+        TestNavigationStateListener listener1 = new TestNavigationStateListener();
+        TestNavigationStateListener listener2 = new TestNavigationStateListener();
+        mClusterHomeManager.registerClusterNavigationStateListener(
+                mContext.getMainExecutor(), listener1);
+        mClusterHomeManager.registerClusterNavigationStateListener(
+                mContext.getMainExecutor(), listener2);
+        TestAppFocusCallback focusCallback = new TestAppFocusCallback();
+        mCarAppFocusManager.requestAppFocus(APP_FOCUS_TYPE_NAVIGATION, focusCallback);
+        focusCallback.waitForFocusGranted();
+
+        // Send the 1st navigation state.
+        mCarNavigationStatusManager.sendNavigationStateChange(NAVIGATION_STATE_BUNDLE_1);
+        // Both listeners should receive the 1st navigation state change.
+        PollingCheck.waitFor(TIMEOUT_MS,
+                () -> (listener1.getNavigationState().equals(NAVIGATION_STATE_1)
+                        && listener2.getNavigationState().equals(NAVIGATION_STATE_1)));
+
+        // Unregister listener1.
+        mClusterHomeManager.unregisterClusterNavigationStateListener(listener1);
+        // Send the 2nd navigation state.
+        mCarNavigationStatusManager.sendNavigationStateChange(NAVIGATION_STATE_BUNDLE_2);
+
+        // Only listener2 is expected to receive the new navigation state.
+        PollingCheck.waitFor(TIMEOUT_MS,
+                () -> (listener2.getNavigationState().equals(NAVIGATION_STATE_2)));
+        assertThat(listener1.getNavigationState()).isEqualTo(NAVIGATION_STATE_1);
+    }
+
+    private static class TestAppFocusCallback implements OnAppFocusOwnershipCallback {
+        private boolean mHasFocus = false;
+        @Override
+        public void onAppFocusOwnershipGranted(int appType) {
+            mHasFocus = true;
+        }
+
+        @Override
+        public void onAppFocusOwnershipLost(int appType) {
+            mHasFocus = false;
+        }
+
+        public void waitForFocusGranted() {
+            PollingCheck.waitFor(TIMEOUT_MS, () -> mHasFocus);
+        }
+    }
+
+    private static class TestNavigationStateListener implements ClusterNavigationStateListener {
+        private NavigationStateProto mReceivedSate = NavigationStateProto.getDefaultInstance();
+
+
+        public NavigationStateProto getNavigationState() {
+            return mReceivedSate;
+        }
+
+        @Override
+        public void onNavigationStateChanged(byte[] navigationState) {
+            try {
+                mReceivedSate = NavigationStateProto.parseFrom(navigationState);
+            } catch (Exception e) {
+                // This should never happen.
+                throw new AssertionError("Received an invalid byte stream ", e);
+            }
+        }
     }
 
     public static final class TestActivity extends Activity {
