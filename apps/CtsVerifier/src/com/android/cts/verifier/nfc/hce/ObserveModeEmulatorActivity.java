@@ -47,7 +47,7 @@ public class ObserveModeEmulatorActivity extends BaseEmulatorActivity {
         super.onResume();
         NfcDialogs.createHceTapReaderDialog(this,
                 getString(R.string.nfc_observe_mode_emulator_help)).show();
-        mAdapter.setTransactionAllowed(false);
+        mAdapter.setObserveModeEnabled(true);
         getPassButton().setEnabled(false);
     }
 

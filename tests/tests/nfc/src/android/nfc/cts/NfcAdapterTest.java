@@ -340,7 +340,7 @@ public class NfcAdapterTest {
             originalDefault = setDefaultPaymentService(CtsMyHostApduService.class);
             NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
             assumeTrue(adapter.isObserveModeSupported());
-            boolean result = adapter.setTransactionAllowed(true);
+            boolean result = adapter.setObserveModeEnabled(false);
             Assert.assertTrue(result);
         } finally {
             setDefaultPaymentService(originalDefault);
@@ -356,7 +356,7 @@ public class NfcAdapterTest {
             originalDefault = setDefaultPaymentService(CtsMyHostApduService.class);
             NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
             assumeTrue(adapter.isObserveModeSupported());
-            boolean result = adapter.setTransactionAllowed(false);
+            boolean result = adapter.setObserveModeEnabled(true);
             Assert.assertTrue(result);
         } finally {
             setDefaultPaymentService(originalDefault);
@@ -452,7 +452,7 @@ public class NfcAdapterTest {
             NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
 
             assumeTrue(adapter.isObserveModeSupported());
-            adapter.setTransactionAllowed(true);
+            adapter.setObserveModeEnabled(false);
             Assert.assertFalse(adapter.isObserveModeEnabled());
         } finally {
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
@@ -470,7 +470,7 @@ public class NfcAdapterTest {
             Assert.assertTrue(setDefaultWalletRoleHolder(mContext));
             NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
             assumeTrue(adapter.isObserveModeSupported());
-            adapter.setTransactionAllowed(false);
+            adapter.setObserveModeEnabled(true);
             Assert.assertTrue(adapter.isObserveModeEnabled());
         } finally {
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
