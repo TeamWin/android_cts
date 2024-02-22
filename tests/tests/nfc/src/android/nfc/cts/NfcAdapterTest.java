@@ -497,7 +497,6 @@ public class NfcAdapterTest {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_NFC_VENDOR_CMD)
     public void testSendVendorCmd() throws InterruptedException {
         CountDownLatch rspCountDownLatch = new CountDownLatch(1);
         CountDownLatch ntfCountDownLatch = new CountDownLatch(1);
@@ -509,11 +508,11 @@ public class NfcAdapterTest {
             nfcAdapter.registerNfcVendorNciCallback(
                     Executors.newSingleThreadExecutor(), cb);
 
-            // Send random payload with a vendor gid.
-            byte[] payload = new byte[100];
-            new Random().nextBytes(payload);
+            // Android GET_CAPS command
             int gid = 0xF;
             int oid = 0xC;
+            byte[] payload = new byte[1];
+            payload[0] = 0;
             nfcAdapter.sendVendorNciMessage(NfcAdapter.MESSAGE_TYPE_COMMAND, gid, oid, payload);
 
             // Wait for response.
