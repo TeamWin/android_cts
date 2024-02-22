@@ -74,6 +74,8 @@ public class Constants {
     public static final int PUT_MODE_FLAGS_TO_CHECK_SET_RESULT_ACTION_ID = 2;
     public static final int GRANT_FLAGS_SET_RESULT_ACTION_ID = 3;
     public static final int NO_ACTION_NEEDED_SET_RESULT_ACTION_ID = 4;
+    public static final int PUT_EXTRA_UNKNOWN_REMOVE_EXTRA_STREAM_SET_RESULT_ACTION_ID = 5;
+    public static final int PUT_NON_URI_EXTRA_STREAM_SET_RESULT_ACTION_ID = 6;
 
     public static final String IS_NEW_INTENT = "isNewIntent";
     public static final String IS_RESULT = "isResult";
@@ -84,6 +86,8 @@ public class Constants {
     public static final int READ_PERMISSION_URI_TYPE = 2;
     public static final String PUT_MODE_FLAGS = "putModeFlags";
     public static final String GRANT_MODE_FLAGS = "grantModeFlags";
+    public static final String RESULT_NON_URI_EXTRA_STREAM = "resultNonUriExtraStream";
+    public static final String RESULT_EXTRA_REFERRER_NAME = "resultExtraReferrerName";
 
     public static final String MODE_FLAGS_TO_CHECK = "modeFlags";
 
