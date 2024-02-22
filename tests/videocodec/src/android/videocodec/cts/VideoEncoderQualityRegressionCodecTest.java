@@ -16,14 +16,19 @@
 
 package android.videocodec.cts;
 
+import static android.media.MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR;
+import static android.media.MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR;
 import static android.mediav2.common.cts.CodecTestBase.ComponentClass.HARDWARE;
 import static android.mediav2.common.cts.CodecTestBase.areFormatsSupported;
 import static android.mediav2.common.cts.CodecTestBase.prepareParamList;
+import static android.videocodec.cts.VideoEncoderInput.BIRTHDAY_FULLHD_LANDSCAPE;
+import static android.videocodec.cts.VideoEncoderInput.getRawResource;
 
 import android.media.MediaFormat;
 import android.mediav2.common.cts.CodecEncoderTestBase;
 import android.mediav2.common.cts.CodecTestBase;
 import android.mediav2.common.cts.EncoderConfigParams;
+import android.mediav2.common.cts.RawResource;
 
 import com.android.compatibility.common.util.ApiTest;
 
@@ -36,6 +41,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * This test is to ensure no quality regression is seen from avc to hevc.
@@ -49,36 +55,56 @@ import java.util.List;
  */
 @RunWith(Parameterized.class)
 public class VideoEncoderQualityRegressionCodecTest extends VideoEncoderQualityRegressionTestBase {
+    private static final VideoEncoderInput.CompressedResource RES = BIRTHDAY_FULLHD_LANDSCAPE;
+    private static final int WIDTH = 1920;
+    private static final int HEIGHT = 1080;
+    protected static final int[] BIT_RATES =
+            {2000000, 4000000, 6000000, 8000000, 10000000, 12000000};
+    protected static final int[] BIT_RATE_MODES = {BITRATE_MODE_CBR, BITRATE_MODE_VBR};
+    protected static final int[] B_FRAMES = {0, 1};
+    private static final int FRAME_RATE = 30;
+    private static final int KEY_FRAME_INTERVAL = 1;
+    private static final int FRAME_LIMIT = 300;
     private static final List<Object[]> exhaustiveArgsList = new ArrayList<>();
 
-    @Parameterized.Parameters(name = "{index}_{0}_{2}")
+    private final int mBitRateMode;
+
+    @Parameterized.Parameters(name = "{index}_{0}_{4}")
     public static Collection<Object[]> input() {
+        RESOURCES.add(RES);
         for (int bitRateMode : BIT_RATE_MODES) {
-            exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_VIDEO_HEVC, bitRateMode,
+            exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_VIDEO_HEVC, RES, bitRateMode,
                     CodecEncoderTestBase.bitRateModeToString(bitRateMode)});
         }
         return prepareParamList(exhaustiveArgsList, true, false, true, false, HARDWARE);
     }
 
-    public VideoEncoderQualityRegressionCodecTest(String encoder, String mediaType, int bitRateMode,
+    public VideoEncoderQualityRegressionCodecTest(String encoder, String mediaType,
+            VideoEncoderInput.CompressedResource cRes, int bitRateMode,
             @SuppressWarnings("unused") String testLabel, String allTestParams) {
-        super(encoder, mediaType, bitRateMode, allTestParams);
+        super(encoder, mediaType, cRes, allTestParams);
+        mBitRateMode = bitRateMode;
     }
 
     @ApiTest(apis = {"android.media.MediaFormat#KEY_BITRATE",
             "android.media.MediaFormat#KEY_BITRATE_MODE"})
     @Test
     public void testQualityRegressionWrtAvc() throws IOException, InterruptedException {
+        RawResource res = getRawResource(mCRes);
         String[] mediaTypes = new String[]{MediaFormat.MIMETYPE_VIDEO_AVC, mMediaType};
+        VideoEncoderValidationTestBase[] testInstances =
+                new VideoEncoderValidationTestBase[mediaTypes.length];
         String[] encoderNames = new String[mediaTypes.length];
         List<EncoderConfigParams[]> cfgsUnion = new ArrayList<>();
         for (int i = 0; i < mediaTypes.length; i++) {
+            testInstances[i] = new VideoEncoderValidationTestBase(null, mediaTypes[i], null,
+                    mAllTestParams);
             EncoderConfigParams[] cfgsOfMediaType = new EncoderConfigParams[BIT_RATES.length];
             cfgsUnion.add(cfgsOfMediaType);
             ArrayList<MediaFormat> fmts = new ArrayList<>();
             for (int j = 0; j < cfgsOfMediaType.length; j++) {
-                cfgsOfMediaType[j] = getVideoEncoderCfgParams(mediaTypes[i], BIT_RATES[j],
-                        mBitRateMode, 0);
+                cfgsOfMediaType[j] = getVideoEncoderCfgParams(mediaTypes[i], WIDTH, HEIGHT,
+                        BIT_RATES[j], mBitRateMode, KEY_FRAME_INTERVAL, FRAME_RATE, B_FRAMES[0]);
                 fmts.add(cfgsOfMediaType[j].getFormat());
             }
             if (mediaTypes[i].equals(mMediaType)) {
@@ -93,6 +119,8 @@ public class VideoEncoderQualityRegressionCodecTest extends VideoEncoderQualityR
                 encoderNames[i] = encoders.get(0);
             }
         }
-        getQualityRegressionForCfgs(cfgsUnion, encoderNames, 0);
+        Predicate<Double> predicate = bdRate -> bdRate < 0d;
+        getQualityRegressionForCfgs(cfgsUnion, testInstances, encoderNames, res, FRAME_LIMIT,
+                FRAME_RATE, true, predicate);
     }
 }
