@@ -211,9 +211,8 @@ public class ComponentCallerTest {
         mContext.startActivity(intent);
 
         assertActivityWasInvoked();
-        assertEquals("Should return denied with "
-                        + modeFlagsToString(modeFlagsToCheck) + " because we have no access to"
-                        + " the content URI",
+        assertEquals("Should return denied with " + modeFlagsToString(modeFlagsToCheck)
+                        + " because we have no access to the content URI",
                 PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
     }
 
@@ -266,9 +265,8 @@ public class ComponentCallerTest {
         mContext.startActivity(intent);
 
         assertActivityWasInvoked();
-        assertEquals("Should return denied with "
-                        + modeFlagsToString(modeFlagsToCheck) + " because we have no access to"
-                        + " the content URI",
+        assertEquals("Should return denied with " + modeFlagsToString(modeFlagsToCheck)
+                        + " because we have no access to the content URI",
                 PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
     }
 
@@ -323,9 +321,8 @@ public class ComponentCallerTest {
         mContext.startActivity(intent);
 
         assertActivityWasInvoked();
-        assertEquals("Should return denied with "
-                        + modeFlagsToString(modeFlagsToCheck) + " because we have no access to"
-                        + " the content URI",
+        assertEquals("Should return denied with " + modeFlagsToString(modeFlagsToCheck)
+                        + " because we have no access to the content URI",
                 PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
     }
 
@@ -382,9 +379,8 @@ public class ComponentCallerTest {
         mContext.startActivity(intent);
 
         assertActivityWasInvoked();
-        assertEquals("Should return denied with "
-                        + modeFlagsToString(modeFlagsToCheck) + " because we have no access to"
-                        + " the content URI",
+        assertEquals("Should return denied with " + modeFlagsToString(modeFlagsToCheck)
+                        + " because we have no access to the content URI",
                 PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
     }
 
@@ -448,12 +444,13 @@ public class ComponentCallerTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.app.ComponentCaller#checkContentUriPermission"})
+    @ApiTest(apis = {"android.app.Activity#getInitialCaller",
+            "android.app.ComponentCaller#checkContentUriPermission"})
     @CddTest(requirements = {"4/C-0-2"})
     public void
-    testActivity_checkContentUriPermission_passingNonUriExtraStreamDoesNotAffectRetrievalOfExtras()
+    testActivityInitialCaller_checkContentUriPermission_passingNonUriExtraStreamDoesNotAffectRetrievalOfExtras()
             throws Exception {
-        Intent intent = getTryToRetrieveExtrasTestIntent();
+        Intent intent = getTryToRetrieveExtrasTestIntent(HELPER_APP_INITIAL_CALLER_ACTIVITY);
         String nonUriExtraStream = "non-uri";
         String referrerName = "ComponentCaller";
         intent.putExtra(Intent.EXTRA_STREAM, nonUriExtraStream);
@@ -692,9 +689,8 @@ public class ComponentCallerTest {
         mContext.startActivity(newIntent);
 
         assertActivityWasInvoked();
-        assertEquals("Should return denied with "
-                        + modeFlagsToString(modeFlagsToCheck) + " because we have no access to"
-                        + " the content URI",
+        assertEquals("Should return denied with " + modeFlagsToString(modeFlagsToCheck)
+                        + " because we have no access to the content URI",
                 PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
     }
 
@@ -758,6 +754,274 @@ public class ComponentCallerTest {
         assertActivityWasInvoked();
         assertEquals("Should return denied because we don't have the write permission",
                 PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getCurrentCaller",
+            "android.app.Activity#onNewIntent(Intent,ComponentCaller)",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityNewIntentCaller_checkContentUriPermission_extraStreamContentUri_noPermission(
+            @TestParameter ModeFlags modeFlagsToCheck,
+            @TestParameter NewIntentCallerActivity newIntentCallerActivity) throws Exception {
+        // The first time we launch the activity, the URI passed is supposed return a granted
+        // permission result. This is to verify the new intent caller is correct.
+        Intent intent = getSendBroadcastTestIntent(URI_IN_EXTRA_STREAM_LOCATION_ID,
+                modeFlagsToCheck, newIntentCallerActivity.mComponent);
+        intent.putExtra(Intent.EXTRA_STREAM, CONTENT_URI_READ_PERMISSION);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+
+        TestResults.reset();
+        Intent newIntent = getSendBroadcastTestIntent(URI_IN_EXTRA_STREAM_LOCATION_ID,
+                modeFlagsToCheck, newIntentCallerActivity.mComponent);
+        newIntent.putExtra(Intent.EXTRA_STREAM, CONTENT_URI_NO_PERMISSION);
+
+        mContext.startActivity(newIntent);
+
+        assertActivityWasInvoked();
+        assertEquals("Should return denied with " + modeFlagsToString(modeFlagsToCheck)
+                        + " because we have no access to the content URI",
+                PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getCurrentCaller",
+            "android.app.Activity#onNewIntent(Intent,ComponentCaller)",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityNewIntentCaller_checkContentUriPermission_extraStreamContentUri_hasRead(
+            @TestParameter NewIntentCallerActivity newIntentCallerActivity) throws Exception {
+        // The first time we launch the activity, the URI passed is supposed return a denied
+        // permission result. This is to verify the new intent caller is correct.
+        Intent intent = getSendBroadcastTestIntent(URI_IN_EXTRA_STREAM_LOCATION_ID, ModeFlags.READ,
+                newIntentCallerActivity.mComponent);
+        intent.putExtra(Intent.EXTRA_STREAM, CONTENT_URI_NO_PERMISSION);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+
+        TestResults.reset();
+        Intent newIntent = getSendBroadcastTestIntent(URI_IN_EXTRA_STREAM_LOCATION_ID,
+                ModeFlags.READ, newIntentCallerActivity.mComponent);
+        newIntent.putExtra(Intent.EXTRA_STREAM, CONTENT_URI_READ_PERMISSION);
+
+        mContext.startActivity(newIntent);
+
+        assertActivityWasInvoked();
+        assertEquals("Should return granted because we have the read permission",
+                PERMISSION_GRANTED, TestResults.sCheckContentUriPermissionRes);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getCurrentCaller",
+            "android.app.Activity#onNewIntent(Intent,ComponentCaller)",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityNewIntentCaller_checkContentUriPermission_extraStreamContentUri_hasReadButNoWrite(
+            @TestParameter(valuesProvider = WriteModeFlagsProvider.class)
+            ModeFlags modeFlagsToCheck,
+            @TestParameter NewIntentCallerActivity newIntentCallerActivity) throws Exception {
+        // The first time we launch the activity, the URI passed is supposed return a granted
+        // permission result. This is to verify the new intent caller is correct.
+        Intent intent = getSendBroadcastTestIntent(URI_IN_EXTRA_STREAM_LOCATION_ID, ModeFlags.READ,
+                newIntentCallerActivity.mComponent);
+        intent.putExtra(Intent.EXTRA_STREAM, CONTENT_URI_READ_PERMISSION);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+
+        TestResults.reset();
+        Intent newIntent = getSendBroadcastTestIntent(URI_IN_EXTRA_STREAM_LOCATION_ID,
+                modeFlagsToCheck, newIntentCallerActivity.mComponent);
+        newIntent.putExtra(Intent.EXTRA_STREAM, CONTENT_URI_READ_PERMISSION);
+
+        mContext.startActivity(newIntent);
+
+        assertActivityWasInvoked();
+        assertEquals("Should return denied because we don't have the write permission",
+                PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getCurrentCaller",
+            "android.app.Activity#onNewIntent(Intent,ComponentCaller)",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityNewIntentCaller_checkContentUriPermission_arrayListExtraStreamsContentUri_noPermission(
+            @TestParameter ModeFlags modeFlagsToCheck,
+            @TestParameter NewIntentCallerActivity newIntentCallerActivity) throws Exception {
+        // The first time we launch the activity, the URI passed is supposed return a granted
+        // permission result. This is to verify the new intent caller is correct.
+        Intent intent = getSendBroadcastTestIntent(URI_IN_ARRAY_LIST_EXTRA_STREAMS_LOCATION_ID,
+                modeFlagsToCheck, newIntentCallerActivity.mComponent);
+        ArrayList<Uri> uris = new ArrayList<>();
+        uris.add(CONTENT_URI_READ_PERMISSION);
+        intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+
+        TestResults.reset();
+        Intent newIntent = getSendBroadcastTestIntent(URI_IN_ARRAY_LIST_EXTRA_STREAMS_LOCATION_ID,
+                modeFlagsToCheck, newIntentCallerActivity.mComponent);
+        ArrayList<Uri> newUris = new ArrayList<>();
+        newUris.add(CONTENT_URI_NO_PERMISSION);
+        newIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, newUris);
+
+        mContext.startActivity(newIntent);
+
+        assertActivityWasInvoked();
+        assertEquals("Should return denied with " + modeFlagsToString(modeFlagsToCheck)
+                        + " because we have no access to the content URI",
+                PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getCurrentCaller",
+            "android.app.Activity#onNewIntent(Intent,ComponentCaller)",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityNewIntentCaller_checkContentUriPermission_arrayListExtraStreamsContentUri_hasRead(
+            @TestParameter NewIntentCallerActivity newIntentCallerActivity) throws Exception {
+        // The first time we launch the activity, the URI passed is supposed return a denied
+        // permission result. This is to verify the new intent caller is correct.
+        Intent intent = getSendBroadcastTestIntent(URI_IN_ARRAY_LIST_EXTRA_STREAMS_LOCATION_ID,
+                ModeFlags.READ, newIntentCallerActivity.mComponent);
+        ArrayList<Uri> uris = new ArrayList<>();
+        uris.add(CONTENT_URI_NO_PERMISSION);
+        intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+
+        TestResults.reset();
+        Intent newIntent = getSendBroadcastTestIntent(URI_IN_ARRAY_LIST_EXTRA_STREAMS_LOCATION_ID,
+                ModeFlags.READ, newIntentCallerActivity.mComponent);
+        ArrayList<Uri> newUris = new ArrayList<>();
+        newUris.add(CONTENT_URI_READ_PERMISSION);
+        newIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, newUris);
+
+        mContext.startActivity(newIntent);
+
+        assertActivityWasInvoked();
+        assertEquals("Should return granted because we have the read permission",
+                PERMISSION_GRANTED, TestResults.sCheckContentUriPermissionRes);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getCurrentCaller",
+            "android.app.Activity#onNewIntent(Intent,ComponentCaller)",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityNewIntentCaller_checkContentUriPermission_arrayListExtraStreamsContentUri_hasReadButNoWrite(
+            @TestParameter(valuesProvider = WriteModeFlagsProvider.class)
+            ModeFlags modeFlagsToCheck,
+            @TestParameter NewIntentCallerActivity newIntentCallerActivity) throws Exception {
+        // The first time we launch the activity, the URI passed is supposed return a granted
+        // permission result. This is to verify the new intent caller is correct.
+        Intent intent = getSendBroadcastTestIntent(URI_IN_ARRAY_LIST_EXTRA_STREAMS_LOCATION_ID,
+                ModeFlags.READ, newIntentCallerActivity.mComponent);
+        ArrayList<Uri> uris = new ArrayList<>();
+        uris.add(CONTENT_URI_READ_PERMISSION);
+        intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+
+        TestResults.reset();
+        Intent newIntent = getSendBroadcastTestIntent(URI_IN_ARRAY_LIST_EXTRA_STREAMS_LOCATION_ID,
+                modeFlagsToCheck, newIntentCallerActivity.mComponent);
+        ArrayList<Uri> newUris = new ArrayList<>();
+        newUris.add(CONTENT_URI_READ_PERMISSION);
+        newIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, newUris);
+
+        mContext.startActivity(newIntent);
+
+        assertActivityWasInvoked();
+        assertEquals("Should return denied because we don't have the write permission",
+                PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getCurrentCaller",
+            "android.app.Activity#onNewIntent(Intent,ComponentCaller)",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityNewIntentCaller_checkContentUriPermission_unknownExtraContentUri_throwsIllegalArgumentException(
+            @TestParameter ModeFlags modeFlagsToCheck,
+            @TestParameter NewIntentCallerActivity newIntentCallerActivity) throws Exception {
+        // The first time we launch the activity, the URI passed is supposed return a denied
+        // permission result. This is to verify the new intent caller is correct.
+        Intent intent = getSendBroadcastTestIntent(URI_IN_EXTRA_STREAM_LOCATION_ID,
+                modeFlagsToCheck, newIntentCallerActivity.mComponent);
+        intent.putExtra(Intent.EXTRA_STREAM, CONTENT_URI_NO_PERMISSION);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+
+        TestResults.reset();
+        Intent newIntent = getSendBroadcastTestIntent(URI_IN_EXTRA_UNKNOWN_LOCATION_ID,
+                modeFlagsToCheck, newIntentCallerActivity.mComponent);
+        newIntent.putExtra(EXTRA_UNKNOWN, CONTENT_URI_NO_PERMISSION);
+
+        mContext.startActivity(newIntent);
+
+        assertActivityWasInvoked();
+        assertTrue("Should throw an IllegalArgumentException for an unknown EXTRA",
+                TestResults.sIsIllegalArgumentExceptionCaught);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getCurrentCaller",
+            "android.app.Activity#onNewIntent(Intent,ComponentCaller)",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityNewIntentCaller_checkContentUriPermission_passingNonUriExtraStreamDoesNotAffectRetrievalOfExtras(
+            @TestParameter NewIntentCallerActivity newIntentCallerActivity) throws Exception {
+        // Notice that the values of EXTRA_STREAM and EXTRA_REFERRER_NAME are different between the
+        // first and the second launch. This is to verify the call into onNewIntent does not affect
+        // retrieval of extras.
+        Intent intent = getTryToRetrieveExtrasTestIntent(newIntentCallerActivity.mComponent);
+        String referrerName = "ComponentCaller1";
+        intent.putExtra(Intent.EXTRA_STREAM, CONTENT_URI_NO_PERMISSION);
+        intent.putExtra(Intent.EXTRA_REFERRER_NAME, referrerName);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+
+        TestResults.reset();
+        Intent newIntent = getTryToRetrieveExtrasTestIntent(newIntentCallerActivity.mComponent);
+        String nonUriExtraStream = "non-uri";
+        String newReferrerName = "ComponentCaller2";
+        newIntent.putExtra(Intent.EXTRA_STREAM, nonUriExtraStream);
+        newIntent.putExtra(Intent.EXTRA_REFERRER_NAME, newReferrerName);
+
+        mContext.startActivity(newIntent);
+
+        assertActivityWasInvoked();
+        assertEquals("Passing a non-URI item as EXTRA_STREAM should not affect the retrieval of"
+                + " EXTRA_STREAM", nonUriExtraStream, TestResults.sExtraStreamString);
+        assertEquals("Passing a non-URI item as EXTRA_STREAM should not affect the retrieval of"
+                        + " other extras, such as EXTRA_REFERRER_NAME",
+                newReferrerName, TestResults.sReferrerName);
     }
 
     @Test
@@ -1172,9 +1436,9 @@ public class ComponentCallerTest {
         return intent;
     }
 
-    private Intent getTryToRetrieveExtrasTestIntent() {
+    private Intent getTryToRetrieveExtrasTestIntent(ComponentName component) {
         Intent intent = new Intent();
-        intent.setComponent(HELPER_APP_INITIAL_CALLER_ACTIVITY);
+        intent.setComponent(component);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT
                 | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
         intent.putExtra(TEST_ACTION_ID, TRY_TO_RETRIEVE_EXTRA_STREAM_REFERRER_NAME);
