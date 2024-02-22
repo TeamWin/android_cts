@@ -278,7 +278,7 @@ public final class CarPowerTestService extends Service {
                 }
 
                 completionType = tokens[2];
-                Log.i(TAG, "Get listener command completion type: " + listenerName);
+                Log.i(TAG, "Get listener command completion type: " + completionType);
                 try {
                     withCompletion = isListenerWithCompletion(completionType);
                 } catch (IllegalArgumentException e) {
@@ -295,7 +295,7 @@ public final class CarPowerTestService extends Service {
                     Log.i(TAG, e.getMessage());
                     break;
                 }
-                Log.i(TAG, "expectedStates: \n" + expectedStates);
+                Log.i(TAG, "expectedStates: " + expectedStates);
 
                 try {
                     boolean statesMatchExpected = listenerStatesMatchExpected(listener,
@@ -307,6 +307,7 @@ public final class CarPowerTestService extends Service {
                                 listenerWithCompletion.completablePowerStateChangeFutureIsValid();
                         statesMatchExpected = statesMatchExpected && futureIsValid;
                     }
+                    Log.i(TAG, "statesMatchExpected: " + statesMatchExpected);
                     mResultBuf.write(String.valueOf(statesMatchExpected));
                 } catch (InterruptedException e) {
                     Log.i(TAG, "Getting listener states timed out");
