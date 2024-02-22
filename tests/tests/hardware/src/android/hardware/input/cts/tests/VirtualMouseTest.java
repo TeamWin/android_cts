@@ -24,13 +24,14 @@ import android.hardware.input.VirtualMouse;
 import android.hardware.input.VirtualMouseButtonEvent;
 import android.hardware.input.VirtualMouseRelativeEvent;
 import android.hardware.input.VirtualMouseScrollEvent;
-import android.hardware.input.cts.DefaultPointerSpeedRule;
 import android.hardware.input.cts.virtualcreators.VirtualInputDeviceCreator;
 import android.hardware.input.cts.virtualcreators.VirtualInputEventCreator;
 import android.view.MotionEvent;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.cts.input.DefaultPointerSpeedRule;
 
 import org.junit.Rule;
 import org.junit.Test;

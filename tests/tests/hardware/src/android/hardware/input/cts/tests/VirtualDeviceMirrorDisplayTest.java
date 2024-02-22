@@ -36,7 +36,6 @@ import android.hardware.input.VirtualStylus;
 import android.hardware.input.VirtualStylusMotionEvent;
 import android.hardware.input.VirtualTouchEvent;
 import android.hardware.input.VirtualTouchscreen;
-import android.hardware.input.cts.DefaultPointerSpeedRule;
 import android.hardware.input.cts.virtualcreators.VirtualInputDeviceCreator;
 import android.hardware.input.cts.virtualcreators.VirtualInputEventCreator;
 import android.platform.test.annotations.RequiresFlagsEnabled;
@@ -51,6 +50,8 @@ import android.virtualdevice.cts.common.VirtualDeviceRule;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.cts.input.DefaultPointerSpeedRule;
 
 import org.junit.Rule;
 import org.junit.Test;
