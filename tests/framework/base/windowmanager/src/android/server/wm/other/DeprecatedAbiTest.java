@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.activity;
+package android.server.wm.other;
 
 import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.UiDeviceUtils.pressBackButton;

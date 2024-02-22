@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm.window;
+package android.server.wm.activity;
 
 import static org.junit.Assert.assertThat;
 

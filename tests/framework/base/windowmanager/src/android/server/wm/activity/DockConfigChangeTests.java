@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.other;
+package android.server.wm.activity;
 
 import static android.content.res.Configuration.UI_MODE_TYPE_DESK;
 import static android.content.res.Configuration.UI_MODE_TYPE_MASK;

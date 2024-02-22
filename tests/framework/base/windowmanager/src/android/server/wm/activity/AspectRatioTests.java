@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.window;
+package android.server.wm.activity;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.server.wm.app.Components.MAX_ASPECT_RATIO_ACTIVITY;

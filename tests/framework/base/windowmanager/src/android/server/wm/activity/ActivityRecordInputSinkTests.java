@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.window;
+package android.server.wm.activity;
 
 import static android.server.wm.WindowManagerState.STATE_PAUSED;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
@@ -50,7 +50,7 @@ public class ActivityRecordInputSinkTests extends ActivityManagerTestBase {
             android.server.wm.second.Components.class.getPackage().getName();
 
     private static final ComponentName TEST_ACTIVITY =
-            new ComponentName(APP_SELF, "android.server.wm.window.ActivityRecordInputSinkTestsActivity");
+            new ComponentName(APP_SELF, "android.server.wm.activity.ActivityRecordInputSinkTestsActivity");
 
     private static final ComponentName OVERLAY_IN_SAME_UID =
             Components.TranslucentFloatingActivity.getComponent(APP_SELF);

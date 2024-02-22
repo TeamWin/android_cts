@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.am;
+package android.server.wm.activity;
 
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ShellCommandHelper.executeShellCommand;

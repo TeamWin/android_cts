@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.activity;
+package android.server.wm.insets;
 
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN;
@@ -25,7 +25,7 @@ import android.platform.test.annotations.Presubmit;
 import org.junit.Test;
 
 @Presubmit
-public class ForceRelayoutSdk29Test extends ForceRelayoutTestBase {
+public class ForceRelayoutTest extends ForceRelayoutTestBase {
 
     @Test
     public void testNoRelayoutWhenInsetsChange_adjustPan() throws Throwable {
@@ -40,8 +40,8 @@ public class ForceRelayoutSdk29Test extends ForceRelayoutTestBase {
     }
 
     @Test
-    public void testRelayoutWhenInsetsChange_adjustResize() throws Throwable {
+    public void testNoRelayoutWhenInsetsChange_adjustResize() throws Throwable {
         testRelayoutWhenInsetsChange(
-                true /* expectRelayoutWhenInsetsChange */, SOFT_INPUT_ADJUST_RESIZE);
+                false /* expectRelayoutWhenInsetsChange */, SOFT_INPUT_ADJUST_RESIZE);
     }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.activity;
+package android.server.wm.other;
 
 import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.app.Components.HOST_ACTIVITY;
@@ -150,7 +150,7 @@ public class AnrTests extends ActivityManagerTestBase {
             mWmState.computeState();
             final WindowManagerState.Task hostActivityTask =
                     mWmState.getTaskByActivity(new ComponentName("android.server.wm.cts",
-                            "android.server.wm.activity.HostActivity"));
+                            "android.server.wm.other.HostActivity"));
             mTouchHelper.tapOnTaskCenterAsync(hostActivityTask);
             clickCloseAppOnAnrDialog("android.server.wm.app");
         } catch (InterruptedException ignored) {

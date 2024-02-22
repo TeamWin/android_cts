@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.activity;
+package android.server.wm.other;
 
 import static android.server.wm.app.Components.KEEP_CLEAR_RECTS_ACTIVITY;
 import static android.server.wm.app.Components.KEEP_CLEAR_RECTS_ACTIVITY2;

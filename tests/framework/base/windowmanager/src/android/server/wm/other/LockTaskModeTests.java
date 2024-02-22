@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.activity;
+package android.server.wm.other;
 
 import static android.app.ActivityManager.LOCK_TASK_MODE_LOCKED;
 import static android.app.ActivityManager.LOCK_TASK_MODE_NONE;
