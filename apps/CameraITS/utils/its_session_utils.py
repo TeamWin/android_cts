@@ -772,7 +772,7 @@ class ItsSession(object):
           f'Invalid response from command{cmd[_CMD_NAME_STR]}')
     return data[_OBJ_VALUE_STR]
 
-  def do_preview_recording(self, video_size, duration, stabilize,
+  def do_preview_recording(self, video_size, duration, stabilize, ois,
                            zoom_ratio=None, ae_target_fps_min=None,
                            ae_target_fps_max=None, hlg10_enabled=False):
     """Issue a preview request and read back the preview recording object.
@@ -786,6 +786,7 @@ class ItsSession(object):
       video_size: str; Preview resolution at which to record. ex. "1920x1080"
       duration: int; The time in seconds for which the video will be recorded.
       stabilize: boolean; Whether the preview should be stabilized or not
+      ois: boolean; Whether the preview should be optically stabilized or not
       zoom_ratio: float; static zoom ratio. None if default zoom
       ae_target_fps_min: int; CONTROL_AE_TARGET_FPS_RANGE min. Set if not None
       ae_target_fps_max: int; CONTROL_AE_TARGET_FPS_RANGE max. Set if not None
@@ -800,6 +801,7 @@ class ItsSession(object):
         'videoSize': video_size,
         'recordingDuration': duration,
         'stabilize': stabilize,
+        'ois': ois,
         'hlg10Enabled': hlg10_enabled,
     }
     if zoom_ratio:
@@ -842,7 +844,8 @@ class ItsSession(object):
         _CAMERA_ID_STR: self._camera_id,
         'videoSize': video_size,
         'recordingDuration': 0,  # for interoperability
-        'stabilize': stabilize
+        'stabilize': stabilize,
+        'ois': False
     }
     zoom_start, zoom_end, step_size, step_duration = sweep_zoom
     if (not self.zoom_ratio_within_range(zoom_start) or
@@ -895,12 +898,14 @@ class ItsSession(object):
         'videoSize': video_size,
         'recordingDuration': 0,  # set to 0 to avoid JSONException
         'stabilize': stabilize,
+        'ois': False,
         'threeARegionDuration': three_a_region_duration
     }
 
     cmd['threeARegionStart'] = three_a_regions['threeARegionStart']
     cmd['threeARegionChange'] = three_a_regions['threeARegionChange']
     cmd['threeARegionEnd'] = three_a_regions['threeARegionEnd']
+    cmd['hlg10Enabled'] = False
     if ae_target_fps_min and ae_target_fps_max:
       cmd['aeTargetFpsMin'] = ae_target_fps_min
       cmd['aeTargetFpsMax'] = ae_target_fps_max

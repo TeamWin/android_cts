@@ -34,8 +34,8 @@ _VIDEO_DELAY_TIME = 5.5  # seconds
 _VIDEO_DURATION = 5.5  # seconds
 
 
-def collect_data(cam, tablet_device, preview_size,
-                 stabilize, rot_rig, fps_range=None, hlg10=False):
+def collect_data(cam, tablet_device, preview_size, stabilize,
+                 ois, rot_rig, fps_range=None, hlg10=False):
   """Capture a new set of data from the device.
 
   Captures camera preview frames while the user is moving the device in
@@ -45,7 +45,8 @@ def collect_data(cam, tablet_device, preview_size,
     cam: camera object
     tablet_device: boolean; based on config file
     preview_size: str; preview stream resolution. ex. '1920x1080'
-    stabilize: boolean; whether preview stabilization is on
+    stabilize: boolean; whether preview stabilization is ON
+    ois: boolean; whether optical image stabilization is ON
     rot_rig: dict with 'cntl' and 'ch' defined
     fps_range: list; target fps range.
     hlg10: boolean; whether to capture hlg10 output
@@ -89,7 +90,7 @@ def collect_data(cam, tablet_device, preview_size,
   min_fps = fps_range[0] if (fps_range is not None) else None
   max_fps = fps_range[1] if (fps_range is not None) else None
   recording_obj = cam.do_preview_recording(
-      preview_size, _VIDEO_DURATION, stabilize, ae_target_fps_min=min_fps,
+      preview_size, _VIDEO_DURATION, stabilize, ois, ae_target_fps_min=min_fps,
       ae_target_fps_max=max_fps, hlg10_enabled=hlg10)
   logging.debug('Recorded output path: %s', recording_obj['recordedOutputPath'])
   logging.debug('Tested quality: %s', recording_obj['quality'])
