@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.hardware.input.cts
+package com.android.cts.input
 
 import android.content.Context
 import android.hardware.input.InputManager
