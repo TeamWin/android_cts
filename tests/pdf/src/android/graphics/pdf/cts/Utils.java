@@ -418,28 +418,6 @@ class Utils {
     }
 
     /**
-     * Run a runnable and expect an exception to a certain type.
-     *
-     * @param r             The {@link Invokable} to run
-     * @param expectedClass The expected exception type
-     */
-    static void verifyException(@NonNull Invokable r,
-            @NonNull Class<? extends Exception> expectedClass) {
-        try {
-            r.run();
-        } catch (Exception e) {
-            if (e.getClass().isAssignableFrom(expectedClass)) {
-                return;
-            } else {
-                Log.e(LOG_TAG, "Incorrect exception", e);
-                fail("Expected: " + expectedClass.getName() + ", got: " + e.getClass().getName());
-            }
-        }
-
-        fail("Expected to have " + expectedClass.getName() + " exception thrown");
-    }
-
-    /**
      * Calculate the area associated by the bounds of {@link Rect} present inside the match Rects
      *
      * @param matchRectList List of {@link  android.graphics.pdf.models.PageMatchBounds}
@@ -574,12 +552,5 @@ class Utils {
         }
 
         return probes;
-    }
-
-    /**
-     * A runnable that can throw an exception.
-     */
-    interface Invokable {
-        void run() throws Exception;
     }
 }
