@@ -7278,7 +7278,8 @@ public class TelephonyManagerTest {
     @RequiresFlagsEnabled(android.permission.flags.Flags.FLAG_GET_EMERGENCY_ROLE_HOLDER_API_ENABLED)
     @ApiTest(apis = {"android.telephony.TelephonyManager#getEmergencyAssistancePackage"})
     public void testGetEmergencyAssistancePackage() {
-        if (ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+        if (mTelephonyManager.isVoiceCapable()
+            && ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.isEmergencyAssistanceEnabled())) {
             assertNotNull(ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                             (tm) -> tm.getEmergencyAssistancePackage()));
