@@ -37,7 +37,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityManager;
-import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -115,8 +114,6 @@ public class ExtensionRearDisplayPresentationTest extends WindowManagerJetpackTe
     private List<Integer> mSessionStateStatusValues;
 
     private final Context mInstrumentationContext = getInstrumentation().getTargetContext();
-    private final KeyguardManager mKeyguardManager = mInstrumentationContext.getSystemService(
-            KeyguardManager.class);
     private final DeviceStateManager mDeviceStateManager = mInstrumentationContext
             .getSystemService(DeviceStateManager.class);
     private final DisplayManager mDisplayManager = mInstrumentationContext
@@ -169,19 +166,15 @@ public class ExtensionRearDisplayPresentationTest extends WindowManagerJetpackTe
 
     @After
     @Override
-    public void tearDown() {
+    public void tearDown() throws Throwable {
         super.tearDown();
         mDeviceStateManager.unregisterCallback(this);
         if (mWindowAreaComponent != null) {
             mWindowAreaComponent.removeRearDisplayPresentationStatusListener(mStatusListener);
-            try {
                 DeviceStateUtils.runWithControlDeviceStatePermission(
                         mDeviceStateManager::cancelStateRequest);
                 DeviceStateUtils.runWithControlDeviceStatePermission(
                         mDeviceStateManager::cancelBaseStateOverride);
-            } catch (Throwable t) {
-                throw new RuntimeException(t);
-            }
         }
     }
 
@@ -236,7 +229,7 @@ public class ExtensionRearDisplayPresentationTest extends WindowManagerJetpackTe
      * {@link WindowAreaComponent#endRearDisplayPresentationSession()}. Verifies that the
      * {@link Consumer} that is provided when calling
      * {@link WindowAreaComponent#startRearDisplayPresentationSession} receives the
-     * {@link WindowAreaComponent#SESSION_STATE_ACTIVE when starting the session and
+     * {@link WindowAreaComponent#SESSION_STATE_ACTIVE} when starting the session and
      * {@link WindowAreaComponent#SESSION_STATE_INACTIVE} when calling
      * {@link WindowAreaComponent#endRearDisplayPresentationSession()}.
      *

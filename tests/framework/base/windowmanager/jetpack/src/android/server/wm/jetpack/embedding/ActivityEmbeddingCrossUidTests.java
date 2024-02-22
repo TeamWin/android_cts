@@ -87,7 +87,7 @@ public class ActivityEmbeddingCrossUidTests extends ActivityEmbeddingTestBase {
 
     @Override
     @After
-    public void tearDown() {
+    public void tearDown() throws Throwable {
         super.tearDown();
         final ActivityManager am = mContext.getSystemService(ActivityManager.class);
         NestedShellPermission.run(() -> am.forceStopPackage("android.server.wm.jetpack.second"));

@@ -347,7 +347,7 @@ public class ExtensionsUtil {
     }
 
     /**
-     * Returns the subset of {@param windowLayoutInfo} display features that are shared by the
+     * Returns the subset of {@code windowLayoutInfo} display features that are shared by the
      * activity bounds in the current orientation and the activity bounds in the other orientation.
      */
     private static List<DisplayFeature> getMutualDisplayFeatures(
