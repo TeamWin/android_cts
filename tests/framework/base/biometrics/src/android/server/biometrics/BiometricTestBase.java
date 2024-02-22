@@ -17,8 +17,8 @@
 package android.server.biometrics;
 
 import static android.os.PowerManager.FULL_WAKE_LOCK;
-import static android.server.biometrics.util.SensorStates.SensorState;
-import static android.server.biometrics.util.SensorStates.UserState;
+import static android.server.biometrics.SensorStates.SensorState;
+import static android.server.biometrics.SensorStates.UserState;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -52,11 +52,6 @@ import android.os.Looper;
 import android.os.PowerManager;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
-import android.server.biometrics.util.BiometricCallbackHelper;
-import android.server.biometrics.util.BiometricServiceState;
-import android.server.biometrics.util.SensorStates;
-import android.server.biometrics.util.TestSessionList;
-import android.server.biometrics.util.Utils;
 import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.TestJournalProvider.TestJournal;
 import android.server.wm.UiDeviceUtils;

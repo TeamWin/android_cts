@@ -20,7 +20,6 @@ import android.app.Activity;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.Bundle;
 import android.os.CancellationSignal;
-import android.server.biometrics.fingerprint.util.FingerprintCallbackHelper;
 
 import androidx.annotation.Nullable;
 
