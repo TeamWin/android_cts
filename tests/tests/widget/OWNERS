@@ -2,3 +2,5 @@
 aelias@google.com
 mount@google.com
 adamp@google.com
+# RemoteViews related
+include /tests/tests/appwidget/OWNERS
