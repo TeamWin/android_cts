@@ -21,6 +21,8 @@ import static android.telecom.cts.apps.TelecomTestApp.MANAGED_APP_CN;
 import static android.telecom.cts.apps.TelecomTestApp.MANAGED_APP_ID;
 import static android.telecom.cts.apps.TelecomTestApp.MANAGED_APP_LABEL;
 
+import static junit.framework.Assert.assertNotNull;
+
 import android.content.Context;
 import android.graphics.Color;
 import android.net.Uri;
@@ -44,7 +46,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * BaseAppVerifier should be extended by any test class that wants to bind to the test apps in the
@@ -61,9 +67,10 @@ public class BaseAppVerifier {
      /  ManagedConnectionServiceApp - The PhoneAccountHandle and PhoneAccount must reside in the
      /  CTS test process.
      /***********************************************************/
-    public PhoneAccountHandle mManagedHandle =
+    public static final PhoneAccountHandle MANAGED_HANDLE_1 =
             new PhoneAccountHandle(MANAGED_APP_CN, MANAGED_APP_ID);
-    public PhoneAccount mManagedAccount = PhoneAccount.builder(mManagedHandle, MANAGED_APP_LABEL)
+    private static final PhoneAccount MANAGED_DEFAULT_ACCOUNT_1 =
+            PhoneAccount.builder(MANAGED_HANDLE_1, MANAGED_APP_LABEL)
             .setAddress(Uri.parse(MANAGED_ADDRESS))
             .setSubscriptionAddress(Uri.parse(MANAGED_ADDRESS))
             .setCapabilities(PhoneAccount.CAPABILITY_VIDEO_CALLING
@@ -73,6 +80,26 @@ public class BaseAppVerifier {
             .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
             .addSupportedUriScheme(PhoneAccount.SCHEME_VOICEMAIL)
             .build();
+
+    public static final PhoneAccountHandle MANAGED_HANDLE_2 =
+            new PhoneAccountHandle(MANAGED_APP_CN, MANAGED_APP_ID + "_2");
+    private static final PhoneAccount MANAGED_DEFAULT_ACCOUNT_2 =
+            PhoneAccount.builder(MANAGED_HANDLE_2, MANAGED_APP_LABEL)
+            .setAddress(Uri.parse(MANAGED_ADDRESS + "_2"))
+            .setSubscriptionAddress(Uri.parse(MANAGED_ADDRESS + "_2"))
+            .setCapabilities(PhoneAccount.CAPABILITY_VIDEO_CALLING
+                    | PhoneAccount.CAPABILITY_CALL_PROVIDER /* needed in order to be default sub */)
+            .setHighlightColor(Color.RED)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
+            .build();
+
+    private static final Map<PhoneAccountHandle, PhoneAccount> MANAGED_PHONE_ACCOUNTS =
+            new HashMap<>();
+    static {
+        MANAGED_PHONE_ACCOUNTS.put(MANAGED_HANDLE_1, MANAGED_DEFAULT_ACCOUNT_1);
+        MANAGED_PHONE_ACCOUNTS.put(MANAGED_HANDLE_2, MANAGED_DEFAULT_ACCOUNT_2);
+    }
+
     /***********************************************************
      /                 setUp and tearDown methods
      /***********************************************************/
@@ -85,7 +112,7 @@ public class BaseAppVerifier {
         }
         mBaseAppVerifierImpl = new BaseAppVerifierImpl(
                 InstrumentationRegistry.getInstrumentation(),
-                mManagedAccount,
+                Arrays.asList(MANAGED_DEFAULT_ACCOUNT_1, MANAGED_DEFAULT_ACCOUNT_2),
                 new InCallServiceMethods() {
 
                     @Override
@@ -143,6 +170,12 @@ public class BaseAppVerifier {
     public CallAttributes getDefaultAttributes(TelecomTestApp name, boolean isOutgoing)
             throws Exception {
         return mBaseAppVerifierImpl.getDefaultAttributes(name, isOutgoing);
+    }
+
+    public CallAttributes getDefaultAttributes(TelecomTestApp name, PhoneAccountHandle pAH,
+            boolean isOutgoing)
+            throws Exception {
+        return mBaseAppVerifierImpl.getDefaultAttributes(name, pAH, isOutgoing);
     }
 
     public CallAttributes getRandomAttributes(TelecomTestApp name, boolean isOutgoing)
@@ -277,12 +310,19 @@ public class BaseAppVerifier {
         return mBaseAppVerifierImpl.getAccountHandlesForApp(appControl);
     }
 
+    public void verifyCallPhoneAccount(String id, PhoneAccountHandle handle) {
+        mBaseAppVerifierImpl.verifyCallPhoneAccount(id, handle);
+    }
     /**
      * Fetch the PhoneAccount associated with the given PhoneAccountHandle
      */
     public List<PhoneAccount> getRegisteredPhoneAccounts(AppControlWrapper appControl)
             throws Exception {
         return appControl.getRegisteredPhoneAccounts();
+    }
+
+    public void setUserDefaultPhoneAccountOverride(PhoneAccountHandle handle) throws Exception {
+        mBaseAppVerifierImpl.setUserDefaultPhoneAccountOverride(handle);
     }
 
     public boolean isPhoneAccountRegistered(PhoneAccountHandle handle) {
@@ -315,5 +355,24 @@ public class BaseAppVerifier {
     public void removeNotificationForCall(AppControlWrapper appControl, String callId)
             throws RemoteException {
         appControl.removeNotificationForCall(callId);
+    }
+
+    /**
+     * Modifies the existing managed PhoneAccount to include a new PhoneAccount restriction.
+     * Must be called after the PhoneAccount was registered as part of
+     * {@link #bindToApp(TelecomTestApp)}.
+     */
+    public void updateManagedPhoneAccountWithRestriction(PhoneAccountHandle handle,
+            Set<PhoneAccountHandle> restrictions) throws Exception {
+        PhoneAccount acctToUpdate = MANAGED_PHONE_ACCOUNTS.get(handle);
+        assertNotNull("setManagedPhoneAccountRestriction: test error, couldn't find PA "
+                + "from PAH: " + handle, acctToUpdate);
+        PhoneAccount.Builder newAcct = new PhoneAccount.Builder(acctToUpdate);
+        if (restrictions == null) {
+            newAcct.clearSimultaneousCallingRestriction();
+        } else {
+            newAcct.setSimultaneousCallingRestriction(restrictions);
+        }
+        mBaseAppVerifierImpl.registerManagedPhoneAccount(newAcct.build());
     }
 }
