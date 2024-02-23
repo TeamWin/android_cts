@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package android.graphics.pdf.cts;
+package android.graphics.pdf.cts.module;
 
-import static android.graphics.pdf.cts.Utils.A4_HEIGHT_PTS;
-import static android.graphics.pdf.cts.Utils.A4_PORTRAIT;
-import static android.graphics.pdf.cts.Utils.A4_WIDTH_PTS;
-import static android.graphics.pdf.cts.Utils.SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR;
-import static android.graphics.pdf.cts.Utils.createPreVRenderer;
-import static android.graphics.pdf.cts.Utils.createRenderer;
-import static android.graphics.pdf.cts.Utils.createRendererUsingNewConstructor;
-import static android.graphics.pdf.cts.Utils.getColorProbes;
-import static android.graphics.pdf.cts.Utils.renderAndCompare;
-import static android.graphics.pdf.cts.Utils.renderPreV;
-import static android.graphics.pdf.cts.Utils.renderPreVAndCompare;
-import static android.graphics.pdf.cts.Utils.renderWithTransform;
+import static android.graphics.pdf.cts.module.Utils.A4_HEIGHT_PTS;
+import static android.graphics.pdf.cts.module.Utils.A4_PORTRAIT;
+import static android.graphics.pdf.cts.module.Utils.A4_WIDTH_PTS;
+import static android.graphics.pdf.cts.module.Utils.SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR;
+import static android.graphics.pdf.cts.module.Utils.createPreVRenderer;
+import static android.graphics.pdf.cts.module.Utils.createRenderer;
+import static android.graphics.pdf.cts.module.Utils.createRendererUsingNewConstructor;
+import static android.graphics.pdf.cts.module.Utils.getColorProbes;
+import static android.graphics.pdf.cts.module.Utils.renderAndCompare;
+import static android.graphics.pdf.cts.module.Utils.renderPreV;
+import static android.graphics.pdf.cts.module.Utils.renderPreVAndCompare;
+import static android.graphics.pdf.cts.module.Utils.renderWithTransform;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
