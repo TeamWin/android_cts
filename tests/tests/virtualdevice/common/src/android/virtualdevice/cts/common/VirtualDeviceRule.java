@@ -29,8 +29,6 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
-import android.annotation.NonNull;
-import android.annotation.Nullable;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityOptions;
@@ -54,9 +52,11 @@ import android.server.wm.WindowManagerStateHelper;
 import android.view.Display;
 import android.view.Surface;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.FeatureUtil;
-import com.android.internal.app.BlockedAppStreamingActivity;
 
 import org.junit.rules.ExternalResource;
 import org.junit.rules.RuleChain;
@@ -100,7 +100,7 @@ public class VirtualDeviceRule implements TestRule {
     public static final int DEFAULT_VIRTUAL_DISPLAY_DPI = 420;
 
     public static final ComponentName BLOCKED_ACTIVITY_COMPONENT =
-            new ComponentName("android", BlockedAppStreamingActivity.class.getName());
+            new ComponentName("android", "com.android.internal.app.BlockedAppStreamingActivity");
 
     private final RuleChain mRuleChain;
     private final FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
