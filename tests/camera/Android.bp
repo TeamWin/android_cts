@@ -69,6 +69,7 @@ android_test {
         "MediaPerformanceClassCommon",
         "cts-wm-util",
         "cts-install-lib",
+        "androidx.camera_camera-camera2",
         "androidx.camera_camera-core",
         "androidx.camera_camera-extensions",
         "androidx.camera_camera-lifecycle",
