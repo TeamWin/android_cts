@@ -19,38 +19,45 @@ package android.view.inputmethod.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
+import static org.mockito.Mockito.mock;
 
 import android.os.Binder;
 import android.os.Parcel;
 import android.platform.test.annotations.AppModeSdkSandbox;
-import android.view.View;
-import android.view.inputmethod.BaseInputConnection;
+import android.platform.test.annotations.DisabledOnRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 import android.view.inputmethod.InputBinding;
+import android.view.inputmethod.InputConnection;
 
 import androidx.test.filters.SmallTest;
-import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+// This is a bivalent test, it is expected to run on both device and host (Ravenwood) sides.
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
-public class InputBindingTest {
+public final class InputBindingTest {
+
+    private static final int ANY_UID = 1;
+    private static final int ANY_PID = 2;
+
+    @Rule
+    public final RavenwoodRule mRavenwood = new RavenwoodRule();
+
     @Test
+    @DisabledOnRavenwood(blockedBy = {Parcel.class})
     public void testInputBinding() {
-        View view = new View(InstrumentationRegistry.getInstrumentation().getTargetContext());
-        BaseInputConnection bic = new BaseInputConnection(view, false);
+        InputConnection conn = mock(InputConnection.class);
         Binder binder = new Binder();
-        int uid = 1;
-        int pid = 2;
-        InputBinding inputBinding = new InputBinding(bic, binder, uid, pid);
-        new InputBinding(bic, inputBinding);
-        assertSame(bic, inputBinding.getConnection());
+        InputBinding inputBinding = new InputBinding(conn, binder, ANY_UID, ANY_PID);
+        assertSame(conn, inputBinding.getConnection());
         assertSame(binder, inputBinding.getConnectionToken());
-        assertEquals(uid, inputBinding.getUid());
-        assertEquals(pid, inputBinding.getPid());
+        assertEquals(ANY_UID, inputBinding.getUid());
+        assertEquals(ANY_PID, inputBinding.getPid());
 
         assertNotNull(inputBinding.toString());
         assertEquals(0, inputBinding.describeContents());
@@ -59,10 +66,36 @@ public class InputBindingTest {
         inputBinding.writeToParcel(p, 0);
         p.setDataPosition(0);
         InputBinding target = InputBinding.CREATOR.createFromParcel(p);
-        assertEquals(uid, target.getUid());
-        assertEquals(pid, target.getPid());
+        assertEquals(ANY_UID, target.getUid());
+        assertEquals(ANY_PID, target.getPid());
         assertSame(binder, target.getConnectionToken());
 
         p.recycle();
+    }
+
+    @Test
+    public void testInputBindingConstructor() {
+        InputConnection conn = mock(InputConnection.class);
+        Binder connectionToken = mock(Binder.class);
+
+        InputBinding binding = new InputBinding(conn, connectionToken, ANY_UID, ANY_PID);
+
+        assertEquals(ANY_UID, binding.getUid());
+        assertEquals(ANY_PID, binding.getPid());
+        assertSame(conn, binding.getConnection());
+        assertSame(connectionToken, binding.getConnectionToken());
+    }
+
+    @Test
+    public void testInputBindingCopyConstructor() {
+        InputConnection conn = mock(InputConnection.class);
+        Binder connectionToken = mock(Binder.class);
+        InputBinding source = new InputBinding(conn, connectionToken, ANY_UID, ANY_PID);
+
+        InputBinding copy = new InputBinding(conn, source);
+        assertEquals(ANY_UID, copy.getUid());
+        assertEquals(ANY_PID, copy.getPid());
+        assertSame(conn, copy.getConnection());
+        assertSame(connectionToken, copy.getConnectionToken());
     }
 }

@@ -47,6 +47,7 @@ android_test {
         "statsdprotonano",
         "android.view.inputmethod.flags-aconfig-java",
         "flag-junit",
+        "ravenwood-junit",
     ],
     srcs: [
         "src/**/*.java",
@@ -70,4 +71,17 @@ android_test {
         ":CtsInputMethodTestLauncher",
     ],
     per_testcase_directory: true,
+}
+
+android_ravenwood_test {
+    name: "CtsInputMethodTestCasesRavenwood",
+    static_libs: [
+        "androidx.annotation_annotation",
+        "androidx.test.rules",
+        "compatibility-device-util-axt",
+    ],
+    srcs: [
+        "src/android/view/inputmethod/cts/InputBindingTest.java",
+    ],
+    auto_gen_config: true,
 }
