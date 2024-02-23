@@ -56,9 +56,9 @@ public class CodecDecoderTestBase extends CodecTestBase {
     protected boolean mSkipChecksumVerification;
 
     protected final ArrayList<ByteBuffer> mCsdBuffers;
-    private int mCurrCsdIdx;
+    protected int mCurrCsdIdx;
 
-    private final ByteBuffer mFlatBuffer = ByteBuffer.allocate(4 * Integer.BYTES);
+    protected final ByteBuffer mFlatBuffer = ByteBuffer.allocate(4 * Integer.BYTES);
 
     protected MediaExtractor mExtractor;
 
@@ -188,7 +188,7 @@ public class CodecDecoderTestBase extends CodecTestBase {
         return format.containsKey("csd-0");
     }
 
-    void flattenBufferInfo(MediaCodec.BufferInfo info, boolean isAudio) {
+    protected void flattenBufferInfo(MediaCodec.BufferInfo info, boolean isAudio) {
         if (isAudio) {
             mFlatBuffer.putInt(info.size);
         }
@@ -372,10 +372,10 @@ public class CodecDecoderTestBase extends CodecTestBase {
         }
     }
 
-    public void decodeToMemory(String file, String decoder, long pts, int mode, int frameLimit)
-            throws IOException, InterruptedException {
+    public void decodeToMemory(String file, String decoder, OutputManager outputBuff, long pts,
+            int mode, int frameLimit) throws IOException, InterruptedException {
         mSaveToMem = true;
-        mOutputBuff = new OutputManager();
+        mOutputBuff = outputBuff;
         mCodec = MediaCodec.createByCodecName(decoder);
         MediaFormat format = setUpSource(file);
         configureCodec(format, false, true, false);
@@ -388,6 +388,11 @@ public class CodecDecoderTestBase extends CodecTestBase {
         mCodec.release();
         mExtractor.release();
         mSaveToMem = false;
+    }
+
+    public void decodeToMemory(String file, String decoder, long pts, int mode, int frameLimit)
+            throws IOException, InterruptedException {
+        decodeToMemory(file, decoder, new OutputManager(), pts, mode, frameLimit);
     }
 
     public void decodeToMemory(ByteBuffer buffer, ArrayList<MediaCodec.BufferInfo> list,
