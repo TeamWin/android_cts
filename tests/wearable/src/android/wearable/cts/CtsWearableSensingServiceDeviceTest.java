@@ -27,6 +27,7 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -39,6 +40,7 @@ import android.app.wearable.WearableSensingDataRequest;
 import android.app.wearable.WearableSensingManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.os.ParcelFileDescriptor;
@@ -131,6 +133,7 @@ public class CtsWearableSensingServiceDeviceTest {
         assumeTrue("VERSION.SDK_INT=" + VERSION.SDK_INT,
                 VERSION.SDK_INT >= VERSION_CODES.UPSIDE_DOWN_CAKE);
         mContext = getInstrumentation().getContext();
+        assumeFalse(isWatch(mContext));  // WearableSensingManagerService is not supported on WearOS
         mWearableSensingManager = mContext.getSystemService(WearableSensingManager.class);
         mDataRequestObserverPendingIntent = createDataRequestPendingIntent(mContext);
         PersistableBundle dataRequestDetails = new PersistableBundle();
@@ -620,5 +623,10 @@ public class CtsWearableSensingServiceDeviceTest {
         int unusedRequestCode = 0;
         return PendingIntent.getBroadcast(
                 context, unusedRequestCode, intent, PendingIntent.FLAG_MUTABLE);
+    }
+
+    private static boolean isWatch(Context context) {
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 }

@@ -24,6 +24,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assume.assumeFalse;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -93,6 +94,7 @@ public class WearableSensingManagerTest {
     @Before
     public void setUp() throws Exception {
         mContext = getInstrumentation().getContext();
+        assumeFalse(isWatch(mContext));  // WearableSensingManagerService is not supported on WearOS
         mWearableSensingManager =
                 (WearableSensingManager)
                         mContext.getSystemService(Context.WEARABLE_SENSING_SERVICE);
@@ -505,5 +507,10 @@ public class WearableSensingManagerTest {
         int unusedRequestCode = 0;
         return PendingIntent.getBroadcast(
                 context, unusedRequestCode, intent, PendingIntent.FLAG_MUTABLE);
+    }
+
+    private static boolean isWatch(Context context) {
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 }
