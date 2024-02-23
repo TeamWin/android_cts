@@ -69,6 +69,36 @@
                 <data android:host="android.app.cts.testcomponentcaller.provider" />
             </intent-filter>
         </activity>
+        <activity android:name=".TestResultCallerActivities$TestResultGetCurrentCallerActivity"
+            android:exported="true"
+            android:launchMode="singleInstance">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.ATTACH_DATA" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <data android:scheme="content" />
+                <data android:host="android.app.cts.componentcaller.provider" />
+                <data android:host="android.app.cts.testcomponentcaller.provider" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".TestResultCallerActivities$TestResultOverloadCallerActivity"
+            android:exported="true"
+            android:launchMode="singleInstance">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.ATTACH_DATA" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <data android:scheme="content" />
+                <data android:host="android.app.cts.componentcaller.provider" />
+                <data android:host="android.app.cts.testcomponentcaller.provider" />
+            </intent-filter>
+        </activity>
 
         <provider android:name=".TestProvider"
             android:exported="true"
