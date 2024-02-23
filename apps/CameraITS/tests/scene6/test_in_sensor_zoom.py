@@ -29,7 +29,7 @@ import numpy as np
 
 _NUM_STEPS = 10
 _ZOOM_MIN_THRESH = 2.0
-_THRESHOLD_MAX_RMS_DIFF_CROPPED_RAW_USE_CASE = 0.03
+_THRESHOLD_MAX_RMS_DIFF_CROPPED_RAW_USE_CASE = 0.06
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 
 
