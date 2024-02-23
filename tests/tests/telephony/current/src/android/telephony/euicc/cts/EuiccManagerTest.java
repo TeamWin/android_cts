@@ -27,6 +27,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.telephony.TelephonyManager;
 import android.telephony.UiccCardInfo;
 import android.telephony.UiccPortInfo;
@@ -40,6 +42,7 @@ import android.text.TextUtils;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import org.junit.After;
@@ -235,8 +238,10 @@ public class EuiccManagerTest {
 
     @Test
     public void testSwitchToSubscriptionDisableWithNoPort() throws Exception {
-        // Only test it when EuiccManager is enabled.
-        if (!mEuiccManager.isEnabled()) {
+        // Only test it when EuiccManager is enabled or not a Wear device with SDK <= 33
+        if (!mEuiccManager.isEnabled() || (getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_WATCH) && ApiLevelUtil.isAtMost(
+                Build.VERSION_CODES.TIRAMISU))) {
             return;
         }
 
