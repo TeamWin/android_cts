@@ -98,7 +98,10 @@ public class VirtualInputDeviceGenericTest {
     @Parameters(method = "allInputDevices")
     @Test
     public void close_multipleCallsSucceed(VirtualInputDeviceFactory factory) throws Exception {
-        VirtualDisplay display = mRule.createManagedVirtualDisplay(mVirtualDevice);
+        VirtualDisplay display = mRule.createManagedVirtualDisplayWithFlags(mVirtualDevice,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
+                        | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY
+                        | DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED);
         Closeable inputDevice =
                 factory.create(mVirtualDevice, DEVICE_NAME, display.getDisplay()).getDevice();
         inputDevice.close();
@@ -109,7 +112,10 @@ public class VirtualInputDeviceGenericTest {
     @Parameters(method = "allInputDevices")
     @Test
     public void close_removesInputDevice(VirtualInputDeviceFactory factory) throws Exception {
-        VirtualDisplay display = mRule.createManagedVirtualDisplay(mVirtualDevice);
+        VirtualDisplay display = mRule.createManagedVirtualDisplayWithFlags(mVirtualDevice,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
+                        | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY
+                        | DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED);
         var deviceHolder = factory.create(mVirtualDevice, DEVICE_NAME, display.getDisplay());
         try (InputDeviceRemovedWaiter waiter =
                      new InputDeviceRemovedWaiter(mInputManager, deviceHolder.getDeviceId())) {
@@ -122,7 +128,10 @@ public class VirtualInputDeviceGenericTest {
     @Test
     public void closeVirtualDevice_removesInputDevice(VirtualInputDeviceFactory factory)
             throws Exception {
-        VirtualDisplay display = mRule.createManagedVirtualDisplay(mVirtualDevice);
+        VirtualDisplay display = mRule.createManagedVirtualDisplayWithFlags(mVirtualDevice,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
+                        | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY
+                        | DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED);
         var deviceHolder = factory.create(mVirtualDevice, DEVICE_NAME, display.getDisplay());
         try (InputDeviceRemovedWaiter waiter =
                      new InputDeviceRemovedWaiter(mInputManager, deviceHolder.getDeviceId())) {
@@ -135,7 +144,10 @@ public class VirtualInputDeviceGenericTest {
     @Test
     public void createVirtualInputDevice_duplicateName_throwsException(
             VirtualInputDeviceFactory factory) {
-        VirtualDisplay display = mRule.createManagedVirtualDisplay(mVirtualDevice);
+        VirtualDisplay display = mRule.createManagedVirtualDisplayWithFlags(mVirtualDevice,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
+                        | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY
+                        | DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED);
         factory.create(mVirtualDevice, DEVICE_NAME, display.getDisplay());
         assertThrows(IllegalArgumentException.class,
                 () -> factory.create(mVirtualDevice, DEVICE_NAME, display.getDisplay()));

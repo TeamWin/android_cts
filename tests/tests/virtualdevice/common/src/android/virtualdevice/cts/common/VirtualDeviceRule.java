@@ -97,7 +97,7 @@ public class VirtualDeviceRule implements TestRule {
     public static final String DEFAULT_VIRTUAL_DISPLAY_NAME = "testVirtualDisplay";
     public static final int DEFAULT_VIRTUAL_DISPLAY_WIDTH = 640;
     public static final int DEFAULT_VIRTUAL_DISPLAY_HEIGHT = 480;
-    public static final int DEFAULT_VIRTUAL_DISPLAY_DPI = 420;
+    public static final int DEFAULT_VIRTUAL_DISPLAY_DPI = 240;
 
     public static final ComponentName BLOCKED_ACTIVITY_COMPONENT =
             new ComponentName("android", BlockedAppStreamingActivity.class.getName());
