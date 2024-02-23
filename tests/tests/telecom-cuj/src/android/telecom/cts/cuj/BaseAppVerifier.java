@@ -73,7 +73,6 @@ public class BaseAppVerifier {
             .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
             .addSupportedUriScheme(PhoneAccount.SCHEME_VOICEMAIL)
             .build();
-
     /***********************************************************
      /                 setUp and tearDown methods
      /***********************************************************/
@@ -303,5 +302,18 @@ public class BaseAppVerifier {
 
     public void assertAudioMode(final int expectedMode) {
         mBaseAppVerifierImpl.assertAudioMode(expectedMode);
+    }
+
+    /**
+     * NOTIFICATION STUFF
+     */
+
+    public void verifyNotificationIsPostedForCall(AppControlWrapper appControl, String callId) {
+       mBaseAppVerifierImpl.verifyNotificationPostedForCall(appControl, callId);
+    }
+
+    public void removeNotificationForCall(AppControlWrapper appControl, String callId)
+            throws RemoteException {
+        appControl.removeNotificationForCall(callId);
     }
 }

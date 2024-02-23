@@ -21,13 +21,13 @@ import android.telecom.ConnectionRequest;
 import android.telecom.ConnectionService;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
-import android.telecom.cts.apps.TestAppConnection;
+import android.telecom.cts.apps.VoipConnection;
 import android.util.Log;
 
 public class VoipConnectionServiceMain extends ConnectionService {
     private static final String TAG = VoipConnectionServiceMain.class.getSimpleName();
     public static VoipConnectionServiceMain sConnectionService;
-    public static TestAppConnection sLastConnection = null;
+    public static VoipConnection sLastConnection = null;
 
     @Override
     public void onBindClient(Intent intent) {
@@ -77,7 +77,7 @@ public class VoipConnectionServiceMain extends ConnectionService {
     }
 
     private Connection createConnection(ConnectionRequest request, boolean isOutgoing) {
-        TestAppConnection connection = new TestAppConnection();
+        VoipConnection connection = new VoipConnection(getApplicationContext(), isOutgoing);
         sLastConnection = connection;
 
         if (isOutgoing) {

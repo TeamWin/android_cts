@@ -17,6 +17,7 @@
 package android.telecom.cts.apps;
 
 import android.os.Bundle;
+import android.os.UserHandle;
 import android.telecom.CallAttributes;
 import android.telecom.CallEndpoint;
 import android.telecom.PhoneAccountHandle;
@@ -37,12 +38,15 @@ import android.telecom.cts.apps.BooleanTransaction;
 // Which means modifying any of the interface methods requires modifying the overridden methods in
 // every application.
 interface IAppControl {
-    // The following AIDL methods cannot fail so they do not need to be wrapped in a Transaction
+    // The following AIDL methods do not currently fail via a TestAppException so they do not need
+    // to be wrapped in a Transaction
     boolean isBound();
     List<PhoneAccountHandle> getOwnAccountHandlesForApp();
     List<PhoneAccount> getRegisteredPhoneAccounts();
     void registerCustomPhoneAccount(in PhoneAccount account);
     void unregisterPhoneAccountWithHandle( in PhoneAccountHandle handle);
+    UserHandle getProcessUserHandle();
+    int getProcessUid();
 
     // The below AIDL methods all need to return a BaseTransaction:
     NoDataTransaction registerDefaultPhoneAccount();
@@ -54,4 +58,6 @@ interface IAppControl {
     BooleanTransaction isMuted(String id);
     CallExceptionTransaction transitionCallStateTo(String id, int state, boolean expectSuccess, in Bundle extras);
     NoDataTransaction requestCallEndpointChange(String id, in CallEndpoint callEndpoint);
+    NoDataTransaction removeNotificationForCall(String callId);
+    BooleanTransaction isNotificationPostedForCall(String callId);
 }

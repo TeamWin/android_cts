@@ -19,4 +19,7 @@
     <!-- QUERY_ALL_PACKAGES is required in order to bind to apps in this directory (telecom-apps)
          from another cts test process (ex.android.telecom.cts) -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.STATUS_BAR_SERVICE" />
+    <uses-permission android:name="android.permission.GRANT_RUNTIME_PERMISSIONS"/>
 </manifest>

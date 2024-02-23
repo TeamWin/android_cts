@@ -21,13 +21,13 @@ import android.telecom.ConnectionRequest;
 import android.telecom.ConnectionService;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
-import android.telecom.cts.apps.TestAppConnection;
+import android.telecom.cts.apps.ManagedConnection;
 import android.util.Log;
 
 public class ManagedConnectionService extends ConnectionService {
     private static final String LOG_TAG = "ManagedConnectionService";
     public static ManagedConnectionService sConnectionService;
-    public static TestAppConnection sLastConnection = null;
+    public static ManagedConnection sLastConnection = null;
 
     @Override
     public void onBindClient(Intent intent) {
@@ -77,7 +77,7 @@ public class ManagedConnectionService extends ConnectionService {
     }
 
     private Connection createConnection(ConnectionRequest request, boolean isOutgoing) {
-        TestAppConnection connection = new TestAppConnection();
+        ManagedConnection connection = new ManagedConnection(getApplicationContext(), isOutgoing);
         sLastConnection = connection;
 
         if (isOutgoing) {
