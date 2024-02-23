@@ -119,6 +119,7 @@ public class WearableSensingManagerIsolatedServiceTest {
     @Before
     public void setUp() throws Exception {
         mContext = getInstrumentation().getContext();
+        assumeFalse(isWatch(mContext));  // WearableSensingManagerService is not supported on WearOS
         // For an unknown reason, the CDM onTransportsChanged listener is not called on TV builds
         assumeFalse(isTelevision(mContext));
         // Sleep for 2 seconds to avoid flakiness until b/326256152 is fixed. The bug can cause
@@ -498,5 +499,10 @@ public class WearableSensingManagerIsolatedServiceTest {
     private static boolean isTelevision(Context context) {
         PackageManager pm = context.getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+    }
+
+    private static boolean isWatch(Context context) {
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 }
