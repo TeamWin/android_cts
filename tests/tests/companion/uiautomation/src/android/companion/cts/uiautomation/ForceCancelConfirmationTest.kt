@@ -22,9 +22,11 @@ import android.companion.cts.common.RecordingCallback.OnFailure
 import android.os.SystemClock
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.compatibility.common.util.FeatureUtil
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import org.junit.Assume.assumeFalse
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -37,6 +39,21 @@ import org.junit.runner.RunWith
 @AppModeFull(reason = "CompanionDeviceManager APIs are not available to the instant apps.")
 @RunWith(AndroidJUnit4::class)
 class ForceCancelConfirmationTest : UiAutomationTestBase(null, null) {
+
+    override fun setUp() {
+        // The CompanionDeviceManager app is not available on Wear.
+        assumeFalse("Skipping test for wear devices", FeatureUtil.isWatch())
+
+        super.setUp()
+    }
+
+    override fun tearDown() {
+        if (FeatureUtil.isWatch()) {
+            return
+        }
+
+        super.tearDown()
+    }
 
     @Test
     fun test_cancel_confirmation() {
