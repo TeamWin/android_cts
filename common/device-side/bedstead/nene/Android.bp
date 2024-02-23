@@ -15,6 +15,7 @@ android_library {
         "common/src/main/java/**/*.java",
     ],
     manifest: "src/main/AndroidManifestInternal.xml",
+    sdk_version: "current",
     min_sdk_version: "29",
     lint: {
         baseline_filename: "lint-baseline.xml",
