@@ -42,6 +42,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.assumeFalse;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -1255,6 +1256,7 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     @Test
     @RequiresFlagsEnabled(android.app.wearable.Flags.FLAG_ENABLE_HOTWORD_WEARABLE_SENSING_API)
     public void testHotwordDetectionService_onDetectFromWearableWithAudioEgress() throws Throwable {
+        assumeFalse(isWatch());  // WearableSensingManagerService is not supported on WearOS
         AlwaysOnHotwordDetector alwaysOnHotwordDetector =
                 createAlwaysOnHotwordDetectorWithSoundTriggerInjection();
         try {
@@ -1289,6 +1291,7 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     @RequiresFlagsEnabled(android.app.wearable.Flags.FLAG_ENABLE_HOTWORD_WEARABLE_SENSING_API)
     public void testHotwordDetectionService_onRejectWearableHotword_notifiesWearable()
             throws Throwable {
+        assumeFalse(isWatch());  // WearableSensingManagerService is not supported on WearOS
         AlwaysOnHotwordDetector alwaysOnHotwordDetector =
                 createAlwaysOnHotwordDetectorWithSoundTriggerInjection();
         try {
@@ -1315,6 +1318,7 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     @Test
     @RequiresFlagsEnabled(android.app.wearable.Flags.FLAG_ENABLE_HOTWORD_WEARABLE_SENSING_API)
     public void testHotwordDetectionService_receivesOptionsFromWearable() throws Throwable {
+        assumeFalse(isWatch());  // WearableSensingManagerService is not supported on WearOS
         AlwaysOnHotwordDetector alwaysOnHotwordDetector =
                 createAlwaysOnHotwordDetectorWithSoundTriggerInjection();
         try {
@@ -1349,6 +1353,7 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     @RequiresFlagsEnabled(android.app.wearable.Flags.FLAG_ENABLE_HOTWORD_WEARABLE_SENSING_API)
     public void testHotwordDetectionService_wearableHotwordWithWrongVisComponent_notifiesWearable()
             throws Throwable {
+        assumeFalse(isWatch());  // WearableSensingManagerService is not supported on WearOS
         AlwaysOnHotwordDetector alwaysOnHotwordDetector =
                 createAlwaysOnHotwordDetectorWithSoundTriggerInjection();
         try {
@@ -1380,6 +1385,7 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     @RequiresFlagsEnabled(android.app.wearable.Flags.FLAG_ENABLE_HOTWORD_WEARABLE_SENSING_API)
     public void testHotwordDetectionService_closePipeInWearableHotwordResult_notifiesWearable()
             throws Throwable {
+        assumeFalse(isWatch());  // WearableSensingManagerService is not supported on WearOS
         // Create AlwaysOnHotwordDetector
         AlwaysOnHotwordDetector alwaysOnHotwordDetector =
                 createAlwaysOnHotwordDetectorWithSoundTriggerInjection();
@@ -2588,5 +2594,9 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
                 });
         assertThat(latch.await(3, SECONDS)).isTrue();
         return statusRef.get();
+    }
+
+    private boolean isWatch() {
+        return sPkgMgr.hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 }
