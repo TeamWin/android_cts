@@ -25,7 +25,8 @@ import static org.junit.Assume.assumeTrue;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.mediav2.common.cts.CodecDecoderMultiAccessUnitTestBase;
+import android.mediav2.common.cts.CodecDecoderBlockModelMultiAccessUnitTestBase;
+import android.mediav2.common.cts.CodecDecoderBlockModelTestBase;
 import android.mediav2.common.cts.CodecDecoderTestBase;
 import android.mediav2.common.cts.OutputManager;
 import android.os.Build;
@@ -50,24 +51,26 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Tests audio decoders support for feature MultipleFrames.
+ * Tests audio decoders support for feature MultipleFrames in block model mode.
  * <p>
  * MultipleFrames feature is optional and is not required to support by all components. If a
  * component supports this feature, then multiple access units are grouped together (demarcated
- * with access unit offsets and timestamps) and sent as input to the component. The components
+ * with access unit offsets and timestamps) are sent as input to the component. The components
  * processes the input sent and returns output in a large enough buffer (demarcated with access
  * unit offsets and timestamps). The number of access units that can be grouped is dependent on
  * format keys, KEY_MAX_INPUT_SIZE, KEY_BUFFER_BATCH_MAX_OUTPUT_SIZE.
  * <p>
- * The test runs the component in MultipleFrames mode and normal mode and expects same output for
- * a given input.
+ * The test runs the component in MultipleFrames block model mode and normal mode and expects same
+ * output for a given input.
  **/
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM, codeName = "VanillaIceCream")
 @AppModeFull(reason = "Instant apps cannot access the SD card")
 @RequiresFlagsEnabled(Flags.FLAG_LARGE_AUDIO_FRAME)
 @RunWith(Parameterized.class)
-public class CodecDecoderMultiAccessUnitTest extends CodecDecoderMultiAccessUnitTestBase {
-    private static final String LOG_TAG = CodecDecoderMultiAccessUnitTest.class.getSimpleName();
+public class CodecDecoderBlockModelMultiAccessUnitTest
+        extends CodecDecoderBlockModelMultiAccessUnitTestBase {
+    private static final String LOG_TAG =
+            CodecDecoderBlockModelMultiAccessUnitTest.class.getSimpleName();
     private static final String MEDIA_DIR = WorkDir.getMediaDirString();
     private static final int[][] OUT_SIZE_IN_MS = {
             {1000, 250},  // max out size, threshold batch out size
@@ -306,8 +309,8 @@ public class CodecDecoderMultiAccessUnitTest extends CodecDecoderMultiAccessUnit
         return prepareParamList(exhaustiveArgsList, false, true, false, true);
     }
 
-    public CodecDecoderMultiAccessUnitTest(String decoder, String mediaType, String testFile,
-            String allTestParams) {
+    public CodecDecoderBlockModelMultiAccessUnitTest(String decoder, String mediaType,
+            String testFile, String allTestParams) {
         super(decoder, mediaType, MEDIA_DIR + testFile, allTestParams);
     }
 
@@ -322,21 +325,19 @@ public class CodecDecoderMultiAccessUnitTest extends CodecDecoderMultiAccessUnit
 
     /**
      * Verifies if the component under test can decode the test file correctly in multiple frame
-     * mode. The decoding happens in asynchronous mode with eos flag signalled with last
-     * compressed frame and eos flag signalled separately after sending all compressed frames. It
-     * expects consistent output in all these runs. That is, the ByteBuffer info and output
-     * timestamp list has to be same in all the runs. The test verifies if the output timestamp
-     * is strictly increasing. The test also verifies if the component / framework output is
-     * consistent with normal mode (single access unit mode).
+     * block model mode. The decoding happens in asynchronous mode with eos flag signalled with
+     * last compressed frame. The test verifies if the component / framework output is consistent
+     * with single access unit normal mode and single access unit block model mode.
      * <p>
-     * Check description of class {@link CodecDecoderMultiAccessUnitTest}
+     * Check description of class {@link CodecDecoderBlockModelMultiAccessUnitTest}
      */
     @ApiTest(apis = {"android.media.MediaFormat#KEY_BUFFER_BATCH_MAX_OUTPUT_SIZE",
             "android.media.MediaFormat#KEY_BUFFER_BATCH_THRESHOLD_OUTPUT_SIZE",
-            "android.media.MediaCodec.Callback#onOutputBuffersAvailable"})
+            "android.media.MediaCodec.Callback#onOutputBuffersAvailable",
+            "android.media.MediaCodec#CONFIGURE_FLAG_USE_BLOCK_MODEL"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    public void testMultipleAccessUnits() throws IOException, InterruptedException {
+    public void testSimpleDecode() throws IOException, InterruptedException {
         assumeTrue(mCodecName + " does not support FEATURE_MultipleFrames",
                 isFeatureSupported(mCodecName, mMediaType, FEATURE_MultipleFrames));
 
@@ -346,37 +347,37 @@ public class CodecDecoderMultiAccessUnitTest extends CodecDecoderMultiAccessUnit
                 Integer.MAX_VALUE);
         OutputManager ref = cdtb.getOutputManager();
 
-        boolean[] boolStates = {true, false};
+        CodecDecoderBlockModelTestBase cdbmtb = new CodecDecoderBlockModelTestBase(
+                mCodecName, mMediaType, null, mAllTestParams);
+        OutputManager test = new OutputManager(ref.getSharedErrorLogs());
+        cdbmtb.decodeToMemory(mTestFile, mCodecName, test, 0,
+                MediaExtractor.SEEK_TO_CLOSEST_SYNC, Integer.MAX_VALUE);
+        if (!ref.equals(test)) {
+            fail("Output in block model mode is not same as output in normal mode. \n"
+                    + mTestConfig + mTestEnv + test.getErrMsg());
+        }
+
         mSaveToMem = true;
-        OutputManager testA = new OutputManager(ref.getSharedErrorLogs());
-        OutputManager testB = new OutputManager(ref.getSharedErrorLogs());
+        mOutputBuff = test;
         MediaFormat format = setUpSource(mTestFile);
         int maxSampleSize = getMaxSampleSizeForMediaType(mTestFile, mMediaType);
         mCodec = MediaCodec.createByCodecName(mCodecName);
         for (int[] outSizeInMs : OUT_SIZE_IN_MS) {
-            configureKeysForLargeAudioFrameMode(format, maxSampleSize, outSizeInMs[0],
+            configureKeysForLargeAudioBlockModelFrameMode(format, maxSampleSize, outSizeInMs[0],
                     outSizeInMs[1]);
-            for (boolean eosType : boolStates) {
-                mOutputBuff = eosType ? testA : testB;
-                mOutputBuff.reset();
-                configureCodec(format, true, eosType, false);
-                mMaxInputLimitMs = outSizeInMs[0];
-                mCodec.start();
-                mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
-                doWork(Integer.MAX_VALUE);
-                queueEOS();
-                waitForAllOutputs();
-                mCodec.reset();
-                if (!ref.equalsByteOutput(mOutputBuff)) {
-                    fail("Output of decoder component when fed with multiple access units in "
-                            + "single enqueue call differs from output received when each access "
-                            + "unit is fed separately. \n"
-                            + mTestConfig + mTestEnv + mOutputBuff.getErrMsg());
-                }
-            }
-            if (!testA.equals(testB)) {
-                fail("Output of decoder component is not consistent across runs. \n" + mTestConfig
-                        + mTestEnv + testB.getErrMsg());
+            mOutputBuff.reset();
+            configureCodec(format, true, true, false);
+            mMaxInputLimitMs = outSizeInMs[0];
+            mCodec.start();
+            mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+            doWork(Integer.MAX_VALUE);
+            queueEOS();
+            waitForAllOutputs();
+            mCodec.reset();
+            if (!ref.equalsByteOutput(mOutputBuff)) {
+                fail("Output of decoder component when fed with multiple access units in single"
+                        + " enqueue call differs from output received when each access unit is fed"
+                        + " separately. \n" + mTestConfig + mTestEnv + mOutputBuff.getErrMsg());
             }
         }
         mCodec.release();
