@@ -28,6 +28,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.app.Activity;
@@ -60,6 +61,7 @@ import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
 
 import com.android.compatibility.common.util.AppOpsUtils;
+import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.install.lib.LocalIntentSender;
 
@@ -108,6 +110,7 @@ public class ArchiveTest {
 
     @Before
     public void setup() throws Exception {
+        assumeTrue("Form factor is not supported", isFormFactorSupported());
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = instrumentation.getTargetContext();
         mPackageManager = mContext.getPackageManager();
@@ -408,6 +411,14 @@ public class ArchiveTest {
             }
         }
         return -1;
+    }
+
+    private static boolean isFormFactorSupported() {
+        return !FeatureUtil.isArc()
+                && !FeatureUtil.isAutomotive()
+                && !FeatureUtil.isTV()
+                && !FeatureUtil.isWatch()
+                && !FeatureUtil.isVrHeadset();
     }
 
     public static class UnarchiveBroadcastReceiver extends BroadcastReceiver {
