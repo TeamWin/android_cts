@@ -824,7 +824,7 @@ public class WifiRttTest extends TestBase {
     /**
      * Test RangingResult.Builder
      */
-    @RequiresFlagsEnabled(Flags.FLAG_RANGING_RESULT_BUILDER)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @Test
     public void testRangingResultBuilder() {
 
@@ -877,7 +877,7 @@ public class WifiRttTest extends TestBase {
      *   - Result margin < threshold (constant)
      */
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_RTT_11AZ_NTB_RANGING_SUPPORT)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     public void testRangingToTest11azApUsingScanResult() throws InterruptedException {
         assumeTrue(mCharacteristics != null && mCharacteristics.getBoolean(
                 WifiRttManager.CHARACTERISTICS_KEY_BOOLEAN_NTB_INITIATOR));
@@ -893,7 +893,7 @@ public class WifiRttTest extends TestBase {
     /*
      * Test that vendor data can be set and retrieved properly in RangingRequest and RangingResult.
      */
-    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
             codeName = "VanillaIceCream")
     @Test

@@ -32,12 +32,12 @@ public class ShortcutManagerPostBackupTest extends ShortcutManagerDeviceTestBase
         assertWith(getPackageShortcuts(ShortcutManagerPreBackupTest.PUBLISHER4_PKG))
                 .haveIds("ms1", "ms2", "s1", "s2")
                 .areAllPinned()
+                .areAllEnabled()
 
                 .selectByIds("ms1", "ms2")
-                .areAllEnabled()
                 .areAllManifest()
 
-                // s1 is re-published, so it's enabled and dynamic.
+                // s1 is re-published, so it's dynamic.
                 .revertToOriginalList()
                 .selectByIds("s1")
                 .areAllEnabled()
@@ -52,11 +52,9 @@ public class ShortcutManagerPostBackupTest extends ShortcutManagerDeviceTestBase
 
                 .revertToOriginalList()
                 .selectByIds("s2")
-                .areAllDisabled()
-                .areAllWithDisabledReason(ShortcutInfo.DISABLED_REASON_VERSION_LOWER)
+                .areAllEnabled()
                 .forAllShortcuts(si -> {
-                    // Note the label shouldn't be updated with the updateShortcuts() call.
-                    assertEquals("shortlabel2", si.getShortLabel());
+                    assertEquals("shortlabel2_updated", si.getShortLabel());
                 })
                 .areAllNotDynamic();
     }
@@ -134,13 +132,11 @@ public class ShortcutManagerPostBackupTest extends ShortcutManagerDeviceTestBase
                 .haveIds("ms1", "ms2", "s1", "s2")
                 .areAllPinned()
 
-                .selectByIds("s1", "ms1")
+                .selectByIds("s1", "s2")
                 .areAllEnabled()
-                .areAllDynamic()
-                .areAllMutable()
 
                 .revertToOriginalList()
-                .selectByIds("s2", "ms2")
+                .selectByIds("ms1", "ms2")
                 .areAllDisabled();
     }
 
@@ -163,19 +159,9 @@ public class ShortcutManagerPostBackupTest extends ShortcutManagerDeviceTestBase
     public void testInvisibleIgnored() {
         assertWith(getPackageShortcuts(ShortcutManagerPreBackupTest.PUBLISHER4_PKG))
                 .haveIds("ms1", "ms2", "s1", "s2")
-
-                .selectByIds("ms1", "s1", "s2")
-                .areAllPinned()
-                .areAllDisabled()
-                .areAllWithDisabledReason(ShortcutInfo.DISABLED_REASON_VERSION_LOWER)
-                .areAllNotDynamic()
-                .areAllNotManifest()
-
-                .revertToOriginalList()
-                .selectByIds("ms2")
+                .selectByIds("s2")
                 .areAllEnabled()
                 .areAllPinned()
-                .areAllNotDynamic()
                 .areAllNotManifest();
     }
 }

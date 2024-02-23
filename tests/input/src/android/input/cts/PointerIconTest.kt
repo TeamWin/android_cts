@@ -34,6 +34,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import com.android.cts.input.DefaultPointerSpeedRule
 import com.android.cts.input.inputeventmatchers.withMotionAction
 import org.junit.After
 import org.junit.Before
@@ -66,6 +67,8 @@ class PointerIconTest {
     val virtualDisplayRule = VirtualDisplayActivityScenarioRule<CaptureEventActivity>(testName)
     @get:Rule
     val fakeAssociationRule = FakeAssociationRule()
+    @get: Rule
+    val defaultPointerSpeedRule = DefaultPointerSpeedRule()
 
     @Before
     fun setUp() {

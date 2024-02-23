@@ -1,6 +1,3 @@
 # Owners of the appops atom
-ewol@google.com
-pyuli@google.com
-shiwangishah@google.com
-zholnin@google.com
+include platform/frameworks/base:/core/java/android/permission/OWNERS
 

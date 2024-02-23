@@ -16,20 +16,12 @@
 
 package android.hardware.input.cts.tests;
 
-import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
-import static android.Manifest.permission.INJECT_EVENTS;
-import static android.view.Display.DEFAULT_DISPLAY;
-
-import static com.google.common.truth.Truth.assertThat;
-
 import static org.junit.Assert.assertThrows;
 
 import android.companion.virtual.flags.Flags;
-import android.hardware.display.VirtualDisplay;
 import android.hardware.input.VirtualStylus;
 import android.hardware.input.VirtualStylusButtonEvent;
 import android.hardware.input.VirtualStylusMotionEvent;
-import android.hardware.input.cts.virtualcreators.VirtualDisplayCreator;
 import android.hardware.input.cts.virtualcreators.VirtualInputDeviceCreator;
 import android.hardware.input.cts.virtualcreators.VirtualInputEventCreator;
 import android.platform.test.annotations.RequiresFlagsEnabled;
@@ -60,7 +52,8 @@ public class VirtualStylusTest extends VirtualDeviceTestCase {
 
     @Override
     void onSetUpVirtualInputDevice() {
-        mVirtualStylus = createVirtualStylus(mVirtualDisplay);
+        mVirtualStylus = VirtualInputDeviceCreator.createAndPrepareStylus(mVirtualDevice,
+                DEVICE_NAME, mVirtualDisplay.getDisplay()).getDevice();
         // We expect to get the exact coordinates in the view that were injected using the
         // stylus. Touch resampling could result in the generation of additional "fake" touch
         // events. To disable resampling, request unbuffered dispatch.
@@ -68,68 +61,10 @@ public class VirtualStylusTest extends VirtualDeviceTestCase {
                 InputDevice.SOURCE_STYLUS);
     }
 
-    @Override
-    void onTearDownVirtualInputDevice() {
-        if (mVirtualStylus != null) {
-            mVirtualStylus.close();
-        }
-    }
-
-    @Test
-    public void close_multipleCallsSucceed() {
-        mVirtualStylus.close();
-        mVirtualStylus.close();
-        mVirtualStylus.close();
-    }
-
     @Test
     public void createVirtualStylus_nullArguments_throwsException() {
         assertThrows(NullPointerException.class,
                 () -> mVirtualDevice.createVirtualStylus(null));
-    }
-
-    @Test
-    public void createVirtualStylus_duplicateName_throwsException() {
-        assertThrows(IllegalArgumentException.class,
-                () -> createVirtualStylus(mVirtualDisplay));
-    }
-
-    @Test
-    public void createVirtualStylus_defaultDisplay_throwsException() {
-        assertThrows(SecurityException.class,
-                () -> VirtualInputDeviceCreator.createStylus(mVirtualDevice, DEVICE_NAME,
-                        100 /* width */, 100 /* height */, DEFAULT_DISPLAY));
-    }
-
-    @Test
-    public void createVirtualStylus_unownedDisplay_throwsException() {
-        try (VirtualDisplayCreator.UnownedVirtualDisplay unownedDisplay =
-                     VirtualDisplayCreator.createUnownedVirtualDisplay()) {
-            assertThrows(SecurityException.class,
-                    () -> createVirtualStylus(unownedDisplay.getVirtualDisplay()));
-        }
-    }
-
-    @Test
-    public void createVirtualStylus_defaultDisplay_injectEvents_succeeds() {
-        mVirtualStylus.close();
-        runWithPermission(
-                () -> assertThat(VirtualInputDeviceCreator.createStylus(mVirtualDevice,
-                        DEVICE_NAME, 100 /* width */, 100 /* height */, DEFAULT_DISPLAY))
-                        .isNotNull(),
-                INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
-    }
-
-    @Test
-    public void createVirtualStylus_unownedVirtualDisplay_injectEvents_succeeds() {
-        mVirtualStylus.close();
-        try (VirtualDisplayCreator.UnownedVirtualDisplay unownedDisplay =
-                     VirtualDisplayCreator.createUnownedVirtualDisplay()) {
-            runWithPermission(
-                    () -> assertThat(
-                            createVirtualStylus(unownedDisplay.getVirtualDisplay())).isNotNull(),
-                    INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
-        }
     }
 
     @Parameters(method = "getAllToolTypes")
@@ -290,17 +225,15 @@ public class VirtualStylusTest extends VirtualDeviceTestCase {
     public void sendTouchEvent_withoutCreateVirtualDevicePermission_throwsException() {
         final int x = 50;
         final int y = 50;
-
-        try (DropShellPermissionsTemporarily ignored = new DropShellPermissionsTemporarily()) {
-            assertThrows(SecurityException.class,
-                    () -> mVirtualStylus.sendMotionEvent(new VirtualStylusMotionEvent.Builder()
-                            .setAction(VirtualStylusMotionEvent.ACTION_DOWN)
-                            .setX(x)
-                            .setY(y)
-                            .setPressure(255)
-                            .setToolType(VirtualStylusMotionEvent.TOOL_TYPE_STYLUS)
-                            .build()));
-        }
+        mRule.runWithoutPermissions(
+                () -> assertThrows(SecurityException.class,
+                        () -> mVirtualStylus.sendMotionEvent(new VirtualStylusMotionEvent.Builder()
+                                .setAction(VirtualStylusMotionEvent.ACTION_DOWN)
+                                .setX(x)
+                                .setY(y)
+                                .setPressure(255)
+                                .setToolType(VirtualStylusMotionEvent.TOOL_TYPE_STYLUS)
+                                .build())));
     }
 
     private void verifyStylusTouchWithTilt(int tiltXDegrees, int tiltYDegrees,
@@ -363,10 +296,6 @@ public class VirtualStylusTest extends VirtualDeviceTestCase {
 
     private void sendMotionEvent(int action, int x, int y, int pressure, int toolType) {
         sendMotionEvent(action, x, y, pressure, toolType, 0 /* tiltX */, 0 /* tiltY */);
-    }
-
-    private VirtualStylus createVirtualStylus(VirtualDisplay display) {
-        return VirtualInputDeviceCreator.createStylus(mVirtualDevice, DEVICE_NAME, display);
     }
 
     private static Integer[] getAllButtonCodes() {

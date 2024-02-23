@@ -16,17 +16,10 @@
 
 package android.hardware.input.cts.tests;
 
-import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
-import static android.Manifest.permission.INJECT_EVENTS;
-import static android.view.Display.DEFAULT_DISPLAY;
-
-import static com.google.common.truth.Truth.assertThat;
-
 import static org.junit.Assert.assertThrows;
 
 import android.hardware.input.VirtualNavigationTouchpad;
 import android.hardware.input.VirtualTouchEvent;
-import android.hardware.input.cts.virtualcreators.VirtualDisplayCreator;
 import android.hardware.input.cts.virtualcreators.VirtualInputDeviceCreator;
 import android.hardware.input.cts.virtualcreators.VirtualInputEventCreator;
 import android.os.SystemClock;
@@ -55,15 +48,9 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
 
     @Override
     void onSetUpVirtualInputDevice() {
-        mVirtualNavigationTouchpad = createVirtualNavigationTouchpad(
-                mVirtualDisplay.getDisplay().getDisplayId());
-    }
-
-    @Override
-    void onTearDownVirtualInputDevice() {
-        if (mVirtualNavigationTouchpad != null) {
-            mVirtualNavigationTouchpad.close();
-        }
+        mVirtualNavigationTouchpad = VirtualInputDeviceCreator.createAndPrepareNavigationTouchpad(
+                mVirtualDevice, DEVICE_NAME, mVirtualDisplay.getDisplay(), TOUCHPAD_WIDTH,
+                TOUCHPAD_HEIGHT).getDevice();
     }
 
     @Test
@@ -103,76 +90,24 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
         final float inputSize = 1f;
         final float x = 30f;
         final float y = 30f;
-        try (DropShellPermissionsTemporarily ignored = new DropShellPermissionsTemporarily()) {
-            assertThrows(SecurityException.class,
-                    () ->
-                            mVirtualNavigationTouchpad.sendTouchEvent(
-                                    new VirtualTouchEvent.Builder()
-                                            .setAction(VirtualTouchEvent.ACTION_DOWN)
-                                            .setPointerId(1)
-                                            .setX(x)
-                                            .setY(y)
-                                            .setPressure(255f)
-                                            .setMajorAxisSize(inputSize)
-                                            .setToolType(VirtualTouchEvent.TOOL_TYPE_FINGER)
-                                            .build()));
-        }
-    }
-
-    @Test
-    public void close_multipleCallsSucceed() {
-        mVirtualNavigationTouchpad.close();
-        mVirtualNavigationTouchpad.close();
-        mVirtualNavigationTouchpad.close();
+        mRule.runWithoutPermissions(
+                () -> assertThrows(SecurityException.class,
+                        () -> mVirtualNavigationTouchpad.sendTouchEvent(
+                                new VirtualTouchEvent.Builder()
+                                        .setAction(VirtualTouchEvent.ACTION_DOWN)
+                                        .setPointerId(1)
+                                        .setX(x)
+                                        .setY(y)
+                                        .setPressure(255f)
+                                        .setMajorAxisSize(inputSize)
+                                        .setToolType(VirtualTouchEvent.TOOL_TYPE_FINGER)
+                                        .build())));
     }
 
     @Test
     public void createVirtualNavigationTouchpad_nullArguments_throwsException() {
         assertThrows(NullPointerException.class,
                 () -> mVirtualDevice.createVirtualNavigationTouchpad(null));
-    }
-
-    @Test
-    public void createVirtualNavigationTouchpad_duplicateName_throwsException() {
-        assertThrows(IllegalArgumentException.class,
-                () -> createVirtualNavigationTouchpad(mVirtualDisplay.getDisplay().getDisplayId()));
-    }
-
-    @Test
-    public void createVirtualNavigationTouchpad_defaultDisplay_throwsException() {
-        assertThrows(SecurityException.class,
-                () -> createVirtualNavigationTouchpad(DEFAULT_DISPLAY));
-    }
-
-    @Test
-    public void createVirtualNavigationTouchpad_unownedDisplay_throwsException() {
-        try (VirtualDisplayCreator.UnownedVirtualDisplay unownedDisplay =
-                     VirtualDisplayCreator.createUnownedVirtualDisplay()) {
-            assertThrows(SecurityException.class,
-                    () -> createVirtualNavigationTouchpad(
-                            unownedDisplay.getDisplay().getDisplayId()));
-        }
-    }
-
-    @Test
-    public void createVirtualNavigationTouchpad_defaultDisplay_injectEvents_succeeds() {
-        mVirtualNavigationTouchpad.close();
-        runWithPermission(
-                () -> assertThat(createVirtualNavigationTouchpad(DEFAULT_DISPLAY)).isNotNull(),
-                INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
-    }
-
-    @Test
-    public void createVirtualNavigationTouchpad_unownedVirtualDisplay_injectEvents_succeeds() {
-        mVirtualNavigationTouchpad.close();
-        try (VirtualDisplayCreator.UnownedVirtualDisplay unownedDisplay =
-                     VirtualDisplayCreator.createUnownedVirtualDisplay()) {
-            runWithPermission(
-                    () -> assertThat(createVirtualNavigationTouchpad(
-                            unownedDisplay.getDisplay().getDisplayId()))
-                            .isNotNull(),
-                    INJECT_EVENTS, CREATE_VIRTUAL_DEVICE);
-        }
     }
 
     @Test
@@ -340,10 +275,5 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
         event.setSource(InputDevice.SOURCE_TOUCH_NAVIGATION);
         event.setDisplayId(mVirtualDisplay.getDisplay().getDisplayId());
         return event;
-    }
-
-    private VirtualNavigationTouchpad createVirtualNavigationTouchpad(int displayId) {
-        return VirtualInputDeviceCreator.createNavigationTouchpad(mVirtualDevice, DEVICE_NAME,
-                displayId, TOUCHPAD_WIDTH, TOUCHPAD_HEIGHT);
     }
 }

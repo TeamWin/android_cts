@@ -415,7 +415,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     public void onPictureInPictureUiStateChanged(PictureInPictureUiState pipState) {
         Bundle res = new Bundle();
         res.putBoolean(UI_STATE_STASHED_RESULT, pipState.isStashed());
-        res.putBoolean(UI_STATE_ENTERING_PIP_RESULT, pipState.isEnteringPip());
+        res.putBoolean(UI_STATE_ENTERING_PIP_RESULT, pipState.isTransitioningToPip());
         if (mCb != null) {
             mCb.sendResult(res);
         }

@@ -38,10 +38,16 @@
         <option name="runtime-hint" value="6m47s" />
         <option name="hidden-api-checks" value="false" />
         <option name="isolated-storage" value="false" />
+        <option name="device-listeners" value="android.tools.collectors.DefaultUITraceListener"/>
+        <!-- DefaultUITraceListener args -->
+        <option name="instrumentation-arg" key="skip_test_success_metrics" value="true"/>
+        <option name="instrumentation-arg" key="per_class" value="true"/>
     </test>
     <!-- Collect the dumped files for debugging -->
     <metrics_collector class="com.android.tradefed.device.metric.FilePullerLogCollector">
+        <option name="pull-pattern-keys" value="perfetto_file_path*"/>
         <option name="directory-keys" value="/storage/emulated/0/CtsSurfaceControl" />
+        <option name="directory-keys" value="/data/user/0/android.view.surfacecontrol.cts/files" />
         <option name="clean-up" value="true" />
         <option name="collect-on-run-ended-only" value="true" />
     </metrics_collector>

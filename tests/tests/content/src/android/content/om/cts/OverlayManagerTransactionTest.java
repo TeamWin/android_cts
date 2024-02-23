@@ -28,7 +28,7 @@ import android.content.om.OverlayInfo;
 import android.content.om.OverlayManager;
 import android.content.om.OverlayManagerTransaction;
 import android.content.pm.PackageManager;
-import android.platform.test.annotations.AppModeSdkSandbox;
+import android.platform.test.annotations.AppModeNonSdkSandbox;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -48,7 +48,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
+@AppModeNonSdkSandbox(reason = "SDK sandbox does not have access to OverlayManager")
 @RunWith(AndroidJUnit4.class)
 public class OverlayManagerTransactionTest {
     private Context mContext;

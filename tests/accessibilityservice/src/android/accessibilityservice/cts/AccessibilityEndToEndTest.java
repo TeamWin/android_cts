@@ -117,7 +117,9 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
@@ -800,7 +802,7 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
     @ApiTest(apis = {
             "android.view.accessibility.AccessibilityNodeInfo#ACTION_ARGUMENT_SCROLL_AMOUNT_FLOAT"})
     public void testActionArgumentScrollAmountFloat() throws Exception {
-        class MyView extends View {
+        class MyView extends TextView {
             MyView(Context context) {
                 super(context);
             }
@@ -811,47 +813,69 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
                 return scrollAmount < 0 ? false : true;
             }
         }
+
         Bundle bundle = new Bundle();
         bundle.putFloat(ACTION_ARGUMENT_SCROLL_AMOUNT_FLOAT, -1);
-        MyView myView = new MyView(getContext());
-        assertThat(myView.performAccessibilityAction(
+        String text = "action_argument_scroll_amount";
+
+        sUiAutomation.executeAndWaitForEvent(
+                () -> sInstrumentation.runOnMainSync(() -> {
+                    final MyView myView = new MyView(getContext());
+                    myView.setText(text);
+                    ((LinearLayout) mActivity.findViewById(R.id.containerView)).addView(myView);
+                }),
+                filterForEventType(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED),
+                DEFAULT_TIMEOUT_MS);
+        AccessibilityNodeInfo myViewNode =
+                sUiAutomation.getRootInActiveWindow().findAccessibilityNodeInfosByText(
+                        text).getFirst();
+
+        assertThat(myViewNode.performAction(
                 AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD.getId(),
                 bundle)).isFalse();
+
         bundle.putFloat(ACTION_ARGUMENT_SCROLL_AMOUNT_FLOAT, 1);
-        assertThat(myView.performAccessibilityAction(
+        assertThat(myViewNode.performAction(
                 AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD.getId(),
                 bundle)).isTrue();
     }
 
     @MediumTest
     @Test
-    public void testCollectionInfoRetained() throws Exception {
-        final AccessibilityNodeInfo sentInfo = new AccessibilityNodeInfo(new View(getContext()));
-        AccessibilityNodeInfo.CollectionInfo sentCi =
+    public void testCollectionInfoFields() {
+        // Collection with 4 items, 1 unimportant.
+        AccessibilityNodeInfo.CollectionInfo ci =
                 new AccessibilityNodeInfo.CollectionInfo.Builder()
-                        .setRowCount(1)
-                        .setColumnCount(2)
-                        .setHierarchical(true)
-                        .setSelectionMode(
-                                AccessibilityNodeInfo.CollectionInfo.SELECTION_MODE_MULTIPLE)
-                        .setItemCount(10)
+                        .setRowCount(4)
+                        .setColumnCount(1)
+                        .setHierarchical(false)
+                        .setSelectionMode(0)
+                        .setItemCount(4)
                         .setImportantForAccessibilityItemCount(3)
                         .build();
-        sentInfo.setCollectionInfo(sentCi);
-        final Parcel parcel = Parcel.obtain();
-        sentInfo.writeToParcelNoRecycle(parcel, 0);
-        parcel.setDataPosition(0);
-        AccessibilityNodeInfo receivedInfo = AccessibilityNodeInfo.CREATOR.createFromParcel(parcel);
-        AccessibilityNodeInfo.CollectionInfo receivedCi = receivedInfo.getCollectionInfo();
 
-        assertThat(receivedCi.getRowCount()).isEqualTo(sentCi.getRowCount());
-        assertThat(receivedCi.getColumnCount()).isEqualTo(sentCi.getColumnCount());
-        assertThat(receivedCi.isHierarchical()).isEqualTo(sentCi.isHierarchical());
-        assertThat(receivedCi.getSelectionMode()).isEqualTo(sentCi.getSelectionMode());
-        assertThat(receivedCi.getItemCount()).isEqualTo(sentCi.getItemCount());
-        assertThat(receivedCi.getImportantForAccessibilityItemCount()).isEqualTo(
-                sentCi.getImportantForAccessibilityItemCount());
-        parcel.recycle();
+        final View listView = mActivity.findViewById(R.id.listview);
+
+        listView.setAccessibilityDelegate(new View.AccessibilityDelegate() {
+            @Override
+            public void onInitializeAccessibilityNodeInfo(View host, AccessibilityNodeInfo info) {
+                super.onInitializeAccessibilityNodeInfo(host, info);
+                info.setCollectionInfo(ci);
+            }
+        });
+
+        AccessibilityNodeInfo foundInfo =
+                sUiAutomation.getRootInActiveWindow().findAccessibilityNodeInfosByViewId(
+                        mActivity.getResources().getResourceName(R.id.listview)).get(0);
+        AccessibilityNodeInfo.CollectionInfo foundCi = foundInfo.getCollectionInfo();
+
+        assertThat(foundCi.getRowCount()).isEqualTo(ci.getRowCount());
+        assertThat(foundCi.getColumnCount()).isEqualTo(ci.getColumnCount());
+        assertThat(foundCi.isHierarchical()).isEqualTo(ci.isHierarchical());
+        assertThat(foundCi.getSelectionMode()).isEqualTo(ci.getSelectionMode());
+        assertThat(foundCi.getItemCount()).isEqualTo(ci.getItemCount());
+        assertThat(foundCi.getImportantForAccessibilityItemCount()).isEqualTo(
+                ci.getImportantForAccessibilityItemCount());
     }
 
     @MediumTest

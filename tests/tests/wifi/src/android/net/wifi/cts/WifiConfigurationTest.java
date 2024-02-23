@@ -202,7 +202,7 @@ public class WifiConfigurationTest extends WifiJUnit3TestBase {
         assertFalse(configuration.isRepeaterEnabled());
     }
 
-    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
              codeName = "VanillaIceCream")
     public void testSetGetVendorData() {

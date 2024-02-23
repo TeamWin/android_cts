@@ -99,6 +99,7 @@ public class IntentTest {
     private static final String TEST_CATEGORY = "testCategory";
     private static final String ANOTHER_TEST_CATEGORY = "testAnotherCategory";
     private static final String TEST_PACKAGE = "android.content.cts";
+    private static final String TEST_ACTIVITY = TEST_PACKAGE + ".MockActivity";
     private static final String ANOTHER_TEST_PACKAGE = "android.database.cts";
     private static final double DELTA_FLOAT = 0.0f;
     private static final double DELTA_DOUBLE = 0.0d;
@@ -110,7 +111,7 @@ public class IntentTest {
             mContext = new MockContext() {
                 @Override
                 public String getPackageName() {
-                    return "android.content.cts";
+                    return TEST_PACKAGE;
                 }
             };
         } else {
@@ -431,7 +432,8 @@ public class IntentTest {
             // expected
         }
 
-        ai = mContext.getPackageManager().getActivityInfo(mComponentName,
+        ai = mContext.getPackageManager().getActivityInfo(
+                new ComponentName(TEST_PACKAGE, TEST_ACTIVITY),
                 PackageManager.GET_META_DATA);
         parser = ai.loadXmlMetaData(mContext.getPackageManager(), "android.app.intent");
 
@@ -739,12 +741,14 @@ public class IntentTest {
     @Test
     @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testResolveActivityInfo() throws NameNotFoundException {
+        ComponentName componentName = new
+                ComponentName(TEST_PACKAGE, TEST_ACTIVITY);
         final PackageManager pm = mContext.getPackageManager();
         assertEquals(null, mIntent.resolveActivityInfo(pm, 1));
-        mIntent.setComponent(mComponentName);
+        mIntent.setComponent(componentName);
         ActivityInfo target = null;
 
-        target = pm.getActivityInfo(mComponentName, 1);
+        target = pm.getActivityInfo(componentName, 1);
         assertEquals(target.targetActivity, mIntent.resolveActivityInfo(pm, 1).targetActivity);
     }
 
@@ -974,8 +978,8 @@ public class IntentTest {
 
         // Should only have one activity responding to narrow category
         final ComponentName target = intent.resolveActivity(mPm);
-        assertEquals("android.content.cts", target.getPackageName());
-        assertEquals("android.content.cts.MockActivity", target.getClassName());
+        assertEquals(TEST_PACKAGE, target.getPackageName());
+        assertEquals(TEST_ACTIVITY, target.getClassName());
     }
 
     @Test
@@ -983,11 +987,11 @@ public class IntentTest {
     public void testResolveActivityShortcutMatch() {
         final Intent intent = new Intent("android.content.cts.action.TEST_ACTION");
         intent.setComponent(
-                new ComponentName("android.content.cts", "android.content.cts.MockActivity2"));
+                new ComponentName(TEST_PACKAGE, "android.content.cts.MockActivity2"));
 
         // Multiple activities match, but we asked for explicit component
         final ComponentName target = intent.resolveActivity(mPm);
-        assertEquals("android.content.cts", target.getPackageName());
+        assertEquals(TEST_PACKAGE, target.getPackageName());
         assertEquals("android.content.cts.MockActivity2", target.getClassName());
     }
 
@@ -1000,7 +1004,7 @@ public class IntentTest {
         // Should have multiple activities, resulting in resolver dialog
         final ComponentName target = intent.resolveActivity(mPm);
         final String pkgName = target.getPackageName();
-        assertFalse("android.content.cts".equals(pkgName));
+        assertFalse(TEST_PACKAGE.equals(pkgName));
 
         // Whoever they are must be able to set preferred activities
         if (!"android".equals(pkgName)) {

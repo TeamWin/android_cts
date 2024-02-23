@@ -106,7 +106,7 @@ public class PollingLoopEmulatorActivity extends BaseEmulatorActivity {
         NfcDialogs.createHceTapReaderDialog(this,
                     getEmulatorHelpString(this, mNfcTech, mCustomFrame)).show();
         setTitle(getEmulatorString(this, mNfcTech, mCustomFrame));
-        mAdapter.setTransactionAllowed(false);
+        mAdapter.setObserveModeEnabled(true);
         getPassButton().setEnabled(false);
         setupServices(this, PollingLoopService.COMPONENT);
         mCardEmulation.setPreferredService(this,
@@ -181,7 +181,7 @@ public class PollingLoopEmulatorActivity extends BaseEmulatorActivity {
             processPollingFrame(frame);
         }
         if (seenCorrectPollingLoop() && !mAllowedTransaction && mCustomFrame == null) {
-            if (mAdapter.setTransactionAllowed(true)) {
+            if (mAdapter.setObserveModeEnabled(false)) {
                 mAllowedTransaction = true;
             }
         }

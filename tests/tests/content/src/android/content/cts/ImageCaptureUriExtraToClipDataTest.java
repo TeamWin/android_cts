@@ -21,7 +21,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
-import android.platform.test.annotations.AppModeSdkSandbox;
+import android.platform.test.annotations.AppModeNonSdkSandbox;
 import android.provider.MediaStore;
 import android.test.AndroidTestCase;
 
@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
+@AppModeNonSdkSandbox(reason = "SDK sandboxes cannot use an intent with these intent actions.")
 public class ImageCaptureUriExtraToClipDataTest extends AndroidTestCase {
     private static final String FILE_NAME = "testFile.txt";
     private File mTestFile;

@@ -17,6 +17,7 @@
 package android.car.cts;
 
 import static android.car.CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION;
+import static android.car.feature.Flags.FLAG_CLUSTER_HEALTH_MONITORING;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -29,12 +30,16 @@ import static org.junit.Assert.fail;
 import android.car.Car;
 import android.car.CarAppFocusManager;
 import android.content.Context;
+import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Log;
 
-import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -113,6 +118,25 @@ public final class CarAppFocusManagerTest extends AbstractCarTestCase {
         assertThat(mManager.isOwningFocus(owner, APP_FOCUS_TYPE_NAVIGATION)).isTrue();
         mManager.abandonAppFocus(owner);
         assertThat(mManager.isOwningFocus(owner, APP_FOCUS_TYPE_NAVIGATION)).isFalse();
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_CLUSTER_HEALTH_MONITORING)
+    @ApiTest(apis = {"android.car.CarAppFocusManager#getAppTypeOwner(int)"})
+    public void testGetAppTypeOwner() throws Exception {
+        assertThat(mManager.getAppTypeOwner(APP_FOCUS_TYPE_NAVIGATION)).isEmpty();
+
+        FocusOwnershipCallback owner = new FocusOwnershipCallback();
+        assertThat(mManager.requestAppFocus(APP_FOCUS_TYPE_NAVIGATION, owner))
+                .isEqualTo(CarAppFocusManager.APP_FOCUS_REQUEST_SUCCEEDED);
+
+        String[] myPackages = mContext.getPackageManager().getPackagesForUid(Process.myUid());
+        assertThat(mManager.getAppTypeOwner(APP_FOCUS_TYPE_NAVIGATION))
+                .containsExactlyElementsIn(myPackages);
+
+        mManager.abandonAppFocus(owner, APP_FOCUS_TYPE_NAVIGATION);
+
+        assertThat(mManager.getAppTypeOwner(APP_FOCUS_TYPE_NAVIGATION)).isEmpty();
     }
 
     @Test

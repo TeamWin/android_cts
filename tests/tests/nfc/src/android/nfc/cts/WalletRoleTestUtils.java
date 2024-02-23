@@ -29,6 +29,8 @@ import android.content.Context;
 
 import com.google.common.util.concurrent.MoreExecutors;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -43,6 +45,11 @@ public final class WalletRoleTestUtils {
     static final String PAYMENT_AID_1 = "A000000004101012";
     static final String PAYMENT_AID_2 = "A000000004101018";
     static final String NON_PAYMENT_AID_1 = "F053414950454D";
+
+    static final List<String> WALLET_HOLDER_AIDS = Arrays.asList("A000000004101011",
+            "A000000004101012",
+            "A000000004101013",
+            "A000000004101018");
 
     static class RoleContext {
         String mOriginalHolder;

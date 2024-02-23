@@ -329,7 +329,7 @@ public class WifiInfoTest extends WifiJUnit4TestBase{
     /**
      * Test that vendor data can be properly set and retrieved.
      */
-    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
+    @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
             codeName = "VanillaIceCream")
     @Test
