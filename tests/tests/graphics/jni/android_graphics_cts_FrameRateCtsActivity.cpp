@@ -273,7 +273,7 @@ jboolean surfaceControlPostBuffer(JNIEnv*, jclass, jlong surfaceControlLong, jin
     }
 
     ASurfaceTransaction* transaction = ASurfaceTransaction_create();
-    ASurfaceTransaction_setBuffer(transaction, surfaceControl, buffer.getBuffer());
+    ASurfaceTransaction_setBuffer(transaction, surfaceControl, buffer.getBuffer(), -1);
     ASurfaceTransaction_apply(transaction);
     ASurfaceTransaction_delete(transaction);
     return JNI_TRUE;
