@@ -42,7 +42,6 @@ public class MockWifiModemService extends Service {
     public static final String CLASS_IDENTIFIER = "-";
     private static final int NUM_MOCKED_INTERFACES = 1; // The number of HAL, now only support
                                                         // nl80211 HAL
-
     public static final String NL80211_INTERFACE_NAME = "android.wifi.mockwifimodem.nl80211";
 
     private static CountDownLatch[] sLatches;
@@ -151,5 +150,9 @@ public class MockWifiModemService extends Service {
     public String getAllConfiguredMethods() {
         // Get configured methods from all mocked HALs. (Now only supports WifiNL80211ManagerImp).
         return sWifiNL80211ManagerImp.getConfiguredMethods();
+    }
+
+    public WifiNL80211ManagerImp getWifiNL80211ManagerImp() {
+        return sWifiNL80211ManagerImp;
     }
 }

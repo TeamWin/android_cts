@@ -35,6 +35,7 @@ public class IWifiScannerImp extends IWifiScannerImpl.Stub {
     private String mIfaceName;
     private WifiScannerInterfaceMock mWifiScannerInterfaceMock;
     private IPnoScanEvent mIPnoScanEvent;
+    private IScanEvent mScanEventHandler;
 
     public interface WifiScannerInterfaceMock {
         default NativeScanResult[] getScanResults() {
@@ -97,6 +98,21 @@ public class IWifiScannerImp extends IWifiScannerImpl.Stub {
         mWifiScannerInterfaceMock = wifiScannerInterfaceMock;
         return overriddenMethods;
     }
+
+    /**
+     * Trigger the scan ready event to force frameworks to get scan result again.
+     * Otherwise the mocked scan result may not work because the frameworks keep use cache data
+     * since there is no scan ready event.
+     */
+    public void mockScanResultReadyEvent() {
+        try {
+            if (mScanEventHandler != null) {
+                mScanEventHandler.OnScanResultReady();
+            }
+        } catch (RemoteException re) {
+            Log.e(TAG, "RemoteException when calling OnScanResultRead" + re);
+        }
+    }
     // Supported methods in IWifiScannerImpl.aidl
     @Override
     public NativeScanResult[] getScanResults() {
@@ -135,7 +151,7 @@ public class IWifiScannerImp extends IWifiScannerImpl.Stub {
     @Override
     public void subscribeScanEvents(IScanEvent handler) {
         Log.i(TAG, "subscribeScanEvents");
-        // TODO: Mock it when we have a use (test) case.
+        mScanEventHandler = handler;
     }
 
     @Override

@@ -20,6 +20,7 @@ import android.content.Context;
 import android.util.Log;
 import android.wifi.mockwifi.nl80211.IClientInterfaceImp;
 import android.wifi.mockwifi.nl80211.IWifiScannerImp;
+import android.wifi.mockwifi.nl80211.WifiNL80211ManagerImp;
 
 import java.util.concurrent.TimeUnit;
 
@@ -130,4 +131,13 @@ public class MockWifiModemManager {
                 wifiScannerInterfaceMock);
     }
 
+    /**
+     * Returns mocked WifiNl80211Manager.
+     */
+    public WifiNL80211ManagerImp getWifiNL80211ManagerImp() {
+        if (mMockWifiModemService == null) {
+            return null;
+        }
+        return mMockWifiModemService.getWifiNL80211ManagerImp();
+    }
 }
