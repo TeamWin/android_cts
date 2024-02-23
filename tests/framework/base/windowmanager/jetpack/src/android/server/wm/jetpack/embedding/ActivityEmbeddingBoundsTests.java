@@ -21,7 +21,6 @@ import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.EXPAND_SPLIT
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.HINGE_SPLIT_ATTRS;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.assertValidSplit;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createSplitPairRuleBuilder;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.getTaskBounds;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplitAttributes;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertNotVisible;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumedAndFillsTask;
@@ -29,7 +28,6 @@ import static android.server.wm.jetpack.utils.TestActivityLauncher.KEY_ACTIVITY_
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.jetpack.utils.TestActivity;
 import android.server.wm.jetpack.utils.TestActivityWithId;
@@ -80,9 +78,8 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
 
         // Set split pair rule such that if the parent bounds is any smaller than it is now, then
         // the parent cannot support a split.
-        final Rect taskBounds = getTaskBounds(primaryActivity, true /* shouldWaitForResume */);
-        final int originalTaskWidth = taskBounds.width();
-        final int originalTaskHeight = taskBounds.height();
+        final int originalTaskWidth = getTaskWidth();
+        final int originalTaskHeight = getTaskHeight();
         final SplitPairRule splitPairRule = createSplitPairRuleBuilder(
                 activityActivityPair -> true /* activityPairPredicate */,
                 activityIntentPair -> true /* activityIntentPredicate */,
