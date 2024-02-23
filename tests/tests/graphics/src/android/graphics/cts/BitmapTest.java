@@ -2561,23 +2561,17 @@ public class BitmapTest {
                 nTestInfo(bm, expectedFormat, width, height, bm.hasAlpha(),
                         bm.isPremultiplied(), false);
                 Bitmap hwBitmap = bm.copy(Bitmap.Config.HARDWARE, false);
-                if (hwBitmap == null) {
-                    // Some devices do not support ALPHA_8 + HARDWARE.
-                    assertEquals(Bitmap.Config.ALPHA_8, config);
-                } else {
-                    // Some devices do not support (F16 | 1010102) + HARDWARE. These fall back to
-                    // 8888. Check the HWB to confirm.
-                    int tempExpectedFormat = expectedFormat;
-                    if (config == Config.RGBA_F16 || config == Config.RGBA_1010102) {
-                        HardwareBuffer buffer = hwBitmap.getHardwareBuffer();
-                        if (buffer.getFormat() == HardwareBuffer.RGBA_8888) {
-                            tempExpectedFormat = ANDROID_BITMAP_FORMAT_RGBA_8888;
-                        }
-                    }
-                    nTestInfo(hwBitmap, tempExpectedFormat, width, height, hwBitmap.hasAlpha(),
-                            hwBitmap.isPremultiplied(), true);
-                    hwBitmap.recycle();
+                assertNotNull(hwBitmap);
+                // Formats that are not supported by gralloc fall back to 8888.
+                // Check what the HWB format is and compare against that
+                int tempExpectedFormat = expectedFormat;
+                HardwareBuffer buffer = hwBitmap.getHardwareBuffer();
+                if (buffer.getFormat() == HardwareBuffer.RGBA_8888) {
+                    tempExpectedFormat = ANDROID_BITMAP_FORMAT_RGBA_8888;
                 }
+                nTestInfo(hwBitmap, tempExpectedFormat, width, height, hwBitmap.hasAlpha(),
+                        hwBitmap.isPremultiplied(), true);
+                hwBitmap.recycle();
                 bm.recycle();
             }
         }
