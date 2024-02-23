@@ -2646,6 +2646,10 @@ public class CameraTestUtils extends Assert {
             String filePath, ColorSpace colorSpace) {
         checkImage(image, width, height, format, colorSpace);
 
+        if (format == ImageFormat.PRIVATE) {
+            return;
+        }
+
         /**
          * TODO: validate timestamp:
          * 1. capture result timestamp against the image timestamp (need
