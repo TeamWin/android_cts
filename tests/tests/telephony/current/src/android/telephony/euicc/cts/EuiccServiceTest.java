@@ -81,6 +81,7 @@ public class EuiccServiceTest {
     private static final int CALLBACK_TIMEOUT_MILLIS = 2000 /* 2 sec */;
 
     private static final int MOCK_SLOT_ID = 1;
+    static final int MOCK_SLOT_ID_EXCEPTION = 2;
     private static final int MOCK_PORT_ID = 0;
     private static final String MOCK_ICCID = "12345";
     private static final String MOCK_NICK_NAME = "nick name";
@@ -252,7 +253,7 @@ public class EuiccServiceTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_ESIM_AVAILABLE_MEMORY)
-    public void testOnGetAvailableMemoryInBytes() throws Exception {
+    public void testOnGetAvailableMemoryInBytes_onSuccess() throws Exception {
         mCountDownLatch = new CountDownLatch(1);
 
         mEuiccServiceBinder.getAvailableMemoryInBytes(
@@ -262,6 +263,41 @@ public class EuiccServiceTest {
                     public void onSuccess(long availableMemoryInBytes) {
                         assertEquals(
                                 MockEuiccService.MOCK_AVAILABLE_MEMORY, availableMemoryInBytes);
+                        mCountDownLatch.countDown();
+                    }
+
+                    @Override
+                    public void onUnsupportedOperationException(String message) {
+                        fail("method should not be called");
+                    }
+                });
+
+        try {
+            mCountDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+
+        assertTrue(mCallback.isMethodCalled());
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_ESIM_AVAILABLE_MEMORY)
+    public void testOnGetAvailableMemoryInBytes_onUnsupportedOperationException()
+            throws Exception {
+        mCountDownLatch = new CountDownLatch(1);
+
+        mEuiccServiceBinder.getAvailableMemoryInBytes(
+                MOCK_SLOT_ID_EXCEPTION,
+                new IGetAvailableMemoryInBytesCallback.Stub() {
+                    @Override
+                    public void onSuccess(long availableMemoryInBytes) {
+                        fail("method should not be called");
+                    }
+
+                    @Override
+                    public void onUnsupportedOperationException(String message) {
+                        assertTrue(message != null && !message.isEmpty());
                         mCountDownLatch.countDown();
                     }
                 });
