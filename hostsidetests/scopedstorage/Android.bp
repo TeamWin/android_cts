@@ -14,6 +14,7 @@
 
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
+    default_team: "trendy_team_android_storage",
 }
 
 android_test_helper_app {
@@ -133,6 +134,7 @@ android_test_helper_app {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
         "cts",
     ],
 }
@@ -149,6 +151,7 @@ android_test_helper_app {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
         "cts",
     ],
 }
@@ -165,6 +168,7 @@ android_test_helper_app {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
         "cts",
     ],
 }
@@ -245,6 +249,7 @@ android_test_helper_app {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
     ],
     sdk_version: "test_current",
     target_sdk_version: "29",
@@ -266,6 +271,7 @@ android_test_helper_app {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
     ],
 }
 
@@ -281,6 +287,7 @@ android_test_helper_app {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
     ],
 }
 
@@ -296,6 +303,7 @@ android_test_helper_app {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
     ],
 }
 
@@ -311,6 +319,7 @@ android_test_helper_app {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
         "cts",
     ],
 }
@@ -327,6 +336,7 @@ android_test_helper_app {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
     ],
 }
 
@@ -342,6 +352,7 @@ android_test_helper_app {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
         "cts",
     ],
 }
@@ -358,6 +369,7 @@ android_test_helper_app {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
         "cts",
     ],
 }
@@ -374,6 +386,7 @@ android_test_helper_app {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
         "cts",
     ],
 }
@@ -508,6 +521,7 @@ java_test_host {
     test_suites: [
         "general-tests",
         "mts-mediaprovider",
+        "mcts-mediaprovider",
     ],
     test_config: "PublicVolumeTest.xml",
     per_testcase_directory: true,
