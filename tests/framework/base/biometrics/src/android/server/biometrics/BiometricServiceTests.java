@@ -23,10 +23,6 @@ import static org.junit.Assume.assumeTrue;
 import android.hardware.biometrics.BiometricTestSession;
 import android.hardware.biometrics.SensorProperties;
 import android.platform.test.annotations.Presubmit;
-import android.server.biometrics.util.BiometricServiceState;
-import android.server.biometrics.util.SensorStates;
-import android.server.biometrics.util.TestSessionList;
-import android.server.biometrics.util.Utils;
 import android.util.Log;
 
 import androidx.annotation.NonNull;

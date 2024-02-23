@@ -19,14 +19,14 @@ package {
 
 android_test {
     name: "CtsBiometricsTestCases",
-
     defaults: ["cts_defaults"],
+    // Tag this module as a cts test artifact
     test_suites: [
         "cts",
+        "sts",
         "vts10",
         "general-tests",
     ],
-
     compile_multilib: "both",
     libs: [
         "android.test.runner",
@@ -36,7 +36,6 @@ android_test {
         "androidx.annotation_annotation",
         "androidx.test.ext.junit",
         "compatibility-device-util-axt",
-        "cts-biometric-util",
         "cts-input-lib",
         "cts-wm-util",
         "ctstestrunner-axt",
@@ -49,64 +48,14 @@ android_test {
         "Harrier",
         "truth",
     ],
-
-    srcs: ["src/android/server/biometrics/*.java"],
+    srcs: ["src/**/*.java"],
     data: [
         ":CtsBiometricServiceTestApp",
         ":CtsBiometricServiceUtilTestApp",
-    ],
-
-    sdk_version: "test_current",
-
-    manifest: "AndroidManifest.xml",
-    test_config: "AndroidTest.xml",
-}
-
-android_test {
-    name: "CtsFingerprintTestCases",
-
-    defaults: ["cts_defaults"],
-    test_suites: [
-        "cts",
-        "vts10",
-        "general-tests",
-    ],
-
-    compile_multilib: "both",
-    libs: [
-        "android.test.runner",
-        "android.test.base",
-    ],
-    static_libs: [
-        "androidx.annotation_annotation",
-        "androidx.test.ext.junit",
-        "compatibility-device-util-axt",
-        "cts-biometric-util",
-        "cts-biometric-util-fpm",
-        "cts-input-lib",
-        "cts-wm-util",
-        "ctstestrunner-axt",
-        "mockito-target-minus-junit4",
-        "platform-test-annotations",
-        "platformprotosnano",
-        "androidx.test.uiautomator_uiautomator",
-        "android.hardware.biometrics.flags-aconfig-java",
-        "flag-junit",
-        "Harrier",
-        "truth",
-    ],
-
-    srcs: ["src/android/server/biometrics/fingerprint/*.java"],
-    data: [
         ":CtsFingerprintServiceTestApp",
-        ":CtsBiometricServiceUtilTestApp",
     ],
-
-    // removed in 35+
-    platform_apis: true,
-
-    manifest: "AndroidManifest-fpm.xml",
-    test_config: "AndroidTest-fpm.xml",
+    sdk_version: "test_current",
+    per_testcase_directory: true,
 }
 
 java_test_helper_library {
@@ -117,16 +66,12 @@ java_test_helper_library {
         "cts-wm-util",
     ],
 
-    srcs: ["src/android/server/biometrics/util/*.java"],
-}
-
-java_test_helper_library {
-    name: "cts-biometric-util-fpm",
-
-    static_libs: [
-        "androidx.annotation_annotation",
-        "cts-wm-util",
+    srcs: [
+        "src/android/server/biometrics/BiometricCallbackHelper.java",
+        "src/android/server/biometrics/BiometricServiceState.java",
+        "src/android/server/biometrics/SensorStates.java",
+        "src/android/server/biometrics/TestSessionList.java",
+        "src/android/server/biometrics/Utils.java",
+        "src/android/server/biometrics/fingerprint/FingerprintCallbackHelper.java",
     ],
-
-    srcs: ["src/android/server/biometrics/fingerprint/util/*.java"],
 }

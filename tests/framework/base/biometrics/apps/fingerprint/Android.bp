@@ -17,25 +17,25 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test_helper_app {
+android_test {
     name: "CtsFingerprintServiceTestApp",
     defaults: ["cts_support_defaults"],
 
     static_libs: [
         "cts-biometric-util",
-        "cts-biometric-util-fpm",
         "cts-wm-app-base",
     ],
 
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+    ],
 
-     // removed in 35+
-    sdk_version: "34",
-    target_sdk_version: "34",
-    min_sdk_version: "34",
+    sdk_version: "test_current",
+    per_testcase_directory: true,
 
     test_suites: [
         "cts",
+        "sts",
         "vts10",
         "general-tests",
     ],

@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<configuration description="Config for CTS Biometrics test cases">
+<configuration description="Config for CTS Hardware test cases">
     <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="framework" />
     <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
@@ -25,6 +25,7 @@
         <option name="test-file-name" value="CtsBiometricsTestCases.apk" />
         <option name="test-file-name" value="CtsBiometricServiceTestApp.apk" />
         <option name="test-file-name" value="CtsBiometricServiceUtilTestApp.apk" />
+        <option name="test-file-name" value="CtsFingerprintServiceTestApp.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.server.biometrics.cts" />

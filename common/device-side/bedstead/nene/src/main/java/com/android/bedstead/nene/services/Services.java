@@ -77,7 +77,7 @@ import android.hardware.camera2.CameraManager;
 //import android.hardware.display.ColorDisplayManager;
 import android.hardware.display.DisplayManager;
 //import android.hardware.face.FaceManager;
-//import android.hardware.fingerprint.FingerprintManager;
+import android.hardware.fingerprint.FingerprintManager;
 import android.hardware.hdmi.HdmiControlManager;
 import android.hardware.input.InputManager;
 //import android.hardware.iris.IrisManager;
@@ -244,7 +244,7 @@ public final class Services {
         sServiceMapping.put(Context.VIRTUAL_DEVICE_SERVICE, VirtualDeviceManager.class);
         sServiceMapping.put(Context.CONSUMER_IR_SERVICE, ConsumerIrManager.class);
 //        sServiceMapping.put(Context.TRUST_SERVICE, TrustManager.class);
-//        sServiceMapping.put(Context.FINGERPRINT_SERVICE, FingerprintManager.class);
+        sServiceMapping.put(Context.FINGERPRINT_SERVICE, FingerprintManager.class);
 //        sServiceMapping.put(Context.FACE_SERVICE, FaceManager.class);
 //        sServiceMapping.put(Context.IRIS_SERVICE, IrisManager.class);
         sServiceMapping.put(Context.BIOMETRIC_SERVICE, BiometricManager.class);
