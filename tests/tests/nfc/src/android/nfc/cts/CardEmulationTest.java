@@ -873,7 +873,23 @@ public class CardEmulationTest {
         setMockService();
     }
 
+    @Test
+    @RequiresFlagsEnabled({android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP})
+    public void testInvalidPollingLoopFilter() {
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
+        ComponentName customServiceName = new ComponentName(mContext, CustomHostApduService.class);
+        Assert.assertThrows(IllegalArgumentException.class,
+                () -> cardEmulation.registerPollingLoopFilterForService(customServiceName,
+                        "", false));
+        Assert.assertThrows(IllegalArgumentException.class,
+                () ->cardEmulation.registerPollingLoopFilterForService(customServiceName,
+                    "????", false));
+        Assert.assertThrows(IllegalArgumentException.class,
+                () ->cardEmulation.registerPollingLoopFilterForService(customServiceName,
+                    "123", false));
 
+    }
 
     static void ensureUnlocked() {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
