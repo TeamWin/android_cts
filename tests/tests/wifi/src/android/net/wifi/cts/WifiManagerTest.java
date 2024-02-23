@@ -7149,7 +7149,8 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     }
 
     /**
-     * Validate setting up a TWT session if device supports and get stats and finally teardown.
+     * Validate setting up a TWT session if device supports and get stats and finally close. If the
+     * connection is multi-link, pick the first link and set up the TWT session.
      */
     @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM, codeName =
@@ -7163,6 +7164,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
             "android.net.wifi.twt.TwtSession#getWakeIntervalMicros",
             "android.net.wifi.twt.TwtSession#getMloLinkId",
             "android.net.wifi.twt.TwtRequest#Builder",
+            "android.net.wifi.twt.TwtRequest.Builder#setLinkId",
             "android.net.wifi.twt.TwtRequest#getMinWakeDurationMicros",
             "android.net.wifi.twt.TwtRequest#getMaxWakeDurationMicros",
             "android.net.wifi.twt.TwtRequest#getMinWakeIntervalMicros",
@@ -7223,6 +7225,13 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
             sWifiManager.connect(twtNetwork.networkId, actionListener);
             waitForConnection();
 
+            // Get the first link id, if the connection is multi-link
+            List<MloLink> mloLinks = sWifiManager.getConnectionInfo().getAssociatedMloLinks();
+            int linkId = MloLink.INVALID_MLO_LINK_ID;
+            if (!mloLinks.isEmpty()) {
+                linkId = mloLinks.getFirst().getLinkId();
+            }
+
             // Build and validate twtRequest
             int minWakeDuration = twtCapabilities.get().getInt(
                     WifiManager.TWT_CAPABILITIES_KEY_INT_MIN_WAKE_DURATION_MICROS);
@@ -7232,13 +7241,17 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
                     WifiManager.TWT_CAPABILITIES_KEY_LONG_MIN_WAKE_INTERVAL_MICROS);
             long maxWakeInterval = twtCapabilities.get().getLong(
                     WifiManager.TWT_CAPABILITIES_KEY_LONG_MAX_WAKE_INTERVAL_MICROS);
-            TwtRequest twtRequest = new TwtRequest.Builder(minWakeDuration, maxWakeDuration,
-                    minWakeInterval, maxWakeInterval).build();
+            TwtRequest.Builder builder = new TwtRequest.Builder(minWakeDuration, maxWakeDuration,
+                    minWakeInterval, maxWakeInterval);
+            if (linkId != MloLink.INVALID_MLO_LINK_ID) {
+                builder.setLinkId(linkId);
+            }
+            TwtRequest twtRequest = builder.build();
             assertEquals(twtRequest.getMinWakeDurationMicros(), minWakeDuration);
             assertEquals(twtRequest.getMaxWakeDurationMicros(), maxWakeDuration);
             assertEquals(twtRequest.getMinWakeIntervalMicros(), minWakeInterval);
             assertEquals(twtRequest.getMaxWakeIntervalMicros(), maxWakeInterval);
-            assertEquals(twtRequest.getLinkId(), MloLink.INVALID_MLO_LINK_ID);
+            assertEquals(twtRequest.getLinkId(), linkId);
 
             // Verify TWT session setup
             sWifiManager.setupTwtSession(twtRequest, mExecutor, testTwtSessionCallback);
@@ -7254,8 +7267,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
                     testTwtSessionCallback.mTwtSession.get());
             assertTrue(testTwtSessionCallback.mTwtSession.get().getWakeDurationMicros() > 0);
             assertTrue(testTwtSessionCallback.mTwtSession.get().getWakeIntervalMicros() > 0);
-            assertTrue(testTwtSessionCallback.mTwtSession.get().getMloLinkId()
-                    == MloLink.INVALID_MLO_LINK_ID);
+            assertTrue(testTwtSessionCallback.mTwtSession.get().getMloLinkId() == linkId);
 
             // Verify TWT session get stats
             testTwtSessionCallback.mTwtSession.get().getStats(mExecutor, twtStatsCallback);
