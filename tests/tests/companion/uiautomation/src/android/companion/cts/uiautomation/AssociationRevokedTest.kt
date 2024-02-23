@@ -20,6 +20,7 @@ import android.Manifest.permission.MANAGE_COMPANION_DEVICES
 import android.companion.AssociationRequest.DEVICE_PROFILE_WATCH
 import android.companion.cts.common.sleepFor
 import android.platform.test.annotations.AppModeFull
+import com.android.compatibility.common.util.FeatureUtil
 import kotlin.test.assertContains
 import kotlin.test.assertFalse
 import kotlin.test.fail
@@ -35,6 +36,21 @@ import org.junit.Test
  */
 @AppModeFull(reason = "CompanionDeviceManager APIs are not available to the instant apps.")
 class AssociationRevokedTest : AssociationRevokedTestBase() {
+
+    override fun setUp() {
+        // The CompanionDeviceManager app is not available on Wear.
+        assumeFalse("Skipping test for wear devices", FeatureUtil.isWatch())
+
+        super.setUp()
+    }
+
+    override fun tearDown() {
+        if (FeatureUtil.isWatch()) {
+            return
+        }
+
+        super.tearDown()
+    }
 
     @Test
     fun test_disassociate_app_should_not_crash() = with(associationApp) {
