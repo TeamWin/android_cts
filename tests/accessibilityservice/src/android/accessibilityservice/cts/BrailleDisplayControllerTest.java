@@ -88,8 +88,8 @@ import java.util.function.Consumer;
 @RequiresFlagsEnabled(Flags.FLAG_BRAILLE_DISPLAY_HID)
 public class BrailleDisplayControllerTest {
     private static final long CALLBACK_TIMEOUT_MS = 5000;
-    private static final byte[] DESCRIPTOR1 = {0xB, 0xE, 0xE, 0xF};
-    private static final byte[] DESCRIPTOR2 = {0xF, 0x0, 0x0, 0xD};
+    private static final byte[] DESCRIPTOR1 = {0x05, 0x41, 0x01, 0x0A};
+    private static final byte[] DESCRIPTOR2 = {0x05, 0x41, 0x01, 0x0B};
     private static final String BT_ADDRESS1 = "00:11:22:33:AA:BB";
     private static final String BT_ADDRESS2 = "22:33:44:55:AA:BB";
     // Test data is in /data/system so that system_server can read/write from these files.
@@ -396,6 +396,27 @@ public class BrailleDisplayControllerTest {
         String hidraw1 = createTestHidrawNode("hidraw1");
         String wrongUniq = mBluetoothDevice1.getAddress() + "_extra";
         Bundle testBD = getTestBrailleDisplay(hidraw1, DESCRIPTOR1, wrongUniq, true);
+        setTestData(List.of(testBD));
+
+        int errorCode = expectConnectionFailed(mController, mExecutor, mBluetoothDevice1);
+
+        assertThat(errorCode).isEqualTo(FLAG_ERROR_BRAILLE_DISPLAY_NOT_FOUND);
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.accessibilityservice.BrailleDisplayController#connect",
+            "android.accessibilityservice.BrailleDisplayController"
+                    + ".BrailleDisplayCallback#onConnectionFailed",
+            "android.accessibilityservice.BrailleDisplayController"
+                    + ".BrailleDisplayCallback#FLAG_ERROR_BRAILLE_DISPLAY_NOT_FOUND",
+    })
+    public void connect_nonBrailleDisplayDescriptor_returnsNotFoundError()
+            throws Exception {
+        final byte[] nonBrailleDisplayDescriptor = {0x05, 0x01 /* != 0x41 */};
+        String hidraw1 = createTestHidrawNode("hidraw1");
+        Bundle testBD = getTestBrailleDisplay(
+                hidraw1, nonBrailleDisplayDescriptor, BT_ADDRESS1, true);
         setTestData(List.of(testBD));
 
         int errorCode = expectConnectionFailed(mController, mExecutor, mBluetoothDevice1);
