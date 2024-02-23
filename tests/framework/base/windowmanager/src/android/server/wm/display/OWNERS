@@ -22,8 +22,8 @@
 # Android > Android OS & Apps > Framework (Java + Native) > Window Manager > WM Shell > Freeform
 # Bug template url: https://b.corp.google.com/issues/new?component=929241&template=1490914 = per-file *Freeform*
 
-# TODO(Update to foldables) Android > Android OS & Apps > Framework (Java + Native) > Window Manager > Foldables
-# TODO(Bug template url: https://b.corp.google.com/issues/new?component=943781&template=1502790 = per-file WindowContext*)
+# Android > Android OS & Apps > Framework (Java + Native) > Window Manager > WindowContext/WindowMetrics
+# Bug template url: https://buganizer.corp.google.com/issues/new?component=1519745&template=1948140 = per-file WindowContext*
 
 # Android > Android OS & Apps > Framework (Java + Native) > Window Manager > Other
 # Bug template url: https://b.corp.google.com/issues/new?component=316125&template=1018199
