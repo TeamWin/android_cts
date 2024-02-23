@@ -24,6 +24,7 @@ import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeNonSdkSandbox;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -46,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
+@AppModeNonSdkSandbox
 public class InstallSessionCleanupTest {
     private static final String INSTALLER_APP_PACKAGE_NAME = "com.android.cts.testinstallerapp";
     private static final TestApp INSTALLER_APP =

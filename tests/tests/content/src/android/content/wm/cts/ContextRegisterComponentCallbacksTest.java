@@ -29,6 +29,7 @@ import android.content.ContextWrapper;
 import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.platform.test.annotations.Presubmit;
 import android.util.DisplayMetrics;
 import android.view.Display;
@@ -62,6 +63,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Presubmit
 @SmallTest
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ContextRegisterComponentCallbacksTest extends ContextTestBase {
     private Context mTestContext;
     private TestComponentCallbacks mTestCallbacks;

@@ -253,7 +253,7 @@ public class ComponentInfoTest {
 
         mComponentInfo.nonLocalizedLabel = null;
         final int resHelloAndroid = getContext().getResources()
-                .getIdentifier("hello_android", "string", getContext().getPackageName());
+                .getIdentifier("hello_android", "string", PACKAGE_NAME);
         mComponentInfo.labelRes = resHelloAndroid;
         assertEquals(getContext().getString(mComponentInfo.labelRes), mComponentInfo.loadLabel(pm));
 

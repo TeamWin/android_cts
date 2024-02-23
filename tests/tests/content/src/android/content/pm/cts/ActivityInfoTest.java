@@ -23,7 +23,6 @@ import static org.junit.Assert.fail;
 
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.cts.MockActivity;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -48,6 +47,9 @@ import org.junit.runner.RunWith;
 public class ActivityInfoTest {
     @Rule
     public final RavenwoodRule mRavenwood = new RavenwoodRule();
+
+    private static final String TEST_PKG = "android.content.cts";
+    private static final String TEST_ACTIVITY = TEST_PKG + ".MockActivity";
 
     ActivityInfo mActivityInfo;
 
@@ -81,7 +83,7 @@ public class ActivityInfoTest {
     @Test
     @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testWriteToParcel() throws NameNotFoundException {
-        ComponentName componentName = new ComponentName(getContext(), MockActivity.class);
+        ComponentName componentName = new ComponentName(TEST_PKG, TEST_ACTIVITY);
 
         mActivityInfo = getContext().getPackageManager().getActivityInfo(
                 componentName, PackageManager.GET_META_DATA);
@@ -110,7 +112,7 @@ public class ActivityInfoTest {
     @Test
     @IgnoreUnderRavenwood(blockedBy = PackageManager.class)
     public void testGetThemeResource() throws NameNotFoundException {
-        ComponentName componentName = new ComponentName(getContext(), MockActivity.class);
+        ComponentName componentName = new ComponentName(TEST_PKG, TEST_ACTIVITY);
 
         mActivityInfo = getContext().getPackageManager().getActivityInfo(
                 componentName, PackageManager.GET_META_DATA);
@@ -132,7 +134,7 @@ public class ActivityInfoTest {
         mActivityInfo = new ActivityInfo();
         assertEquals(0, mActivityInfo.describeContents());
 
-        ComponentName componentName = new ComponentName(getContext(), MockActivity.class);
+        ComponentName componentName = new ComponentName(TEST_PKG, TEST_ACTIVITY);
 
         mActivityInfo = getContext().getPackageManager().getActivityInfo(
                 componentName, PackageManager.GET_META_DATA);

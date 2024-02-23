@@ -42,6 +42,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.UserManager
 import android.platform.test.annotations.AppModeFull
+import android.platform.test.annotations.AppModeNonSdkSandbox
 import android.platform.test.annotations.RequiresFlagsEnabled
 import android.platform.test.flag.junit.CheckFlagsRule
 import android.platform.test.flag.junit.DeviceFlagsValueProvider
@@ -76,6 +77,7 @@ import org.junit.runners.model.Statement
 @EnsureHasSecondaryUser
 @RunWith(BedsteadJUnit4::class)
 @AppModeFull(reason = "Cannot query other apps if instant")
+@AppModeNonSdkSandbox(reason = "SDK sandboxes cannot query other apps")
 class PackageManagerShellCommandMultiUserTest {
 
     @JvmField

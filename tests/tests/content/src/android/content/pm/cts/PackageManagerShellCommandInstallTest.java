@@ -76,6 +76,7 @@ import android.os.Process;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeNonSdkSandbox;
 import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
@@ -124,6 +125,7 @@ import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
 @AppModeFull
+@AppModeNonSdkSandbox
 public class PackageManagerShellCommandInstallTest {
     static final String TEST_APP_PACKAGE = "com.example.helloworld";
     static final String TEST_VERIFIER_PACKAGE = "com.example.helloverifier";
