@@ -35,9 +35,12 @@ import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
+import android.hardware.input.InputManager;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
@@ -65,6 +68,7 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -92,11 +96,17 @@ public class BrailleDisplayControllerTest {
     private static final byte[] DESCRIPTOR2 = {0x05, 0x41, 0x01, 0x0B};
     private static final String BT_ADDRESS1 = "00:11:22:33:AA:BB";
     private static final String BT_ADDRESS2 = "22:33:44:55:AA:BB";
-    // Test data is in /data/system so that system_server can read/write from these files.
-    // Note: this also requires using shell commands to create/read/write from files in this
-    // directory, because this test app only has normal app privileges but shell can act
-    // as the system user.
-    private static final String TEST_DATA_DIR =
+    // "Real" HIDRAW node files are used for the majority of tests, created
+    // by the 'hid' command line tool.
+    private static final String HIDRAW_NODE_0 = "/dev/hidraw0";
+    private static final String HIDRAW_NODE_1 = "/dev/hidraw1";
+    // Fake test files are used to test input and writing, which are not supported
+    // by the 'hid' command line tool.
+    // These files are in /data/system so that system_server can read/write from them.
+    // Note: this also requires userdebug/eng builds and using shell commands to
+    // create/read/write from files in this directory, because this test app only has
+    // normal app privileges but userdebug-shell can act as the system user.
+    private static final String FAKE_HIDRAW_DIR =
             "/data/system/" + BrailleDisplayControllerTest.class.getSimpleName();
 
     private static Instrumentation sInstrumentation;
@@ -115,6 +125,11 @@ public class BrailleDisplayControllerTest {
     private StubBrailleDisplayAccessibilityService mService;
     private BrailleDisplayController mController;
     private Executor mExecutor;
+    private boolean mIsUserdebugOrEng;
+
+    // Tracks the added and removed HIDRAW device nodes.
+    private int mDeviceCount;
+    private final Object mDeviceWaitObject = new Object();
 
     // Default implementation of BrailleDisplayCallback
     private static class TestBrailleDisplayCallback implements
@@ -165,9 +180,37 @@ public class BrailleDisplayControllerTest {
         assumeTrue(bluetoothManager != null);
         mBluetoothDevice1 = bluetoothManager.getAdapter().getRemoteDevice(BT_ADDRESS1);
         mBluetoothDevice2 = bluetoothManager.getAdapter().getRemoteDevice(BT_ADDRESS2);
-        executeSystemShellCommand("mkdir " + TEST_DATA_DIR);
-        TestUtils.waitUntil(TEST_DATA_DIR + " should exist", () ->
-                !executeSystemShellCommand("ls -l " + TEST_DATA_DIR).isEmpty());
+        mIsUserdebugOrEng = !"user".equals(Build.TYPE);
+        if (mIsUserdebugOrEng) {
+            executeSystemShellCommand("mkdir " + FAKE_HIDRAW_DIR);
+            TestUtils.waitUntil(FAKE_HIDRAW_DIR + " should exist", () ->
+                    !executeSystemShellCommand("ls -l " + FAKE_HIDRAW_DIR).isEmpty());
+        }
+        mDeviceCount = 0;
+        InputManager inputManager = sInstrumentation.getContext().getSystemService(
+                InputManager.class);
+        assertThat(inputManager).isNotNull();
+        inputManager.registerInputDeviceListener(new InputManager.InputDeviceListener() {
+            @Override
+            public void onInputDeviceAdded(int deviceId) {
+                synchronized (mDeviceWaitObject) {
+                    mDeviceCount++;
+                    mDeviceWaitObject.notifyAll();
+                }
+            }
+
+            @Override
+            public void onInputDeviceRemoved(int deviceId) {
+                synchronized (mDeviceWaitObject) {
+                    mDeviceCount--;
+                    mDeviceWaitObject.notifyAll();
+                }
+            }
+
+            @Override
+            public void onInputDeviceChanged(int deviceId) {
+            }
+        }, new Handler(mService.getMainLooper()));
     }
 
     @After
@@ -175,7 +218,16 @@ public class BrailleDisplayControllerTest {
         if (mController != null) {
             mController.disconnect();
         }
-        executeSystemShellCommand("rm -rf " + TEST_DATA_DIR);
+        if (mIsUserdebugOrEng) {
+            executeSystemShellCommand("rm -rf " + FAKE_HIDRAW_DIR);
+        }
+        // Individual tests should clean up their own test HIDRAW nodes,
+        // but this can sometimes take a moment to propagate.
+        TestUtils.waitOn(mDeviceWaitObject, () -> {
+            synchronized (mDeviceWaitObject) {
+                return mDeviceCount == 0;
+            }
+        }, CALLBACK_TIMEOUT_MS, "Expected all HIDRAW devices removed");
     }
 
     private void setTestData(List<Bundle> testData) {
@@ -199,6 +251,54 @@ public class BrailleDisplayControllerTest {
     }
 
     /**
+     * Creates a test /dev/hidraw* node using the 'hid' command line tool.
+     *
+     * @return An OutputStream that keeps the 'hid' command alive. Closing this stream will
+     * stop the command and delete the HIDRAW node.
+     */
+    private OutputStream createTestHidrawNode(String expectedPath) throws Exception {
+        assertThat(new File(expectedPath).exists()).isFalse();
+
+        // See frameworks/base/cmds/hid/README.md for the expected format.
+        // These values are all valid defaults copied from cts/tests/tests/hardware/res/raw,
+        // but none are actually read in the tests because the tests use the data provided by
+        // BrailleDisplayController.setTestBrailleDisplayData.
+        String registerCommand = """
+                {
+                  "id": ID,
+                  "command": "register",
+                  "name": "fake device",
+                  "bus": "bluetooth",
+                  "vid": 0x0001,
+                  "pid": 0x0001,
+                  "source": "GAMEPAD",
+                  "descriptor": [
+                    0x05, 0x41, 0x09, 0x05, 0xa1, 0x01, 0x05, 0x01, 0x09, 0x01, 0xa1, 0x00, 0x09,
+                    0x30, 0x09, 0x31, 0x15, 0x00, 0x26, 0xff, 0x00, 0x75, 0x08, 0x95, 0x02, 0x81,
+                    0x02, 0xc0, 0x05, 0x09, 0x19, 0x01, 0x29, 0x0a, 0x15, 0x00, 0x25, 0x01, 0x75,
+                    0x01, 0x95, 0x0a, 0x81, 0x02, 0x95, 0x01, 0x75, 0x06, 0x81, 0x01, 0xc0
+                  ]
+                }
+                """.replace("ID", expectedPath.equals(HIDRAW_NODE_0) ? "0" : "1");
+
+        final int expectedDeviceCount;
+        synchronized (mDeviceWaitObject) {
+            expectedDeviceCount = mDeviceCount + 1;
+        }
+        ParcelFileDescriptor hidCommandInput = sUiAutomation.executeShellCommandRw("hid -")[1];
+        OutputStream hidCommand =
+                new ParcelFileDescriptor.AutoCloseOutputStream(hidCommandInput);
+        hidCommand.write(registerCommand.getBytes());
+        hidCommand.flush();
+        TestUtils.waitOn(mDeviceWaitObject, () -> {
+            synchronized (mDeviceWaitObject) {
+                return mDeviceCount == expectedDeviceCount;
+            }
+        }, CALLBACK_TIMEOUT_MS, "Expected HIDRAW device to be created");
+        return hidCommand;
+    }
+
+    /**
      * Runs a shell command as the {@code system} user.
      *
      * <p>Supports redirection (e.g. {@code echo hello > file}) and returns the output as a String.
@@ -219,8 +319,8 @@ public class BrailleDisplayControllerTest {
         }
     }
 
-    private static String createTestHidrawNode(String name) throws Exception {
-        String path = Path.of(TEST_DATA_DIR, name).toString();
+    private static String createFakeHidrawNode(String name) throws Exception {
+        String path = Path.of(FAKE_HIDRAW_DIR, name).toString();
         executeSystemShellCommand("touch " + path);
         TestUtils.waitUntil(path + " should exist", () ->
                 !executeSystemShellCommand("ls " + path).isEmpty());
@@ -315,15 +415,16 @@ public class BrailleDisplayControllerTest {
             "android.accessibilityservice.BrailleDisplayController#isConnected",
     })
     public void connect() throws Exception {
-        String hidraw1 = createTestHidrawNode("hidraw1");
-        Bundle testBD = getTestBrailleDisplay(hidraw1, DESCRIPTOR1, BT_ADDRESS1, true);
-        setTestData(List.of(testBD));
+        try (OutputStream testHidrawNode = createTestHidrawNode(HIDRAW_NODE_0)) {
+            Bundle testBD = getTestBrailleDisplay(HIDRAW_NODE_0, DESCRIPTOR1, BT_ADDRESS1, true);
+            setTestData(List.of(testBD));
 
-        byte[] connectedDeviceDescriptor = expectConnectionSuccess(mController, mExecutor,
-                mBluetoothDevice1);
+            byte[] connectedDeviceDescriptor = expectConnectionSuccess(mController, mExecutor,
+                    mBluetoothDevice1);
 
-        assertThat(connectedDeviceDescriptor).isEqualTo(DESCRIPTOR1);
-        assertThat(mController.isConnected()).isTrue();
+            assertThat(connectedDeviceDescriptor).isEqualTo(DESCRIPTOR1);
+            assertThat(mController.isConnected()).isTrue();
+        }
     }
 
     @Test
@@ -334,15 +435,17 @@ public class BrailleDisplayControllerTest {
             "android.accessibilityservice.BrailleDisplayController#isConnected",
     })
     public void connect_defaultExecutor_isSuccessful() throws Exception {
-        String hidraw1 = createTestHidrawNode("hidraw1");
-        Bundle testBD = getTestBrailleDisplay(hidraw1, DESCRIPTOR1, BT_ADDRESS1, true);
-        setTestData(List.of(testBD));
+        try (OutputStream testHidrawNode = createTestHidrawNode(HIDRAW_NODE_0)) {
+            Bundle testBD = getTestBrailleDisplay(HIDRAW_NODE_0, DESCRIPTOR1, BT_ADDRESS1, true);
+            setTestData(List.of(testBD));
 
-        byte[] connectedDeviceDescriptor = expectConnectionSuccess(mController, /*executor=*/null,
-                mBluetoothDevice1);
+            byte[] connectedDeviceDescriptor = expectConnectionSuccess(mController, /*executor=*/
+                    null,
+                    mBluetoothDevice1);
 
-        assertThat(connectedDeviceDescriptor).isEqualTo(DESCRIPTOR1);
-        assertThat(mController.isConnected()).isTrue();
+            assertThat(connectedDeviceDescriptor).isEqualTo(DESCRIPTOR1);
+            assertThat(mController.isConnected()).isTrue();
+        }
     }
 
     @Test
@@ -355,14 +458,15 @@ public class BrailleDisplayControllerTest {
     })
     public void connect_alreadyConnected_throwsIllegalStateException()
             throws Exception {
-        String hidraw1 = createTestHidrawNode("hidraw1");
-        Bundle testBD = getTestBrailleDisplay(hidraw1, DESCRIPTOR1, BT_ADDRESS1, true);
-        setTestData(List.of(testBD));
-        expectConnectionSuccess(mController, mExecutor, mBluetoothDevice1);
+        try (OutputStream testHidrawNode = createTestHidrawNode(HIDRAW_NODE_0)) {
+            Bundle testBD = getTestBrailleDisplay(HIDRAW_NODE_0, DESCRIPTOR1, BT_ADDRESS1, true);
+            setTestData(List.of(testBD));
+            expectConnectionSuccess(mController, mExecutor, mBluetoothDevice1);
 
-        assertThrows(IllegalStateException.class,
-                () -> mController.connect(mBluetoothDevice1, mExecutor,
-                        new TestBrailleDisplayCallback()));
+            assertThrows(IllegalStateException.class,
+                    () -> mController.connect(mBluetoothDevice1, mExecutor,
+                            new TestBrailleDisplayCallback()));
+        }
     }
 
     @Test
@@ -374,14 +478,15 @@ public class BrailleDisplayControllerTest {
                     + ".BrailleDisplayCallback#FLAG_ERROR_BRAILLE_DISPLAY_NOT_FOUND",
     })
     public void connect_wrongBusType_returnsNotFoundError() throws Exception {
-        String hidraw1 = createTestHidrawNode("hidraw1");
-        Bundle testBD = getTestBrailleDisplay(hidraw1, DESCRIPTOR1, BT_ADDRESS1,
-                /*isBluetooth=*/false);
-        setTestData(List.of(testBD));
+        try (OutputStream testHidrawNode = createTestHidrawNode(HIDRAW_NODE_0)) {
+            Bundle testBD = getTestBrailleDisplay(HIDRAW_NODE_0, DESCRIPTOR1, BT_ADDRESS1,
+                    /*isBluetooth=*/false);
+            setTestData(List.of(testBD));
 
-        int errorCode = expectConnectionFailed(mController, mExecutor, mBluetoothDevice1);
+            int errorCode = expectConnectionFailed(mController, mExecutor, mBluetoothDevice1);
 
-        assertThat(errorCode).isEqualTo(FLAG_ERROR_BRAILLE_DISPLAY_NOT_FOUND);
+            assertThat(errorCode).isEqualTo(FLAG_ERROR_BRAILLE_DISPLAY_NOT_FOUND);
+        }
     }
 
     @Test
@@ -393,14 +498,15 @@ public class BrailleDisplayControllerTest {
                     + ".BrailleDisplayCallback#FLAG_ERROR_BRAILLE_DISPLAY_NOT_FOUND",
     })
     public void connect_wrongUniq_returnsNotFoundError() throws Exception {
-        String hidraw1 = createTestHidrawNode("hidraw1");
-        String wrongUniq = mBluetoothDevice1.getAddress() + "_extra";
-        Bundle testBD = getTestBrailleDisplay(hidraw1, DESCRIPTOR1, wrongUniq, true);
-        setTestData(List.of(testBD));
+        try (OutputStream testHidrawNode = createTestHidrawNode(HIDRAW_NODE_0)) {
+            String wrongUniq = mBluetoothDevice1.getAddress() + "_extra";
+            Bundle testBD = getTestBrailleDisplay(HIDRAW_NODE_0, DESCRIPTOR1, wrongUniq, true);
+            setTestData(List.of(testBD));
 
-        int errorCode = expectConnectionFailed(mController, mExecutor, mBluetoothDevice1);
+            int errorCode = expectConnectionFailed(mController, mExecutor, mBluetoothDevice1);
 
-        assertThat(errorCode).isEqualTo(FLAG_ERROR_BRAILLE_DISPLAY_NOT_FOUND);
+            assertThat(errorCode).isEqualTo(FLAG_ERROR_BRAILLE_DISPLAY_NOT_FOUND);
+        }
     }
 
     @Test
@@ -413,15 +519,16 @@ public class BrailleDisplayControllerTest {
     })
     public void connect_nonBrailleDisplayDescriptor_returnsNotFoundError()
             throws Exception {
-        final byte[] nonBrailleDisplayDescriptor = {0x05, 0x01 /* != 0x41 */};
-        String hidraw1 = createTestHidrawNode("hidraw1");
-        Bundle testBD = getTestBrailleDisplay(
-                hidraw1, nonBrailleDisplayDescriptor, BT_ADDRESS1, true);
-        setTestData(List.of(testBD));
+        try (OutputStream testHidrawNode = createTestHidrawNode(HIDRAW_NODE_0)) {
+            final byte[] nonBrailleDisplayDescriptor = {0x05, 0x01 /* != 0x41 */};
+            Bundle testBD = getTestBrailleDisplay(
+                    HIDRAW_NODE_0, nonBrailleDisplayDescriptor, BT_ADDRESS1, true);
+            setTestData(List.of(testBD));
 
-        int errorCode = expectConnectionFailed(mController, mExecutor, mBluetoothDevice1);
+            int errorCode = expectConnectionFailed(mController, mExecutor, mBluetoothDevice1);
 
-        assertThat(errorCode).isEqualTo(FLAG_ERROR_BRAILLE_DISPLAY_NOT_FOUND);
+            assertThat(errorCode).isEqualTo(FLAG_ERROR_BRAILLE_DISPLAY_NOT_FOUND);
+        }
     }
 
     @Test
@@ -431,17 +538,20 @@ public class BrailleDisplayControllerTest {
                     + ".BrailleDisplayCallback#onConnected",
     })
     public void connect_multipleDevices_returnsCorrectDevice() throws Exception {
-        String hidraw1 = createTestHidrawNode("hidraw1");
-        Bundle testBD1 = getTestBrailleDisplay(hidraw1, DESCRIPTOR1, BT_ADDRESS1, true);
-        String hidraw2 = createTestHidrawNode("hidraw2");
-        Bundle testBD2 = getTestBrailleDisplay(hidraw2, DESCRIPTOR2, BT_ADDRESS2, true);
-        setTestData(List.of(testBD1, testBD2));
+        try (
+                OutputStream testHidrawNode0 = createTestHidrawNode(HIDRAW_NODE_0);
+                OutputStream testHidrawNode1 = createTestHidrawNode(HIDRAW_NODE_1)
+        ) {
+            Bundle testBD1 = getTestBrailleDisplay(HIDRAW_NODE_0, DESCRIPTOR1, BT_ADDRESS1, true);
+            Bundle testBD2 = getTestBrailleDisplay(HIDRAW_NODE_1, DESCRIPTOR2, BT_ADDRESS2, true);
+            setTestData(List.of(testBD1, testBD2));
 
-        byte[] connectedDeviceDescriptor = expectConnectionSuccess(mController, mExecutor,
-                mBluetoothDevice2);
+            byte[] connectedDeviceDescriptor = expectConnectionSuccess(mController, mExecutor,
+                    mBluetoothDevice2);
 
-        assertThat(connectedDeviceDescriptor).isEqualTo(DESCRIPTOR2);
-        assertThat(mController.isConnected()).isTrue();
+            assertThat(connectedDeviceDescriptor).isEqualTo(DESCRIPTOR2);
+            assertThat(mController.isConnected()).isTrue();
+        }
     }
 
     @Test
@@ -453,17 +563,21 @@ public class BrailleDisplayControllerTest {
                     + ".BrailleDisplayCallback#FLAG_ERROR_BRAILLE_DISPLAY_NOT_FOUND",
     })
     public void connect_multipleIdenticalDevices_returnsNotFoundError() throws Exception {
-        String hidraw1 = createTestHidrawNode("hidraw1");
-        Bundle testBD1 = getTestBrailleDisplay(hidraw1, DESCRIPTOR1, BT_ADDRESS1, true);
-        String hidraw2 = createTestHidrawNode("hidraw2");
-        // BD2 copies all BD1 device properties, but is exposed as a different HIDRAW node path.
-        Bundle testBD2 = testBD1.deepCopy();
-        testBD2.putString(BrailleDisplayController.TEST_BRAILLE_DISPLAY_HIDRAW_PATH, hidraw2);
-        setTestData(List.of(testBD1, testBD2));
+        try (
+                OutputStream testHidrawNode0 = createTestHidrawNode(HIDRAW_NODE_0);
+                OutputStream testHidrawNode1 = createTestHidrawNode(HIDRAW_NODE_1)
+        ) {
+            Bundle testBD1 = getTestBrailleDisplay(HIDRAW_NODE_0, DESCRIPTOR1, BT_ADDRESS1, true);
+            // BD2 copies all BD1 device properties, but is exposed as a different HIDRAW node path.
+            Bundle testBD2 = testBD1.deepCopy();
+            testBD2.putString(BrailleDisplayController.TEST_BRAILLE_DISPLAY_HIDRAW_PATH,
+                    HIDRAW_NODE_1);
+            setTestData(List.of(testBD1, testBD2));
 
-        int errorCode = expectConnectionFailed(mController, mExecutor, mBluetoothDevice1);
+            int errorCode = expectConnectionFailed(mController, mExecutor, mBluetoothDevice1);
 
-        assertThat(errorCode).isEqualTo(FLAG_ERROR_BRAILLE_DISPLAY_NOT_FOUND);
+            assertThat(errorCode).isEqualTo(FLAG_ERROR_BRAILLE_DISPLAY_NOT_FOUND);
+        }
     }
 
     @Test
@@ -479,20 +593,22 @@ public class BrailleDisplayControllerTest {
                 InstrumentedAccessibilityService.enableService(
                         InstrumentedAccessibilityService.class);
         try {
-            String hidraw1 = createTestHidrawNode("hidraw1");
-            Bundle testBD = getTestBrailleDisplay(hidraw1, DESCRIPTOR1, BT_ADDRESS1, true);
-            setTestData(mService, List.of(testBD));
-            setTestData(anotherService, List.of(testBD));
+            try (OutputStream testHidrawNode = createTestHidrawNode(HIDRAW_NODE_0)) {
+                Bundle testBD = getTestBrailleDisplay(HIDRAW_NODE_0, DESCRIPTOR1, BT_ADDRESS1,
+                        true);
+                setTestData(mService, List.of(testBD));
+                setTestData(anotherService, List.of(testBD));
 
-            // Connect another service to the Braille display first.
-            expectConnectionSuccess(anotherService.getBrailleDisplayController(),
-                    anotherService.getMainExecutor(), mBluetoothDevice1);
-            // Attempt to connect a different service to the same Braille display.
-            int errorCode = expectConnectionFailed(mController, mExecutor, mBluetoothDevice1);
+                // Connect another service to the Braille display first.
+                expectConnectionSuccess(anotherService.getBrailleDisplayController(),
+                        anotherService.getMainExecutor(), mBluetoothDevice1);
+                // Attempt to connect a different service to the same Braille display.
+                int errorCode = expectConnectionFailed(mController, mExecutor, mBluetoothDevice1);
 
-            assertThat(anotherService.getBrailleDisplayController().isConnected()).isTrue();
-            assertThat(mController.isConnected()).isFalse();
-            assertThat(errorCode).isEqualTo(FLAG_ERROR_BRAILLE_DISPLAY_NOT_FOUND);
+                assertThat(anotherService.getBrailleDisplayController().isConnected()).isTrue();
+                assertThat(mController.isConnected()).isFalse();
+                assertThat(errorCode).isEqualTo(FLAG_ERROR_BRAILLE_DISPLAY_NOT_FOUND);
+            }
         } finally {
             anotherService.getBrailleDisplayController().disconnect();
             anotherService.disableSelfAndRemove();
@@ -508,12 +624,13 @@ public class BrailleDisplayControllerTest {
                     + ".BrailleDisplayCallback#onConnectionFailed",
     })
     public void connect_canConnectAfterFailedConnection() throws Exception {
-        String hidraw1 = createTestHidrawNode("hidraw1");
-        Bundle testBD = getTestBrailleDisplay(hidraw1, DESCRIPTOR1, BT_ADDRESS1, true);
-        setTestData(List.of(testBD));
+        try (OutputStream testHidrawNode = createTestHidrawNode(HIDRAW_NODE_0)) {
+            Bundle testBD = getTestBrailleDisplay(HIDRAW_NODE_0, DESCRIPTOR1, BT_ADDRESS1, true);
+            setTestData(List.of(testBD));
 
-        expectConnectionFailed(mController, mExecutor, mBluetoothDevice2);
-        expectConnectionSuccess(mController, mExecutor, mBluetoothDevice1);
+            expectConnectionFailed(mController, mExecutor, mBluetoothDevice2);
+            expectConnectionSuccess(mController, mExecutor, mBluetoothDevice1);
+        }
     }
 
     @Test
@@ -544,14 +661,16 @@ public class BrailleDisplayControllerTest {
                     + ".BrailleDisplayCallback#FLAG_ERROR_BRAILLE_DISPLAY_NOT_FOUND",
     })
     public void connect_unableToGetReportDescriptor_returnsErrors() throws Exception {
-        String hidraw1 = createTestHidrawNode("hidraw1");
-        Bundle testBD = getTestBrailleDisplay(hidraw1, /*descriptor=*/null, BT_ADDRESS1, true);
-        setTestData(List.of(testBD));
+        try (OutputStream testHidrawNode = createTestHidrawNode(HIDRAW_NODE_0)) {
+            Bundle testBD = getTestBrailleDisplay(HIDRAW_NODE_0, /*descriptor=*/null, BT_ADDRESS1,
+                    true);
+            setTestData(List.of(testBD));
 
-        int errorCode = expectConnectionFailed(mController, mExecutor, mBluetoothDevice1);
+            int errorCode = expectConnectionFailed(mController, mExecutor, mBluetoothDevice1);
 
-        assertThat(errorCode).isEqualTo(
-                FLAG_ERROR_CANNOT_ACCESS | FLAG_ERROR_BRAILLE_DISPLAY_NOT_FOUND);
+            assertThat(errorCode).isEqualTo(
+                    FLAG_ERROR_CANNOT_ACCESS | FLAG_ERROR_BRAILLE_DISPLAY_NOT_FOUND);
+        }
     }
 
     // TODO: b/316035785 - Change this to a CTS-Verifier test, requiring >=1 connected USB device
@@ -594,9 +713,16 @@ public class BrailleDisplayControllerTest {
         // This test checks that we can reconnect after disconnection, so prepare the
         // test state by calling another test that already connects & disconnects.
         disconnect_disconnectsExistingConnection();
+        TestUtils.waitOn(mDeviceWaitObject, () -> {
+            synchronized (mDeviceWaitObject) {
+                return mDeviceCount == 0;
+            }
+        }, CALLBACK_TIMEOUT_MS, "Expected all HIDRAW devices removed");
 
-        expectConnectionSuccess(mController, mExecutor, mBluetoothDevice1);
-        assertThat(mController.isConnected()).isTrue();
+        try (OutputStream testHidrawNode = createTestHidrawNode(HIDRAW_NODE_0)) {
+            expectConnectionSuccess(mController, mExecutor, mBluetoothDevice1);
+            assertThat(mController.isConnected()).isTrue();
+        }
     }
 
     @Test
@@ -606,18 +732,19 @@ public class BrailleDisplayControllerTest {
                     + ".BrailleDisplayCallback#onDisconnected",
     })
     public void disconnect_disconnectsExistingConnection() throws Exception {
-        AtomicBoolean calledDisconnected = new AtomicBoolean();
-        String hidraw1 = createTestHidrawNode("hidraw1");
-        Bundle testBD = getTestBrailleDisplay(hidraw1, DESCRIPTOR1, BT_ADDRESS1, true);
-        setTestData(List.of(testBD));
-        expectConnectionSuccess(mController, mExecutor, mBluetoothDevice1, null,
-                () -> calledDisconnected.set(true));
+        try (OutputStream testHidrawNode = createTestHidrawNode(HIDRAW_NODE_0)) {
+            AtomicBoolean calledDisconnected = new AtomicBoolean();
+            Bundle testBD = getTestBrailleDisplay(HIDRAW_NODE_0, DESCRIPTOR1, BT_ADDRESS1, true);
+            setTestData(List.of(testBD));
+            expectConnectionSuccess(mController, mExecutor, mBluetoothDevice1, null,
+                    () -> calledDisconnected.set(true));
 
-        mController.disconnect();
+            mController.disconnect();
 
-        TestUtils.waitUntil("Expected disconnection", (int) CALLBACK_TIMEOUT_MS / 1000,
-                calledDisconnected::get);
-        assertThat(mController.isConnected()).isFalse();
+            TestUtils.waitUntil("Expected disconnection", (int) CALLBACK_TIMEOUT_MS / 1000,
+                    calledDisconnected::get);
+            assertThat(mController.isConnected()).isFalse();
+        }
     }
 
     @Test
@@ -637,16 +764,19 @@ public class BrailleDisplayControllerTest {
     })
     public void deviceIsRemoved_callsOnBrailleDisplayDisconnected() throws Exception {
         AtomicBoolean calledDisconnected = new AtomicBoolean();
-        String hidraw1 = createTestHidrawNode("hidraw1");
-        Bundle testBD = getTestBrailleDisplay(hidraw1, DESCRIPTOR1, BT_ADDRESS1, true);
-        setTestData(List.of(testBD));
-        expectConnectionSuccess(mController, mExecutor, mBluetoothDevice1, null,
-                () -> calledDisconnected.set(true));
+        try (OutputStream testHidrawNode = createTestHidrawNode(HIDRAW_NODE_0)) {
+            Bundle testBD = getTestBrailleDisplay(HIDRAW_NODE_0, DESCRIPTOR1, BT_ADDRESS1, true);
+            setTestData(List.of(testBD));
+            expectConnectionSuccess(mController, mExecutor, mBluetoothDevice1, null,
+                    () -> calledDisconnected.set(true));
 
-        executeSystemShellCommand("rm " + hidraw1);
+            // Closing the OutputStream stops the `hid` command, and stopping the
+            // `hid` command causes the HIDRAW node it created to be removed.
+            testHidrawNode.close();
 
-        TestUtils.waitUntil("Expected disconnection", (int) CALLBACK_TIMEOUT_MS / 1000,
-                calledDisconnected::get);
+            TestUtils.waitUntil("Expected disconnection", (int) CALLBACK_TIMEOUT_MS / 1000,
+                    calledDisconnected::get);
+        }
     }
 
     @Test
@@ -654,10 +784,11 @@ public class BrailleDisplayControllerTest {
             "android.accessibilityservice.BrailleDisplayController.BrailleDisplayCallback#onInput",
     })
     public void onInput() throws Exception {
+        assumeTrue("Test requires debug build", mIsUserdebugOrEng);
         String input1 = "hello", input2 = "world";
         Object waitObject = new Object();
         List<byte[]> receivedInputBytes = new ArrayList<>();
-        String hidraw1 = createTestHidrawNode("hidraw1");
+        String hidraw1 = createFakeHidrawNode("hidraw1");
         Bundle testBD = getTestBrailleDisplay(hidraw1, DESCRIPTOR1, BT_ADDRESS1, true);
         setTestData(List.of(testBD));
         expectConnectionSuccess(mController, mExecutor, mBluetoothDevice1, bytes -> {
@@ -686,8 +817,9 @@ public class BrailleDisplayControllerTest {
             "android.accessibilityservice.BrailleDisplayController#write",
     })
     public void write() throws Exception {
+        assumeTrue("Test requires debug build", mIsUserdebugOrEng);
         String output1 = "hello", output2 = "world";
-        String hidraw1 = createTestHidrawNode("hidraw1");
+        String hidraw1 = createFakeHidrawNode("hidraw1");
         Bundle testBD = getTestBrailleDisplay(hidraw1, DESCRIPTOR1, BT_ADDRESS1, true);
         setTestData(List.of(testBD));
         expectConnectionSuccess(mController, mExecutor, mBluetoothDevice1);
@@ -703,10 +835,11 @@ public class BrailleDisplayControllerTest {
             "android.accessibilityservice.BrailleDisplayController#write",
     })
     public void write_largeOutput_throwsForLargeOutput() throws Exception {
+        assumeTrue("Test requires debug build", mIsUserdebugOrEng);
         AtomicBoolean calledDisconnected = new AtomicBoolean();
         String regularOutput = "ABC";
         String largeOutput = "A".repeat(IBinder.getSuggestedMaxIpcSizeBytes() * 2);
-        String hidraw1 = createTestHidrawNode("hidraw1");
+        String hidraw1 = createFakeHidrawNode("hidraw1");
         Bundle testBD = getTestBrailleDisplay(hidraw1, DESCRIPTOR1, BT_ADDRESS1, true);
         setTestData(List.of(testBD));
         expectConnectionSuccess(mController, mExecutor, mBluetoothDevice1, null,
