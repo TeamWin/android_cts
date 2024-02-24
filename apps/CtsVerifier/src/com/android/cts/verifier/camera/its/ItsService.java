@@ -1069,6 +1069,7 @@ public class ItsService extends Service implements SensorEventListener {
                     String videoSize = cmdObj.getString("videoSize");
                     int recordingDuration = cmdObj.getInt("recordingDuration");
                     boolean stabilize = cmdObj.getBoolean("stabilize");
+                    boolean ois = cmdObj.getBoolean("ois");
                     double zoomRatio = cmdObj.optDouble("zoomRatio");
                     int aeTargetFpsMin = cmdObj.optInt("aeTargetFpsMin");
                     int aeTargetFpsMax = cmdObj.optInt("aeTargetFpsMax");
@@ -1082,7 +1083,7 @@ public class ItsService extends Service implements SensorEventListener {
                     double stepSize = cmdObj.optDouble("stepSize");
                     double stepDuration = cmdObj.optDouble("stepDuration");
                     doBasicPreviewRecording(cameraId, videoSize, recordingDuration,
-                            stabilize, hlg10Enabled, zoomRatio, aeTargetFpsMin, aeTargetFpsMax,
+                            stabilize, ois, hlg10Enabled, zoomRatio, aeTargetFpsMin, aeTargetFpsMax,
                             threeARegionStart, threeARegionChange, threeARegionEnd,
                             threeARegionDuration, zoomStart, zoomEnd, stepSize, stepDuration);
                 } else if ("isHLG10Supported".equals(cmdObj.getString("cmdName"))) {
@@ -2884,8 +2885,9 @@ public class ItsService extends Service implements SensorEventListener {
         // Configure and create capture session.
         try {
             configureAndCreateCaptureSession(CameraDevice.TEMPLATE_RECORD, mRecordSurface,
-                    videoStabilizationMode, DynamicRangeProfiles.HLG10, mockCallback,
-                    zoomRatio, aeTargetFpsMin, aeTargetFpsMax, recordingResultListener);
+                    videoStabilizationMode, /*ois=*/ false, DynamicRangeProfiles.HLG10,
+                    mockCallback, zoomRatio, aeTargetFpsMin, aeTargetFpsMax,
+                    recordingResultListener);
         } catch (CameraAccessException e) {
             throw new ItsException("Access error: ", e);
         }
@@ -2963,7 +2965,7 @@ public class ItsService extends Service implements SensorEventListener {
         // Configure and create capture session.
         try {
             configureAndCreateCaptureSession(CameraDevice.TEMPLATE_RECORD, mRecordSurface,
-                    videoStabilizationMode, DynamicRangeProfiles.STANDARD,
+                    videoStabilizationMode, /*ois=*/ false, DynamicRangeProfiles.STANDARD,
                     /*callback =*/ null, zoomRatio, aeTargetFpsMin, aeTargetFpsMax,
                     recordingResultListener);
         } catch (android.hardware.camera2.CameraAccessException e) {
@@ -3011,8 +3013,8 @@ public class ItsService extends Service implements SensorEventListener {
      * ImageReader to the MediaRecorder surface which is encoded into a video.
      */
     private void doBasicPreviewRecording(String cameraId, String videoSizeString,
-            int recordingDuration, boolean stabilize, boolean hlg10Enabled, double zoomRatio,
-            int aeTargetFpsMin, int aeTargetFpsMax, JSONArray threeARegionStart,
+            int recordingDuration, boolean stabilize, boolean ois, boolean hlg10Enabled,
+            double zoomRatio, int aeTargetFpsMin, int aeTargetFpsMax, JSONArray threeARegionStart,
             JSONArray threeARegionChange, JSONArray threeARegionEnd, double threeARegionDuration,
             double zoomStart, double zoomEnd, double stepSize, double stepDuration)
             throws ItsException {
@@ -3064,7 +3066,7 @@ public class ItsService extends Service implements SensorEventListener {
             double zoomStartVal = (Double.isNaN(zoomRatio)) ? zoomStart : zoomRatio;
 
             configureAndCreateCaptureSession(CameraDevice.TEMPLATE_PREVIEW,
-                    pr.getCameraSurface(), stabilizationMode, DynamicRangeProfiles.STANDARD,
+                    pr.getCameraSurface(), stabilizationMode, ois, DynamicRangeProfiles.STANDARD,
                     sessionListener, zoomStartVal, aeTargetFpsMin, aeTargetFpsMax,
                     recordingResultListener);
 
@@ -3204,15 +3206,13 @@ public class ItsService extends Service implements SensorEventListener {
     }
 
     private void configureAndCreateCaptureSession(int requestTemplate, Surface recordSurface,
-            int videoStabilizationMode, long dynamicRangeProfile,
+            int videoStabilizationMode, boolean ois, long dynamicRangeProfile,
             CameraCaptureSession.StateCallback stateCallback,
             double zoomRatio, int aeTargetFpsMin, int aeTargetFpsMax,
             CameraCaptureSession.CaptureCallback captureCallback) throws CameraAccessException {
         assert (recordSurface != null);
         // Create capture request builder
         mCaptureRequestBuilder = mCamera.createCaptureRequest(requestTemplate);
-        mCaptureRequestBuilder.set(CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF);
 
         // handle optional arguments
         if (!Double.isNaN(zoomRatio)) {
@@ -3246,7 +3246,14 @@ public class ItsService extends Service implements SensorEventListener {
                         + ". Leaving unchanged.");
                 break;
         }
-
+        Log.i(TAG, "ois = " + ois);
+        if (ois) {
+            mCaptureRequestBuilder.set(CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                    CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON);
+        } else {
+            mCaptureRequestBuilder.set(CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                    CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF);
+        }
         mCaptureRequestBuilder.addTarget(recordSurface);
         OutputConfiguration outConfig = new OutputConfiguration(recordSurface);
         outConfig.setDynamicRangeProfile(dynamicRangeProfile);
