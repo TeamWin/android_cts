@@ -16,7 +16,11 @@
 
 package android.app.cts;
 
+import static android.app.ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED;
+import static android.app.ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_DENIED;
+import static android.app.ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_SYSTEM_DEFINED;
 import static android.app.Flags.FLAG_BCAST_EVENT_TIMESTAMPS;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static junit.framework.Assert.assertEquals;
@@ -34,8 +38,6 @@ import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.platform.test.ravenwood.RavenwoodRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
-import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -177,7 +179,7 @@ public class BroadcastOptionsTest {
         // backwards compatibility
         assertTrue(options.isPendingIntentBackgroundActivityLaunchAllowed());
         assertThat(options.getPendingIntentBackgroundActivityStartMode()).isEqualTo(
-                BroadcastOptions.MODE_BACKGROUND_ACTIVITY_START_SYSTEM_DEFINED);
+                MODE_BACKGROUND_ACTIVITY_START_SYSTEM_DEFINED);
     }
 
     @Test
@@ -186,7 +188,7 @@ public class BroadcastOptionsTest {
         options.setPendingIntentBackgroundActivityLaunchAllowed(true);
         assertTrue(options.isPendingIntentBackgroundActivityLaunchAllowed());
         assertThat(options.getPendingIntentBackgroundActivityStartMode()).isEqualTo(
-                BroadcastOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED);
+                MODE_BACKGROUND_ACTIVITY_START_ALLOWED);
     }
 
     @Test
@@ -195,27 +197,27 @@ public class BroadcastOptionsTest {
         options.setPendingIntentBackgroundActivityLaunchAllowed(false);
         assertFalse(options.isPendingIntentBackgroundActivityLaunchAllowed());
         assertThat(options.getPendingIntentBackgroundActivityStartMode()).isEqualTo(
-                BroadcastOptions.MODE_BACKGROUND_ACTIVITY_START_DENIED);
+                MODE_BACKGROUND_ACTIVITY_START_DENIED);
     }
 
     @Test
     public void testGetSetPendingIntentBackgroundActivityStartModeAllowed() {
         BroadcastOptions options = BroadcastOptions.makeBasic()
                 .setPendingIntentBackgroundActivityStartMode(
-                        BroadcastOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED);
+                        MODE_BACKGROUND_ACTIVITY_START_ALLOWED);
         assertTrue(options.isPendingIntentBackgroundActivityLaunchAllowed());
         assertThat(options.getPendingIntentBackgroundActivityStartMode()).isEqualTo(
-                BroadcastOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED);
+                MODE_BACKGROUND_ACTIVITY_START_ALLOWED);
     }
 
     @Test
     public void testGetSetPendingIntentBackgroundActivityStartModeDenied() {
         BroadcastOptions options = BroadcastOptions.makeBasic()
                 .setPendingIntentBackgroundActivityStartMode(
-                        BroadcastOptions.MODE_BACKGROUND_ACTIVITY_START_DENIED);
+                        MODE_BACKGROUND_ACTIVITY_START_DENIED);
         assertFalse(options.isPendingIntentBackgroundActivityLaunchAllowed());
         assertThat(options.getPendingIntentBackgroundActivityStartMode()).isEqualTo(
-                BroadcastOptions.MODE_BACKGROUND_ACTIVITY_START_DENIED);
+                MODE_BACKGROUND_ACTIVITY_START_DENIED);
     }
 
     @Test
