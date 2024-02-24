@@ -18,10 +18,10 @@ package android.telecom.cts.apps;
 
 import static android.os.SystemClock.sleep;
 import static android.telecom.cts.apps.StackTraceUtil.appendStackTraceList;
-
 import static org.junit.Assert.assertEquals;
 
 import android.os.SystemClock;
+
 import android.telecom.Connection;
 
 import java.util.List;
@@ -55,8 +55,28 @@ public class WaitUntil {
         assertEquals(description, condition.expected(), condition.actual());
     }
 
+    // NOTE:
+    // - This method should NOT be called from a telecom test app. The assertEquals will cause
+    //     a DeadObjectException which will make any test failure log unreadable!
+    // - This can be used for classes like BindUtils, BaseAppVerifierImpl, etc. that are running
+    //    in the CTS test process
+    public static void waitUntilConditionIsTrueOrTimeout(
+            Condition condition) {
+        long startTimeMillis = SystemClock.elapsedRealtime();
+        long remainingTimeMillis = DEFAULT_TIMEOUT_MS;
+        long elapsedTimeMillis;
+
+        while (!Objects.equals(condition.expected(), condition.actual())
+                && remainingTimeMillis > 0) {
+            sleep(50);
+            elapsedTimeMillis = SystemClock.elapsedRealtime() - startTimeMillis;
+            remainingTimeMillis = DEFAULT_TIMEOUT_MS - elapsedTimeMillis;
+        }
+        assertEquals(condition.expected(), condition.actual());
+    }
+
     // This helper is intended for test apps!
-    private static boolean waitUntilConditionIsTrueOrTimeout(
+    private static boolean waitUntilConditionIsTrueOrReturnFalse(
             Condition condition) {
         long startTimeMillis = SystemClock.elapsedRealtime();
         long remainingTimeMillis = DEFAULT_TIMEOUT_MS;
@@ -81,7 +101,7 @@ public class WaitUntil {
             List<String> stackTrace,
             Connection connection) {
 
-        boolean success = waitUntilConditionIsTrueOrTimeout(
+        boolean success = waitUntilConditionIsTrueOrReturnFalse(
                 new Condition() {
                     @Override
                     public Object expected() {
@@ -111,8 +131,9 @@ public class WaitUntil {
     public static void waitUntilCallAudioStateIsSet(
             String packageName,
             List<String> stackTrace,
-            TestAppConnection connection) {
-        boolean success = waitUntilConditionIsTrueOrTimeout(
+            boolean isManaged,
+            Connection connection) {
+        boolean success = waitUntilConditionIsTrueOrReturnFalse(
                 new Condition() {
                     @Override
                     public Object expected() {
@@ -121,7 +142,13 @@ public class WaitUntil {
 
                     @Override
                     public Object actual() {
-                        return connection.getCurrentCallEndpointFromCallback() != null;
+                        if (isManaged) {
+                            return ((ManagedConnection) connection).getCurrentCallEndpointFromCallback()
+                                    != null;
+                        } else {
+                            return ((VoipConnection) connection).getCurrentCallEndpointFromCallback()
+                                    != null;
+                        }
                     }
                 }
         );
@@ -131,7 +158,7 @@ public class WaitUntil {
                     appendStackTraceList(stackTrace,
                             CLASS_NAME + ".waitUntilCallAudioStateIsSet"),
                     "expected:<Connection#onCallEndpointChanged() to set"
-                            + " TestAppConnection#mCallEndpoints within the time window> "
+                            + " Connection#mCallEndpoints within the time window> "
                             + "actual:<hit timeout waiting for the CallEndpoint to be set>");
         }
     }
@@ -139,8 +166,9 @@ public class WaitUntil {
     public static void waitUntilAvailableEndpointsIsSet(
             String packageName,
             List<String> stackTrace,
-            TestAppConnection connection) {
-        boolean success = waitUntilConditionIsTrueOrTimeout(
+            boolean isManaged,
+            Connection connection) {
+        boolean success = waitUntilConditionIsTrueOrReturnFalse(
                 new Condition() {
                     @Override
                     public Object expected() {
@@ -149,7 +177,13 @@ public class WaitUntil {
 
                     @Override
                     public Object actual() {
-                        return connection.getCallEndpoints() != null;
+                        if (isManaged) {
+                            return ((ManagedConnection) connection).getCallEndpoints()
+                                    != null;
+                        } else {
+                            return ((VoipConnection) connection).getCallEndpoints()
+                                    != null;
+                        }
                     }
                 }
         );
@@ -164,12 +198,12 @@ public class WaitUntil {
         }
     }
 
-    public static TestAppConnection waitUntilConnectionIsNonNull(
+    public static Connection waitUntilConnectionIsNonNull(
             String packageName,
             List<String> stackTrace,
             ConnectionServiceImpl s) {
 
-        boolean success = waitUntilConditionIsTrueOrTimeout(
+        boolean success = waitUntilConditionIsTrueOrReturnFalse(
                 new Condition() {
                     @Override
                     public Object expected() {
@@ -199,15 +233,15 @@ public class WaitUntil {
         return str.substring(0, str.indexOf(TELECOM_ID_TOKEN));
     }
 
-    private static TestAppConnection getLastConnection(ConnectionServiceImpl s) {
-        return (TestAppConnection) s.getLastConnection();
+    private static Connection getLastConnection(ConnectionServiceImpl s) {
+        return s.getLastConnection();
     }
 
     public static void waitUntilCurrentCallEndpointIsSet(
             String packageName,
             List<String> stackTrace,
             TransactionalCallEvents events) throws TestAppException {
-        boolean success = WaitUntil.waitUntilConditionIsTrueOrTimeout(
+        boolean success = WaitUntil.waitUntilConditionIsTrueOrReturnFalse(
                 new Condition() {
                     @Override
                     public Object expected() {
@@ -236,7 +270,7 @@ public class WaitUntil {
             List<String> stackTrace,
             TransactionalCallEvents events) throws TestAppException {
 
-        boolean success = WaitUntil.waitUntilConditionIsTrueOrTimeout(
+        boolean success = WaitUntil.waitUntilConditionIsTrueOrReturnFalse(
                 new Condition() {
                     @Override
                     public Object expected() {

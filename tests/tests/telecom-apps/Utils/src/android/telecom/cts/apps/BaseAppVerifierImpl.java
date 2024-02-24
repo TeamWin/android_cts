@@ -36,8 +36,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.ActivityManager;
 import android.app.AppOpsManager;
 import android.app.Instrumentation;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
@@ -45,6 +49,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Process;
 import android.os.RemoteException;
+import android.service.notification.NotificationListenerService;
+import android.service.notification.StatusBarNotification;
 import android.telecom.Call;
 import android.telecom.CallAttributes;
 import android.telecom.CallEndpoint;
@@ -145,7 +151,6 @@ public class BaseAppVerifierImpl {
         }
         return controls;
     }
-
 
     public void tearDownApp(AppControlWrapper appControl) {
         if (appControl != null) {
@@ -367,4 +372,27 @@ public class BaseAppVerifierImpl {
         );
     }
 
+    public void verifyNotificationPostedForCall(AppControlWrapper appControlWrapper, String callId){
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        try {
+                            return appControlWrapper.isNotificationPostedForCall(callId);
+                        } catch (RemoteException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                },
+                DEFAULT_TIMEOUT_MS,
+               String.format("Expected to find notification for call with id=[%s], "
+                               + "for application=[%s], but no notification was posted by the"
+                               + " notification manager", callId,
+                                appControlWrapper.getTelecomApps()));
+    }
 }

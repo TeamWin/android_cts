@@ -32,6 +32,7 @@ java_defaults {
         "cts-wm-util",
         "junit",
         "junit-params",
+        "platform-compat-test-rules",
         "testng",
         "truth",
     ],

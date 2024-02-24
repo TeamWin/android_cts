@@ -22,7 +22,6 @@ from mobly import test_runner
 import its_base_test
 import camera_properties_utils
 import capture_request_utils
-import image_processing_utils
 import its_session_utils
 import target_exposure_utils
 
@@ -41,7 +40,6 @@ class FormatCombosTest(its_base_test.ItsBaseTest):
   """
 
   def test_format_combos(self):
-    logging.debug('Starting %s', _NAME)
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
         camera_id=self.camera_id,
@@ -56,7 +54,6 @@ class FormatCombosTest(its_base_test.ItsBaseTest):
 
       successes = []
       failures = []
-      debug = self.debug_mode
 
       # Up to 2 possible request types: auto and manual
       req_aut = capture_request_utils.auto_capture_request()
@@ -105,8 +102,7 @@ class FormatCombosTest(its_base_test.ItsBaseTest):
       # Two different burst lengths: single frame and 3 frames.
       burst_lens = [1, 3]
 
-      # There are 2xlen(fmt_combos)x2 different combinations.
-      # Run through them all.
+      # Run through 2xlen(fmt_combos)x2 different combinations.
       n = 0
       for r, req in enumerate(reqs):
         if req['android.control.mode'] == _AUTO_REQUEST_MODE:
@@ -116,33 +112,19 @@ class FormatCombosTest(its_base_test.ItsBaseTest):
         for f, fmt_combo in enumerate(fmt_combos):
           for b, burst_len in enumerate(burst_lens):
             try:
-              caps = cam.do_capture([req] * burst_len, fmt_combo)
+              cam.do_capture([req] * burst_len, fmt_combo)
               successes.append((n, r, f, b))
               logging.debug('Success[%02d]', n)
-              logging.debug(' req: %s', req_str)
-              logging.debug(' fmt: %s', str(fmt_combo))
-              logging.debug(' burst_len: %d\n', burst_len)
+              logging.debug('req: %s', req_str)
+              logging.debug('fmt: %s', str(fmt_combo))
+              logging.debug('burst_len: %d\n', burst_len)
 
-              # Dump the captures out to jpegs in debug mode.
-              if debug:
-                name_with_path = os.path.join(self.log_path, _NAME)
-                if not isinstance(caps, list):
-                  caps = [caps]
-                elif isinstance(caps[0], list):
-                  caps = sum(caps, [])
-                for c, cap in enumerate(caps):
-                  img = image_processing_utils.convert_capture_to_rgb_image(
-                      cap, props=props)
-                  img_name = (f'{name_with_path}_{n:02d}_{req_str}_fmt{f}_'
-                              f'burst{burst_len}_cap{c}.jpg')
-                  image_processing_utils.write_image(img, img_name)
-            # pylint: disable=broad-except
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
               logging.error(e)
               logging.error('Failure[%02d]', n)
-              logging.debug(' req: %s', req_str)
-              logging.error(' fmt: %s', str(fmt_combo))
-              logging.error(' burst_len: %d\n', burst_len)
+              logging.debug('req: %s', req_str)
+              logging.error('fmt: %s', str(fmt_combo))
+              logging.error('burst_len: %d\n', burst_len)
               failures.append((n, r, f, b))
               if _STOP_AT_FIRST_FAILURE:
                 raise AssertionError(

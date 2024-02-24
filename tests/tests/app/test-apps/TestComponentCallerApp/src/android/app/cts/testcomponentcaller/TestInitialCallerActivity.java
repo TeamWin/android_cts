@@ -16,11 +16,12 @@
 
 package android.app.cts.testcomponentcaller;
 
-import static android.app.cts.testcomponentcaller.Constants.ACTION_ID;
+import static android.app.cts.testcomponentcaller.Constants.TEST_ACTION_ID;
 import static android.app.cts.testcomponentcaller.Constants.EXTRA_CHECK_CONTENT_URI_PERMISSION_RESULT;
 import static android.app.cts.testcomponentcaller.Constants.EXTRA_ILLEGAL_ARG_EXCEPTION_CAUGHT;
 import static android.app.cts.testcomponentcaller.Constants.EXTRA_UNKNOWN;
 import static android.app.cts.testcomponentcaller.Constants.IS_NEW_INTENT;
+import static android.app.cts.testcomponentcaller.Constants.IS_RESULT;
 import static android.app.cts.testcomponentcaller.Constants.MODE_FLAGS_TO_CHECK;
 import static android.app.cts.testcomponentcaller.Constants.EXTRA_SECURITY_EXCEPTION_CAUGHT;
 import static android.app.cts.testcomponentcaller.Constants.INVALID_PERMISSION_RESULT;
@@ -51,13 +52,15 @@ public class TestInitialCallerActivity extends Activity {
     @Override
     public void onStart() {
         super.onStart();
-        Log.i(TAG, "onStart: " + getIntent());
-        performTest(getIntent(), getInitialCaller());
+        if (!getIntent().getBooleanExtra(IS_RESULT, false)) {
+            Log.i(TAG, "onStart: " + getIntent());
+            performTest(getIntent(), getInitialCaller());
+        }
     }
 
     protected void performTest(Intent intent, ComponentCaller caller) {
         int uriLocationId = intent.getIntExtra(URI_LOCATION_ID, -1);
-        int actionId = intent.getIntExtra(ACTION_ID, -1);
+        int actionId = intent.getIntExtra(TEST_ACTION_ID, -1);
         int modeFlags = intent.getIntExtra(MODE_FLAGS_TO_CHECK, -1);
         boolean isNewIntent = intent.getBooleanExtra(IS_NEW_INTENT, false);
 

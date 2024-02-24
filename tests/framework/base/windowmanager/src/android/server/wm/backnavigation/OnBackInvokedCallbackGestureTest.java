@@ -106,6 +106,9 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
         final TouchHelper.SwipeSession touchSession = new TouchHelper.SwipeSession(
                 DEFAULT_DISPLAY, true, false);
         touchSession.beginSwipe(0, midHeight);
+        // Back start event shouldn't be sent until the edge swipe threshold is crossed.
+        assertNotInvoked(mTracker.mStartLatch);
+
         touchSession.continueSwipe(midWidth, midHeight, PROGRESS_SWIPE_STEPS);
         assertInvoked(mTracker.mStartLatch);
         assertInvoked(mTracker.mProgressLatch);

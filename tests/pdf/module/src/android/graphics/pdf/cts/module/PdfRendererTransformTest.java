@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package android.graphics.pdf.cts;
+package android.graphics.pdf.cts.module;
 
-import static android.graphics.pdf.cts.Utils.A4_HEIGHT_PTS;
-import static android.graphics.pdf.cts.Utils.A4_PORTRAIT;
-import static android.graphics.pdf.cts.Utils.A4_WIDTH_PTS;
-import static android.graphics.pdf.cts.Utils.renderAndCompare;
-import static android.graphics.pdf.cts.Utils.renderPreVAndCompare;
+import static android.graphics.pdf.cts.module.Utils.A4_HEIGHT_PTS;
+import static android.graphics.pdf.cts.module.Utils.A4_PORTRAIT;
+import static android.graphics.pdf.cts.module.Utils.A4_WIDTH_PTS;
+import static android.graphics.pdf.cts.module.Utils.renderAndCompare;
+import static android.graphics.pdf.cts.module.Utils.renderPreVAndCompare;
 
 import android.content.Context;
 import android.graphics.Matrix;

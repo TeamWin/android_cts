@@ -20,7 +20,7 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
-import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
+import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
@@ -54,7 +54,7 @@ import org.junit.Test;
 @android.server.wm.annotation.Group2
 public class WindowInsetsLayoutTests extends WindowManagerTestBase {
 
-    private final static long TIMEOUT = 1000; // milliseconds
+    private static final long TIMEOUT = 1000; // milliseconds
 
     @Test
     public void testSetFitInsetsTypes() {
@@ -77,18 +77,18 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
 
     private void testSetFitInsetsTypesInner(int types, TestActivity activity) {
         getInstrumentation().runOnMainSync(() -> {
-            activity.addChildWindow(types, Side.all(), false);
+            activity.addOverlayWindow(types, Side.all(), false);
         });
 
-        // Make sure the child window has been laid out.
-        final View childWindowRoot = activity.getChildWindowRoot();
-        PollingCheck.waitFor(TIMEOUT, () -> childWindowRoot.getWidth() > 0);
+        // Make sure the overlay window has been laid out.
+        final View overlayWindowRoot = activity.getOverlayWindowRoot();
+        PollingCheck.waitFor(TIMEOUT, () -> overlayWindowRoot.getWidth() > 0);
 
         getInstrumentation().runOnMainSync(() -> {
-            final WindowInsets windowInsets = childWindowRoot.getRootWindowInsets();
+            final WindowInsets windowInsets = overlayWindowRoot.getRootWindowInsets();
             final Insets insets = windowInsets.getInsets(types);
             assertEquals(Insets.NONE, insets);
-            activity.removeChildWindow();
+            activity.removeOverlayWindow();
         });
     }
 
@@ -115,15 +115,15 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
     private void testSetFitInsetsSidesInner(int sides, TestActivity activity) {
         final int types = Type.systemBars();
         getInstrumentation().runOnMainSync(() -> {
-            activity.addChildWindow(types, sides, false);
+            activity.addOverlayWindow(types, sides, false);
         });
 
-        // Make sure the child window has been laid out.
-        final View childWindowRoot = activity.getChildWindowRoot();
-        PollingCheck.waitFor(TIMEOUT, () -> childWindowRoot.getWidth() > 0);
+        // Make sure the overlay window has been laid out.
+        final View overlayWindowRoot = activity.getOverlayWindowRoot();
+        PollingCheck.waitFor(TIMEOUT, () -> overlayWindowRoot.getWidth() > 0);
 
         getInstrumentation().runOnMainSync(() -> {
-            final WindowInsets windowInsets = childWindowRoot.getRootWindowInsets();
+            final WindowInsets windowInsets = overlayWindowRoot.getRootWindowInsets();
             final Insets insets = windowInsets.getInsets(types);
             if ((sides & Side.LEFT) != 0) {
                 assertEquals(0, insets.left);
@@ -137,7 +137,7 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
             if ((sides & Side.BOTTOM) != 0) {
                 assertEquals(0, insets.bottom);
             }
-            activity.removeChildWindow();
+            activity.removeOverlayWindow();
         });
     }
 
@@ -158,33 +158,33 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
 
         getInstrumentation().runOnMainSync(() -> {
             activity.assertMatchesWindowBounds();
-            activity.addChildWindow(types, sides, false);
+            activity.addOverlayWindow(types, sides, false);
         });
 
-        // Make sure the 1st child window has been laid out.
-        final View childWindowRoot1 = activity.getChildWindowRoot();
-        PollingCheck.waitFor(TIMEOUT, () -> childWindowRoot1.getWidth() > 0);
+        // Make sure the 1st overlay window has been laid out.
+        final View overlayWindowRoot1 = activity.getOverlayWindowRoot();
+        PollingCheck.waitFor(TIMEOUT, () -> overlayWindowRoot1.getWidth() > 0);
 
         getInstrumentation().runOnMainSync(() -> {
-            childWindowRoot1.getLocationOnScreen(locationAndSize1);
-            locationAndSize1[2] = childWindowRoot1.getWidth();
-            locationAndSize1[3] = childWindowRoot1.getHeight();
-            activity.removeChildWindow();
+            overlayWindowRoot1.getLocationOnScreen(locationAndSize1);
+            locationAndSize1[2] = overlayWindowRoot1.getWidth();
+            locationAndSize1[3] = overlayWindowRoot1.getHeight();
+            activity.removeOverlayWindow();
 
             mainWindowRoot.getWindowInsetsController().hide(types);
 
-            activity.addChildWindow(types, sides, true);
+            activity.addOverlayWindow(types, sides, true);
         });
 
-        // Make sure the 2nd child window has been laid out.
-        final View childWindowRoot2 = activity.getChildWindowRoot();
-        PollingCheck.waitFor(TIMEOUT, () -> childWindowRoot2.getWidth() > 0);
+        // Make sure the 2nd overlay window has been laid out.
+        final View overlayWindowRoot2 = activity.getOverlayWindowRoot();
+        PollingCheck.waitFor(TIMEOUT, () -> overlayWindowRoot2.getWidth() > 0);
 
         getInstrumentation().runOnMainSync(() -> {
-            childWindowRoot2.getLocationOnScreen(locationAndSize2);
-            locationAndSize2[2] = childWindowRoot2.getWidth();
-            locationAndSize2[3] = childWindowRoot2.getHeight();
-            activity.removeChildWindow();
+            overlayWindowRoot2.getLocationOnScreen(locationAndSize2);
+            locationAndSize2[2] = overlayWindowRoot2.getWidth();
+            locationAndSize2[3] = overlayWindowRoot2.getHeight();
+            activity.removeOverlayWindow();
         });
 
         for (int i = 0; i < 4; i++) {
@@ -194,7 +194,7 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
 
     public static class TestActivity extends FocusableActivity {
 
-        private View mChildWindowRoot;
+        private View mOverlayWindowRoot;
 
         @Override
         protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -206,9 +206,13 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
             getWindow().setAttributes(lp);
         }
 
-        void addChildWindow(int types, int sides, boolean ignoreVis) {
+        void addOverlayWindow(int types, int sides, boolean ignoreVis) {
             final WindowManager.LayoutParams attrs = new WindowManager.LayoutParams();
-            attrs.type = TYPE_APPLICATION_PANEL;
+            // In targets like automotive portrait UI, when the system bars are hidden, the
+            // system can change the bounds of the app to be fullscreen which can cause issues
+            // with the location. Use TYPE_APPLICATION_OVERLAY so that overlay window always ends
+            // up taking the fullscreen bounds.
+            attrs.type = TYPE_APPLICATION_OVERLAY;
             attrs.width = MATCH_PARENT;
             attrs.height = MATCH_PARENT;
             attrs.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
@@ -216,16 +220,16 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
             attrs.setFitInsetsTypes(types);
             attrs.setFitInsetsSides(sides);
             attrs.setFitInsetsIgnoringVisibility(ignoreVis);
-            mChildWindowRoot = new View(this);
-            getWindowManager().addView(mChildWindowRoot, attrs);
+            mOverlayWindowRoot = new View(this);
+            getWindowManager().addView(mOverlayWindowRoot, attrs);
         }
 
-        void removeChildWindow() {
-            getWindowManager().removeViewImmediate(mChildWindowRoot);
+        void removeOverlayWindow() {
+            getWindowManager().removeViewImmediate(mOverlayWindowRoot);
         }
 
-        View getChildWindowRoot() {
-            return mChildWindowRoot;
+        View getOverlayWindowRoot() {
+            return mOverlayWindowRoot;
         }
 
         void assertMatchesWindowBounds() {

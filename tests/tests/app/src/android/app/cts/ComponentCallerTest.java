@@ -16,18 +16,32 @@
 
 package android.app.cts;
 
-import static android.app.cts.testcomponentcaller.Constants.ACTION_ID;
+import static android.app.cts.testcomponentcaller.Constants.PUT_MODE_FLAGS_TO_CHECK_SET_RESULT_ACTION_ID;
+import static android.app.cts.testcomponentcaller.Constants.GRANT_FLAGS_SET_RESULT_ACTION_ID;
+import static android.app.cts.testcomponentcaller.Constants.NO_ACTION_NEEDED_SET_RESULT_ACTION_ID;
+import static android.app.cts.testcomponentcaller.Constants.NO_URI_PROVIDED_SET_RESULT_ACTION_ID;
+import static android.app.cts.testcomponentcaller.Constants.SET_RESULT_ACTION_ID;
+import static android.app.cts.testcomponentcaller.Constants.TEST_ACTION_ID;
 import static android.app.cts.testcomponentcaller.Constants.EXTRA_CHECK_CONTENT_URI_PERMISSION_RESULT;
 import static android.app.cts.testcomponentcaller.Constants.EXTRA_ILLEGAL_ARG_EXCEPTION_CAUGHT;
 import static android.app.cts.testcomponentcaller.Constants.EXTRA_UNKNOWN;
+import static android.app.cts.testcomponentcaller.Constants.GRANT_MODE_FLAGS;
 import static android.app.cts.testcomponentcaller.Constants.HELPER_APP_NEW_INTENT_GET_CURRENT_CALLER_ACTIVITY;
 import static android.app.cts.testcomponentcaller.Constants.HELPER_APP_NEW_INTENT_OVERLOAD_CALLER_ACTIVITY;
+import static android.app.cts.testcomponentcaller.Constants.HELPER_APP_RESULT_GET_CURRENT_CALLER_ACTIVITY;
+import static android.app.cts.testcomponentcaller.Constants.HELPER_APP_RESULT_OVERLOAD_CALLER_ACTIVITY;
 import static android.app.cts.testcomponentcaller.Constants.HELPER_APP_URI;
 import static android.app.cts.testcomponentcaller.Constants.IS_NEW_INTENT;
+import static android.app.cts.testcomponentcaller.Constants.IS_RESULT;
 import static android.app.cts.testcomponentcaller.Constants.MODE_FLAGS_TO_CHECK;
 import static android.app.cts.testcomponentcaller.Constants.EXTRA_SECURITY_EXCEPTION_CAUGHT;
+import static android.app.cts.testcomponentcaller.Constants.PROVIDER_RESULT_URI_TYPE;
+import static android.app.cts.testcomponentcaller.Constants.NO_PERMISSION_URI_TYPE;
+import static android.app.cts.testcomponentcaller.Constants.READ_PERMISSION_URI_TYPE;
+import static android.app.cts.testcomponentcaller.Constants.PUT_MODE_FLAGS;
 import static android.app.cts.testcomponentcaller.Constants.SEND_TEST_BROADCAST_ACTION_ID;
 import static android.app.cts.testcomponentcaller.Constants.START_TEST_ACTIVITY_ACTION_ID;
+import static android.app.cts.testcomponentcaller.Constants.TEST_SET_RESULT_ACTIVITY;
 import static android.app.cts.testcomponentcaller.Constants.TRY_TO_RETRIEVE_EXTRA_STREAM_REFERRER_NAME;
 import static android.app.cts.testcomponentcaller.Constants.URI_IN_ARRAY_LIST_EXTRA_STREAMS_LOCATION_ID;
 import static android.app.cts.testcomponentcaller.Constants.URI_IN_EXTRA_STREAM_LOCATION_ID;
@@ -40,6 +54,8 @@ import static android.app.cts.testcomponentcaller.Constants.URI_IN_CLIP_DATA_LOC
 import static android.app.cts.testcomponentcaller.Constants.URI_IN_DATA_LOCATION_ID;
 import static android.app.cts.testcomponentcaller.Constants.TEST_RECEIVER_ACTION;
 import static android.app.cts.testcomponentcaller.Constants.NONE_PROVIDED_USE_HELPER_APP_URI_LOCATION_ID;
+import static android.app.cts.testcomponentcaller.Constants.RESULT_URI_TYPE;
+import static android.app.cts.testcomponentcaller.Constants.URI_PROVIDED_SET_RESULT_ACTION_ID;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
@@ -825,6 +841,266 @@ public class ComponentCallerTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.app.Activity#getCurrentCaller",
+            "android.app.Activity#onActivityResult(int,int,Intent,ComponentCaller)",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityResultCaller_checkContentUriPermission_throwsIfCallerOfApiDoesNotHaveTheSameAccessToContentUri(
+            @TestParameter ModeFlags modeFlagsToCheck,
+            @TestParameter ResultCallerActivity resultCallerActivity) throws Exception {
+        // We launch the test activity with an URI that is not supposed to throw a SecurityException.
+        // This is to verify that the initial caller is not confused with the result caller. The
+        // test activity will then call {@code startActivityForResult} on the
+        // {@link SetResultTestActivity}, which will modify the result intent and set the correct
+        // URI based on the extras below. Once the test app receives the result, it will send back a
+        // broadcast with the result caller's test results.
+        Intent intent = getUriInDataSendBroadcastTestIntent(HELPER_APP_URI, modeFlagsToCheck,
+                resultCallerActivity.mComponent);
+
+        intent.putExtra(SET_RESULT_ACTION_ID, URI_PROVIDED_SET_RESULT_ACTION_ID);
+        intent.putExtra(RESULT_URI_TYPE, PROVIDER_RESULT_URI_TYPE);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+        assertTrue("Should throw a SecurityException because the result caller of the API doesn't"
+                        + " have the same " + modeFlagsToString(modeFlagsToCheck)
+                        + " access to a content URI",
+                TestResults.sIsSecurityExceptionCaught);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getCurrentCaller",
+            "android.app.Activity#onActivityResult(int,int,Intent,ComponentCaller)",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityResultCaller_checkContentUriPermission_throwsIfContentUriWasNotPassedAtLaunch(
+            @TestParameter ModeFlags modeFlagsToCheck,
+            @TestParameter ResultCallerActivity resultCallerActivity) throws Exception {
+        // We launch the test activity with an URI that is not supposed to throw an
+        // IllegalArgumentException. This is to verify that the initial caller is not confused with
+        // the result caller. The test activity will then call {@code startActivityForResult} on the
+        // {@link SetResultTestActivity}, which will modify the result intent and set the correct
+        // URI based on the extras below. Once the test app receives the result, it will send back a
+        // broadcast with the result caller's test results.
+        Intent intent = getUriInDataSendBroadcastTestIntent(HELPER_APP_URI, modeFlagsToCheck,
+                resultCallerActivity.mComponent);
+
+        intent.putExtra(SET_RESULT_ACTION_ID, NO_URI_PROVIDED_SET_RESULT_ACTION_ID);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+        assertTrue("Should throw an IllegalArgumentException because the supplied content URI was"
+                        + " not passed at launch",
+                TestResults.sIsIllegalArgumentExceptionCaught);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getCurrentCaller",
+            "android.app.Activity#onActivityResult(int,int,Intent,ComponentCaller)",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityResultCaller_checkContentUriPermission_getDataContentUriViaPermission_noPermission(
+            @TestParameter ModeFlags modeFlagsToCheck,
+            @TestParameter ResultCallerActivity resultCallerActivity) throws Exception {
+        // We launch the test activity with an URI that is supposed to return a granted permission
+        // result. This is to verify that the initial caller is not confused with the result caller.
+        // The test activity will then call {@code startActivityForResult} on the
+        // {@link SetResultTestActivity}, which will modify the result intent and set the correct
+        // URI based on the extras below. Once the test app receives the result, it will send back a
+        // broadcast with the result caller's test results.
+        Intent intent = getUriInDataSendBroadcastTestIntent(CONTENT_URI_READ_PERMISSION,
+                modeFlagsToCheck, resultCallerActivity.mComponent);
+
+        intent.putExtra(SET_RESULT_ACTION_ID, URI_PROVIDED_SET_RESULT_ACTION_ID);
+        intent.putExtra(RESULT_URI_TYPE, NO_PERMISSION_URI_TYPE);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+        assertEquals("Should return denied with " + modeFlagsToString(modeFlagsToCheck)
+                        + " because we have no access to the content URI",
+                PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getCurrentCaller",
+            "android.app.Activity#onActivityResult(int,int,Intent,ComponentCaller)",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityResultCaller_checkContentUriPermission_getDataContentUriViaPermission_hasRead(
+            @TestParameter ResultCallerActivity resultCallerActivity) throws Exception {
+        // We launch the test activity with an URI that is supposed to return a denied permission
+        // result. This is to verify that the initial caller is not confused with the result caller.
+        // The test activity will then call {@code startActivityForResult} on the
+        // {@link SetResultTestActivity}, which will modify the result intent and set the correct
+        // URI based on the extras below. Once the test app receives the result, it will send back a
+        // broadcast with the result caller's test results.
+        Intent intent = getUriInDataSendBroadcastTestIntent(CONTENT_URI_NO_PERMISSION,
+                ModeFlags.READ,  resultCallerActivity.mComponent);
+
+        intent.putExtra(SET_RESULT_ACTION_ID, URI_PROVIDED_SET_RESULT_ACTION_ID);
+        intent.putExtra(RESULT_URI_TYPE, READ_PERMISSION_URI_TYPE);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+        assertEquals("Should return granted because we have the read permission",
+                PERMISSION_GRANTED, TestResults.sCheckContentUriPermissionRes);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getCurrentCaller",
+            "android.app.Activity#onActivityResult(int,int,Intent,ComponentCaller)",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityResultCaller_checkContentUriPermission_getDataContentUriViaPermission_hasReadButNoWrite(
+            @TestParameter(valuesProvider = WriteModeFlagsProvider.class)
+            ModeFlags modeFlagsToCheck,
+            @TestParameter ResultCallerActivity resultCallerActivity) throws Exception {
+        // We launch the test activity with an URI that is supposed to return a granted permission
+        // result. This is to verify that the initial caller is not confused with the result caller.
+        // The test activity will then call {@code startActivityForResult} on the
+        // {@link SetResultTestActivity}, which will modify the result intent and set the correct
+        // URI based on the extras below. Once the test app receives the result, it will send back a
+        // broadcast with the result caller's test results.
+        Intent intent = getUriInDataSendBroadcastTestIntent(
+                CONTENT_URI_READ_PERMISSION, ModeFlags.READ, resultCallerActivity.mComponent);
+
+        intent.putExtra(SET_RESULT_ACTION_ID, PUT_MODE_FLAGS_TO_CHECK_SET_RESULT_ACTION_ID);
+        intent.putExtra(PUT_MODE_FLAGS, modeFlagsToCheck.mValue);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+        assertEquals("Should return denied because we don't have the write permission",
+                PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getCurrentCaller",
+            "android.app.Activity#onActivityResult(int,int,Intent,ComponentCaller)",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityResultCaller_checkContentUriPermission_clipDataContentUri_noPermission(
+            @TestParameter ModeFlags modeFlagsToCheck,
+            @TestParameter ResultCallerActivity resultCallerActivity) throws Exception {
+        // We launch the test activity with an URI that is supposed to return a granted permission
+        // result. This is to verify that the initial caller is not confused with the result caller.
+        // The test activity will then call {@code startActivityForResult} on the
+        // {@link SetResultTestActivity}, which will modify the result intent and set the correct
+        // URI based on the extras below. Once the test app receives the result, it will send back a
+        // broadcast with the result caller's test results.
+        Intent intent = getSendBroadcastTestIntent(URI_IN_CLIP_DATA_LOCATION_ID,
+                modeFlagsToCheck, resultCallerActivity.mComponent);
+        intent.setClipData(ClipData.newRawUri("", CONTENT_URI_READ_PERMISSION));
+
+        intent.putExtra(SET_RESULT_ACTION_ID, URI_PROVIDED_SET_RESULT_ACTION_ID);
+        intent.putExtra(RESULT_URI_TYPE, NO_PERMISSION_URI_TYPE);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+        assertEquals("Should return denied with "
+                        + modeFlagsToString(modeFlagsToCheck) + " because we have no access to"
+                        + " the content URI",
+                PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getCurrentCaller",
+            "android.app.Activity#onActivityResult(int,int,Intent,ComponentCaller)",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityResultCaller_checkContentUriPermission_clipDataContentUri_hasRead(
+            @TestParameter ResultCallerActivity resultCallerActivity) throws Exception {
+        // We launch the test activity with an URI that is supposed to return a denied permission
+        // result. This is to verify that the initial caller is not confused with the result caller.
+        // The test activity will then call {@code startActivityForResult} on the
+        // {@link SetResultTestActivity}, which will modify the result intent and set the correct
+        // URI based on the extras below. Once the test app receives the result, it will send back a
+        // broadcast with the result caller's test results.
+        Intent intent = getSendBroadcastTestIntent(URI_IN_CLIP_DATA_LOCATION_ID, ModeFlags.READ,
+                resultCallerActivity.mComponent);
+        intent.setClipData(ClipData.newRawUri("", CONTENT_URI_NO_PERMISSION));
+
+        intent.putExtra(SET_RESULT_ACTION_ID, URI_PROVIDED_SET_RESULT_ACTION_ID);
+        intent.putExtra(RESULT_URI_TYPE, READ_PERMISSION_URI_TYPE);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+        assertEquals("Should return granted because we have the read permission",
+                PERMISSION_GRANTED, TestResults.sCheckContentUriPermissionRes);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getCurrentCaller",
+            "android.app.Activity#onActivityResult(int,int,Intent,ComponentCaller)",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void
+    testActivityResultCaller_checkContentUriPermission_clipDataContentUri_hasReadButNoWrite(
+            @TestParameter(valuesProvider = WriteModeFlagsProvider.class)
+            ModeFlags modeFlagsToCheck,
+            @TestParameter ResultCallerActivity resultCallerActivity) throws Exception {
+        // We launch the test activity with an URI that is supposed to return a granted permission
+        // result. This is to verify that the initial caller is not confused with the result caller.
+        // The test activity will then call {@code startActivityForResult} on the
+        // {@link SetResultTestActivity}, which will modify the result intent and set the correct
+        // URI based on the extras below. Once the test app receives the result, it will send back a
+        // broadcast with the result caller's test results.
+        Intent intent = getSendBroadcastTestIntent(URI_IN_CLIP_DATA_LOCATION_ID,
+                ModeFlags.READ, resultCallerActivity.mComponent);
+        intent.setClipData(ClipData.newRawUri("", CONTENT_URI_READ_PERMISSION));
+
+        intent.putExtra(SET_RESULT_ACTION_ID, PUT_MODE_FLAGS_TO_CHECK_SET_RESULT_ACTION_ID);
+        intent.putExtra(PUT_MODE_FLAGS, modeFlagsToCheck.mValue);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+        assertEquals("Should return denied because we don't have the write permission",
+                PERMISSION_DENIED, TestResults.sCheckContentUriPermissionRes);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.app.Activity#getCurrentCaller",
+            "android.app.Activity#onActivityResult(int,int,Intent,ComponentCaller)",
+            "android.app.ComponentCaller#checkContentUriPermission"})
+    @CddTest(requirements = {"4/C-0-2"})
+    public void testActivityResultCaller_checkContentUriPermission_contentUriViaGrant(
+            @TestParameter ModeFlags modeFlagsToCheck,
+            @TestParameter ResultCallerActivity resultCallerActivity) throws Exception {
+        // We launch the test activity with an URI that is supposed to return a denied permission
+        // result. This is to verify that the initial caller is not confused with the result caller.
+        // The test activity will then call {@code startActivityForResult} on the
+        // {@link SetResultTestActivity}, which will modify the result intent and set the correct
+        // URI based on the extras below. Once the test app receives the result, it will send back a
+        // broadcast with the result caller's test results.
+        Intent intent = getUriInDataSendBroadcastTestIntent(TestProvider.getContentUri(),
+                modeFlagsToCheck, resultCallerActivity.mComponent);
+
+        intent.putExtra(SET_RESULT_ACTION_ID, GRANT_FLAGS_SET_RESULT_ACTION_ID);
+        intent.putExtra(GRANT_MODE_FLAGS, modeFlagsToCheck.mValue);
+
+        mContext.startActivity(intent);
+
+        assertActivityWasInvoked();
+        assertEquals("Should return granted because we granted "
+                        + modeFlagsToString(modeFlagsToCheck),
+                PERMISSION_GRANTED, TestResults.sCheckContentUriPermissionRes);
+    }
+
+    @Test
     @ApiTest(apis = {"android.app.Activity#getCaller", "android.app.Activity#getIntent",
             "android.app.Activity#setIntent"})
     @CddTest(requirements = {"4/C-0-2"})
@@ -873,9 +1149,10 @@ public class ComponentCallerTest {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT
                 | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
         intent.putExtra(URI_LOCATION_ID, uriLocationId);
-        intent.putExtra(ACTION_ID, SEND_TEST_BROADCAST_ACTION_ID);
+        intent.putExtra(TEST_ACTION_ID, SEND_TEST_BROADCAST_ACTION_ID);
         intent.putExtra(MODE_FLAGS_TO_CHECK, modeFlagsToCheck.mValue);
         intent.putExtra(IS_NEW_INTENT, isNewIntentComponent(component));
+        intent.putExtra(IS_RESULT, isResultComponent(component));
         return intent;
     }
 
@@ -891,7 +1168,7 @@ public class ComponentCallerTest {
     private Intent getStartActivityTestIntent(int uriLocationId, ModeFlags modeFlagsToCheck,
             ComponentName component) {
         Intent intent = getSendBroadcastTestIntent(uriLocationId, modeFlagsToCheck, component);
-        intent.putExtra(ACTION_ID, START_TEST_ACTIVITY_ACTION_ID);
+        intent.putExtra(TEST_ACTION_ID, START_TEST_ACTIVITY_ACTION_ID);
         return intent;
     }
 
@@ -900,7 +1177,7 @@ public class ComponentCallerTest {
         intent.setComponent(HELPER_APP_INITIAL_CALLER_ACTIVITY);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT
                 | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
-        intent.putExtra(ACTION_ID, TRY_TO_RETRIEVE_EXTRA_STREAM_REFERRER_NAME);
+        intent.putExtra(TEST_ACTION_ID, TRY_TO_RETRIEVE_EXTRA_STREAM_REFERRER_NAME);
         return intent;
     }
 
@@ -922,6 +1199,11 @@ public class ComponentCallerTest {
     private boolean isNewIntentComponent(ComponentName component) {
         return component.equals(HELPER_APP_NEW_INTENT_GET_CURRENT_CALLER_ACTIVITY)
                 || component.equals(HELPER_APP_NEW_INTENT_OVERLOAD_CALLER_ACTIVITY);
+    }
+
+    private boolean isResultComponent(ComponentName component) {
+        return component.equals(HELPER_APP_RESULT_GET_CURRENT_CALLER_ACTIVITY)
+                || component.equals(HELPER_APP_RESULT_OVERLOAD_CALLER_ACTIVITY);
     }
 
     /** Results for each test. Use {@link #reset()} to reset all results. */
@@ -1074,8 +1356,8 @@ public class ComponentCallerTest {
                 TestResults.sGetCurrentCallerThrowsIllegalStateExceptionInOnStart = true;
             }
             Intent intent = new Intent();
-            intent.setComponent(new ComponentName("android.app.cts",
-                    "android.app.cts.ComponentCallerTest$SetResultTestActivity"));
+            intent.setComponent(TEST_SET_RESULT_ACTIVITY);
+            intent.putExtra(SET_RESULT_ACTION_ID, NO_ACTION_NEEDED_SET_RESULT_ACTION_ID);
             startActivityForResult(intent, 0);
         }
 
@@ -1112,9 +1394,57 @@ public class ComponentCallerTest {
         @Override
         public void onStart() {
             super.onStart();
-            Log.i(TAG, "onStart: " + getIntent());
-            setResult(RESULT_OK, new Intent());
+            Intent intent = getIntent();
+            Log.i(TAG, "onStart: " + intent);
+            setResult(RESULT_OK, buildResultIntent(intent));
             finish();
+        }
+
+        private Intent buildResultIntent(Intent intent) {
+            Intent resultIntent = new Intent(intent);
+            resultIntent.setComponent(null);
+            resultIntent.setFlags(0);
+
+            int actionId = resultIntent.getIntExtra(SET_RESULT_ACTION_ID, -1);
+            switch (actionId) {
+                case URI_PROVIDED_SET_RESULT_ACTION_ID -> {
+                    Uri providedUri = getProvidedUri(resultIntent);
+                    if (resultIntent.getData() != null) {
+                        resultIntent.setData(providedUri);
+                    } else if (resultIntent.getClipData() != null) {
+                        resultIntent.setClipData(ClipData.newRawUri("", providedUri));
+                    } else {
+                        throw new RuntimeException("The Uri wasn't provided in any known location");
+                    }
+                }
+                case NO_URI_PROVIDED_SET_RESULT_ACTION_ID -> {
+                    resultIntent.setAction(null);
+                    resultIntent.putExtra(URI_LOCATION_ID,
+                            NONE_PROVIDED_USE_HELPER_APP_URI_LOCATION_ID);
+                    resultIntent.setData(null);
+                }
+                case PUT_MODE_FLAGS_TO_CHECK_SET_RESULT_ACTION_ID -> {
+                    int modeFlags = resultIntent.getIntExtra(PUT_MODE_FLAGS, -1);
+                    resultIntent.putExtra(MODE_FLAGS_TO_CHECK, modeFlags);
+                }
+                case GRANT_FLAGS_SET_RESULT_ACTION_ID -> {
+                    int modeFlags = resultIntent.getIntExtra(GRANT_MODE_FLAGS, 0);
+                    resultIntent.addFlags(modeFlags);
+                }
+                case NO_ACTION_NEEDED_SET_RESULT_ACTION_ID -> { }
+                default -> throw new RuntimeException("Invalid result action ID: " + actionId);
+            }
+            return resultIntent;
+        }
+
+        private Uri getProvidedUri(Intent intent) {
+            int uriType = intent.getIntExtra(RESULT_URI_TYPE, -1);
+            return switch (uriType) {
+                case PROVIDER_RESULT_URI_TYPE -> TestProvider.getContentUri();
+                case NO_PERMISSION_URI_TYPE -> CONTENT_URI_NO_PERMISSION;
+                case READ_PERMISSION_URI_TYPE -> CONTENT_URI_READ_PERMISSION;
+                default -> throw new RuntimeException("Invalid URI type: " + uriType);
+            };
         }
     }
 
@@ -1188,6 +1518,7 @@ public class ComponentCallerTest {
         GET_CURRENT_CALLER(HELPER_APP_NEW_INTENT_GET_CURRENT_CALLER_ACTIVITY),
         OVERLOAD_CALLER(HELPER_APP_NEW_INTENT_OVERLOAD_CALLER_ACTIVITY);
 
+        @SuppressWarnings("ImmutableEnumChecker") // ComponentName fields are final
         final ComponentName mComponent;
 
         NewIntentCallerActivity(ComponentName component) {
@@ -1203,6 +1534,18 @@ public class ComponentCallerTest {
 
         NewIntentGetSetCallerActivity(Class<? extends Activity> cls) {
             this.mCls = cls;
+        }
+    }
+
+    public enum ResultCallerActivity {
+        GET_CURRENT_CALLER(HELPER_APP_RESULT_GET_CURRENT_CALLER_ACTIVITY),
+        OVERLOAD_CALLER(HELPER_APP_RESULT_OVERLOAD_CALLER_ACTIVITY);
+
+        @SuppressWarnings("ImmutableEnumChecker") // ComponentName fields are final
+        final ComponentName mComponent;
+
+        ResultCallerActivity(ComponentName component) {
+            this.mComponent = component;
         }
     }
 

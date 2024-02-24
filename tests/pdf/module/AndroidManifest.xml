@@ -1,5 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-  ~ Copyright (C) 2023 The Android Open Source Project
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2024 The Android Open Source Project
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -15,11 +16,14 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.telecom.cts.apps">
-    <!-- QUERY_ALL_PACKAGES is required in order to bind to apps in this directory (telecom-apps)
-         from another cts test process (ex.android.telecom.cts) -->
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
-    <uses-permission android:name="android.permission.ACCESS_NOTIFICATIONS"/>
-    <uses-permission android:name="android.permission.STATUS_BAR_SERVICE" />
-    <uses-permission android:name="android.permission.GRANT_RUNTIME_PERMISSIONS"/>
+          package="android.graphics.pdf.cts.module"
+          android:targetSandboxVersion="2">
+    <application android:label="PDF Viewer Device Test Cases">
+        <uses-library android:name="android.test.runner" />
+    </application>
+
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
+                     android:targetPackage="android.graphics.pdf.cts.module"
+                     android:label="PDF Viewer Devices Test cases" />
+
 </manifest>

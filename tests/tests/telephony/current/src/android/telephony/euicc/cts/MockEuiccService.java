@@ -61,6 +61,9 @@ public class MockEuiccService extends EuiccService {
     @Override
     public long onGetAvailableMemoryInBytes(int slotId) {
         sMockEuiccServiceCallback.setMethodCalled();
+        if (slotId == EuiccServiceTest.MOCK_SLOT_ID_EXCEPTION) {
+            throw new UnsupportedOperationException("exception message");
+        }
         return MOCK_AVAILABLE_MEMORY;
     }
 

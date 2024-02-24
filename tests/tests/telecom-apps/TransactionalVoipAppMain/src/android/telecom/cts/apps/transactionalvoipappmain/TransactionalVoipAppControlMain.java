@@ -20,6 +20,7 @@ import static android.telecom.Call.STATE_ACTIVE;
 import static android.telecom.Call.STATE_DISCONNECTED;
 import static android.telecom.Call.STATE_HOLDING;
 import static android.telecom.cts.apps.AssertOutcome.assertCountDownLatchWasCalled;
+import static android.telecom.cts.apps.NotificationUtils.isTargetNotificationPosted;
 import static android.telecom.cts.apps.StackTraceUtil.appendStackTraceList;
 import static android.telecom.cts.apps.StackTraceUtil.createStackTraceList;
 import static android.telecom.cts.apps.TelecomTestApp.TRANSACTIONAL_CLONE_ACCOUNT;
@@ -29,12 +30,16 @@ import static android.telecom.cts.apps.TelecomTestApp.T_CONTROL_INTERFACE_ACTION
 import static android.telecom.cts.apps.WaitUntil.waitUntilAvailableEndpointAreSet;
 import static android.telecom.cts.apps.WaitUntil.waitUntilCurrentCallEndpointIsSet;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.OutcomeReceiver;
+import android.os.Process;
 import android.os.RemoteException;
+import android.os.UserHandle;
 import android.telecom.CallAttributes;
 import android.telecom.CallControl;
 import android.telecom.CallEndpoint;
@@ -45,12 +50,13 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telecom.cts.apps.AvailableEndpointsTransaction;
 import android.telecom.cts.apps.BooleanTransaction;
-import android.telecom.cts.apps.CallControlExtras;
 import android.telecom.cts.apps.CallEndpointTransaction;
 import android.telecom.cts.apps.CallExceptionTransaction;
+import android.telecom.cts.apps.CallResources;
 import android.telecom.cts.apps.IAppControl;
 import android.telecom.cts.apps.LatchedOutcomeReceiver;
 import android.telecom.cts.apps.NoDataTransaction;
+import android.telecom.cts.apps.NotificationUtils;
 import android.telecom.cts.apps.PhoneAccountTransaction;
 import android.telecom.cts.apps.TestAppException;
 import android.telecom.cts.apps.TestAppTransaction;
@@ -68,10 +74,14 @@ public class TransactionalVoipAppControlMain extends Service {
     private String mTag = TransactionalVoipAppControlMain.class.getSimpleName();
     private String mPackageName = TransactionalVoipAppControlMain.class.getPackageName();
     private String mClassName = TransactionalVoipAppControlMain.class.getCanonicalName();
-    private final HashMap<String, TransactionalCall> mIdToControl = new HashMap<>();
+    private static int sNextNotificationId = 200;
     private TelecomManager mTelecomManager = null;
+    private NotificationManager mNotificationManager = null;
     private boolean mIsBound = false;
-    private PhoneAccount mPhoneAccount = TRANSACTIONAL_MAIN_DEFAULT_ACCOUNT;
+    public PhoneAccount mPhoneAccount = TRANSACTIONAL_MAIN_DEFAULT_ACCOUNT;
+    private final String NOTIFICATION_CHANNEL_ID = mTag;
+    private final String NOTIFICATION_CHANNEL_NAME = mPackageName + " Notification Channel";
+    private final HashMap<String, TransactionalCall> mIdToControl = new HashMap<>();
 
     private final IBinder mBinder = new IAppControl.Stub() {
 
@@ -82,6 +92,16 @@ public class TransactionalVoipAppControlMain extends Service {
         }
 
         @Override
+        public UserHandle getProcessUserHandle(){
+            return Process.myUserHandle();
+        }
+
+        @Override
+        public int getProcessUid(){
+            return Process.myUid();
+        }
+
+        @Override
         public NoDataTransaction addCall(CallAttributes callAttributes) throws RemoteException {
             Log.i(mTag, String.format("addCall: w/ attributes=[%s]", callAttributes));
             try {
@@ -89,7 +109,12 @@ public class TransactionalVoipAppControlMain extends Service {
                         + ".addCall(" + callAttributes + ")");
                 maybeInitTelecomManager();
                 final CountDownLatch latch = new CountDownLatch(1);
-                final TransactionalCall call = new TransactionalCall(callAttributes);
+                final TransactionalCall call = new TransactionalCall(getApplicationContext(),
+                        new CallResources(
+                                getApplicationContext(),
+                                callAttributes,
+                                NOTIFICATION_CHANNEL_ID,
+                                sNextNotificationId++));
 
                 mTelecomManager.addCall(callAttributes, Runnable::run, new OutcomeReceiver<>() {
                     @Override
@@ -156,33 +181,13 @@ public class TransactionalVoipAppControlMain extends Service {
 
                 switch (state) {
                     case STATE_ACTIVE -> {
-                        if (call.isOutgoingCall()) {
-                            Log.i(mTag, "transitionCallStateTo: setActive");
-                            callControl.setActive(Runnable::run, outcome);
-                        } else {
-                            Log.i(mTag, "transitionCallStateTo: setAnswer");
-                            int videoState = CallAttributes.AUDIO_CALL;
-                            if (CallControlExtras.hasVideoStateExtra(extras)) {
-                                CallControlExtras.getVideoStateFromExtras(extras);
-                            }
-                            callControl.answer(videoState, Runnable::run, outcome);
-                        }
+                        call.setActive(outcome, extras);
                     }
                     case STATE_HOLDING -> {
-                        Log.i(mTag, "transitionCallStateTo: setInactive");
-                        callControl.setInactive(Runnable::run, outcome);
+                        call.setInactive(outcome);
                     }
                     case STATE_DISCONNECTED -> {
-                        Log.i(mTag, "transitionCallStateTo: disconnect");
-                        int disconnectCause = DisconnectCause.LOCAL;
-                        if (CallControlExtras.hasDisconnectCauseExtra(extras)) {
-                            disconnectCause = CallControlExtras.getDisconnectCauseFromExtras(
-                                    extras);
-                        }
-                        callControl.disconnect(
-                                new DisconnectCause(disconnectCause),
-                                Runnable::run,
-                                outcome);
+                        call.disconnect(outcome, extras);
                         mIdToControl.remove(id);
                     }
                 }
@@ -373,6 +378,36 @@ public class TransactionalVoipAppControlMain extends Service {
             return mTelecomManager.getRegisteredPhoneAccounts();
         }
 
+        public BooleanTransaction isNotificationPostedForCall(String callId) {
+            List<String> stackTrace = createStackTraceList(mClassName
+                    + ".isNotificationPostedForCall(" + (callId) + ")");
+            try {
+                int targetNotificationId = getCallOrThrowError(callId,
+                        stackTrace).getCallResources()
+                        .getNotificationId();
+
+                return new BooleanTransaction(TestAppTransaction.Success,
+                        isTargetNotificationPosted(getApplicationContext(),
+                                targetNotificationId));
+            } catch (TestAppException e) {
+                return new BooleanTransaction(TestAppTransaction.Failure, e);
+            }
+        }
+
+        @Override
+        public NoDataTransaction removeNotificationForCall(String callId) {
+            List<String> stackTrace = createStackTraceList(mClassName
+                    + ".removeNotificationForCall(" + (callId) + ")");
+            try {
+                TransactionalCall call = getCallOrThrowError(callId, stackTrace);
+                CallResources callResources = call.getCallResources();
+                callResources.clearCallNotification(getApplicationContext());
+                return new NoDataTransaction(TestAppTransaction.Success);
+            } catch (TestAppException e) {
+                return new NoDataTransaction(TestAppTransaction.Failure, e);
+            }
+        }
+
         private TransactionalCall getCallOrThrowError(String id, List<String> stackTrace) {
             if (!mIdToControl.containsKey(id)) {
                 throw new TestAppException(mPackageName,
@@ -391,6 +426,7 @@ public class TransactionalVoipAppControlMain extends Service {
             Log.i(mTag, String.format("onBind: return control interface w/ intent=[%s]", intent));
             mIsBound = true;
             maybeInitTelecomManager();
+            initNotificationChannel();
             setDefaultPhoneAccountBasedOffIntent(intent);
             mTelecomManager.registerPhoneAccount(mPhoneAccount);
             return mBinder;
@@ -409,22 +445,38 @@ public class TransactionalVoipAppControlMain extends Service {
                     Runnable::run,
                     result -> {
                     });
+            call.getCallResources().destroyResources(getApplicationContext());
         }
         mIdToControl.clear();
         Log.i(mTag, String.format("onUnbind: mPhoneAccount=[%s]", mPhoneAccount));
         mTelecomManager.unregisterPhoneAccount(mPhoneAccount.getAccountHandle());
+        // delete the call channel
+        NotificationUtils.deleteNotificationChannel(
+                getApplicationContext(),
+                NOTIFICATION_CHANNEL_ID);
         mIsBound = false;
         return super.onUnbind(intent);
     }
 
     private void maybeInitTelecomManager() {
-        Log.i(mTag, "maybeInitTelecomManager:");
+        Log.d(mTag, "maybeInitTelecomManager:");
         if (mTelecomManager == null) {
             mTelecomManager = getSystemService(TelecomManager.class);
         }
     }
 
-    private void setDefaultPhoneAccountBasedOffIntent(Intent intent) {
+    private void initNotificationChannel() {
+        Log.d(mTag, "initNotificationChannel:");
+        if (mNotificationManager == null) {
+            mNotificationManager = getSystemService(NotificationManager.class);
+            mNotificationManager.createNotificationChannel(new NotificationChannel(
+                    NOTIFICATION_CHANNEL_ID,
+                    NOTIFICATION_CHANNEL_NAME,
+                    NotificationManager.IMPORTANCE_DEFAULT));
+        }
+    }
+
+    public void setDefaultPhoneAccountBasedOffIntent(Intent intent) {
         if (intent.getPackage().equals(TRANSACTIONAL_CLONE_PACKAGE_NAME)) {
             mPhoneAccount = TRANSACTIONAL_CLONE_ACCOUNT;
             mTag = "TransactionalVoipAppControlClone";

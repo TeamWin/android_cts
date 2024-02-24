@@ -111,10 +111,11 @@ public abstract class BaseTestActivity extends PassFailButtons.Activity implemen
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onDestroy() {
         mTestCase.stop();
         mWifiProgress.setVisibility(View.GONE);
+
+        super.onDestroy();
     }
 
     @Override

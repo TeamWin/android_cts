@@ -25,7 +25,6 @@ import static android.server.wm.activity.lifecycle.TransitionVerifier.transition
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.EXPAND_SPLIT_ATTRS;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createSplitPairRuleBuilder;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRuleBuilderWithPrimaryActivityClass;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.getTaskBounds;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplitAttributes;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertNotVisible;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
@@ -34,7 +33,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
-import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
@@ -300,9 +298,8 @@ public class PinActivityStackTests extends ActivityEmbeddingLifecycleTestBase {
                 TestActivityWithId.class, expandRule, "expandActivityId", mSplitInfoConsumer);
 
         // Pin the top ActivityStack
-        final Rect taskBounds = getTaskBounds(mPinnedActivity, true /* shouldWaitForResume */);
-        final int originalTaskWidth = taskBounds.width();
-        final int originalTaskHeight = taskBounds.height();
+        final int originalTaskWidth = getTaskWidth();
+        final int originalTaskHeight = getTaskHeight();
         final SplitPinRule stickySplitPinRule = new SplitPinRule.Builder(
                 new SplitAttributes.Builder().build(),
                 parentWindowMetrics -> parentWindowMetrics.getBounds().width() >= originalTaskWidth

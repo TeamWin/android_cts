@@ -31,16 +31,22 @@ import static android.telecom.cts.apps.TelecomTestApp.SELF_MANAGED_CS_CLONE_ACCO
 import static android.telecom.cts.apps.TelecomTestApp.SELF_MANAGED_CS_CLONE_PACKAGE_NAME;
 import static android.telecom.cts.apps.TelecomTestApp.SELF_MANAGED_CS_MAIN_ACCOUNT;
 import static android.telecom.cts.apps.TelecomTestApp.VOIP_CS_CONTROL_INTERFACE_ACTION;
+import static android.telecom.cts.apps.NotificationUtils.isTargetNotificationPosted;
 import static android.telecom.cts.apps.WaitUntil.waitUntilAvailableEndpointsIsSet;
 import static android.telecom.cts.apps.WaitUntil.waitUntilCallAudioStateIsSet;
 import static android.telecom.cts.apps.WaitUntil.waitUntilConnectionIsNonNull;
 import static android.telecom.cts.apps.WaitUntil.waitUntilIdIsSet;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Process;
 import android.os.RemoteException;
+import android.os.UserHandle;
 import android.telecom.CallAttributes;
 import android.telecom.CallEndpoint;
 import android.telecom.DisconnectCause;
@@ -51,11 +57,13 @@ import android.telecom.cts.apps.AvailableEndpointsTransaction;
 import android.telecom.cts.apps.BooleanTransaction;
 import android.telecom.cts.apps.CallEndpointTransaction;
 import android.telecom.cts.apps.CallExceptionTransaction;
+import android.telecom.cts.apps.CallResources;
 import android.telecom.cts.apps.IAppControl;
 import android.telecom.cts.apps.LatchedEndpointOutcomeReceiver;
 import android.telecom.cts.apps.NoDataTransaction;
+import android.telecom.cts.apps.NotificationUtils;
 import android.telecom.cts.apps.PhoneAccountTransaction;
-import android.telecom.cts.apps.TestAppConnection;
+import android.telecom.cts.apps.VoipConnection;
 import android.telecom.cts.apps.TestAppException;
 import android.telecom.cts.apps.TestAppTransaction;
 import android.telecom.cts.apps.WaitUntil;
@@ -71,10 +79,14 @@ public class VoipConnectionServiceControlMain extends Service {
     private String mTag = VoipConnectionServiceControlMain.class.getSimpleName();
     private String mPackageName = VoipConnectionServiceControlMain.class.getPackageName();
     private String mClassName = VoipConnectionServiceControlMain.class.getCanonicalName();
-    private final HashMap<String, TestAppConnection> mIdToConnection = new HashMap<>();
+    private final HashMap<String, VoipConnection> mIdToConnection = new HashMap<>();
     private boolean mIsBound = false;
     private TelecomManager mTelecomManager = null;
     private PhoneAccount mPhoneAccount = SELF_MANAGED_CS_MAIN_ACCOUNT;
+    private static int sNextNotificationId = 100;
+    private NotificationManager mNotificationManager = null;
+    private final String NOTIFICATION_CHANNEL_ID = mTag;
+    private final String NOTIFICATION_CHANNEL_NAME = mTag + " Notification Channel";
 
     private final WaitUntil.ConnectionServiceImpl
             mConnectionServiceImpl = () -> VoipConnectionServiceMain.sLastConnection;
@@ -84,7 +96,18 @@ public class VoipConnectionServiceControlMain extends Service {
         @Override
         public boolean isBound() {
             Log.i(mTag, String.format("isBound: [%b]", mIsBound));
+            Binder.getCallingUid();
             return mIsBound;
+        }
+
+        @Override
+        public UserHandle getProcessUserHandle(){
+            return Process.myUserHandle();
+        }
+
+        @Override
+        public int getProcessUid(){
+            return Process.myUid();
         }
 
         @Override
@@ -106,7 +129,7 @@ public class VoipConnectionServiceControlMain extends Service {
                 // populate a new connection.  The app process will wait via a while loop until
                 // a new connection is populated. If a connection is not added in the given time
                 // window, a TestAppException will be thrown!
-                TestAppConnection c = waitUntilConnectionIsNonNull(mPackageName,
+                VoipConnection c = (VoipConnection) waitUntilConnectionIsNonNull(mPackageName,
                         stackTrace,
                         mConnectionServiceImpl);
                 // track the connection so it can be manipulated later in the test stage
@@ -119,7 +142,7 @@ public class VoipConnectionServiceControlMain extends Service {
         }
 
         private void trackConnection(
-                TestAppConnection connection,
+                VoipConnection connection,
                 CallAttributes callAttributes,
                 List<String> stackTrace) {
             String id = waitUntilIdIsSet(mPackageName,
@@ -128,11 +151,17 @@ public class VoipConnectionServiceControlMain extends Service {
             maybeClearHoldCapabilities(connection, callAttributes);
             Log.i(mTag, String.format("trackConnection: id=[%s], connection=[%s]", id, connection));
             mIdToConnection.put(id, connection);
+            connection.setIdAndResources(id,
+                    new CallResources(
+                            getApplicationContext(),
+                            callAttributes,
+                            NOTIFICATION_CHANNEL_ID,
+                            sNextNotificationId++));
             // clear out the last connection since it has been added to tracking
             VoipConnectionServiceMain.sLastConnection = null;
         }
 
-        private void maybeClearHoldCapabilities(TestAppConnection c,
+        private void maybeClearHoldCapabilities(VoipConnection c,
                 CallAttributes callAttributes) {
             if (!hasSetInactiveCapabilities(callAttributes)) {
                 c.clearHoldCapabilities();
@@ -146,28 +175,29 @@ public class VoipConnectionServiceControlMain extends Service {
                 Bundle extras) {
             Log.i(mTag, "transitionCallStateTo: attempting to transition callId=" + id);
             try {
-                TestAppConnection connection = getConnectionOrThrow(id,
+                VoipConnection connection = getConnectionOrThrow(id,
                         createStackTraceList(mClassName + ".transitionCallStateTo(" + (id) + ")"));
 
                 switch (state) {
                     case STATE_DIALING -> {
-                        connection.setDialing();
+                        connection.setCallToDialing();
                         Log.i(mTag, "transitionCallStateTo: setDialing");
                     }
                     case STATE_RINGING -> {
-                        connection.setRinging();
+                        connection.setCallToRinging();
                         Log.i(mTag, "transitionCallStateTo: setRinging");
                     }
                     case STATE_ACTIVE -> {
-                        connection.setActive();
+
+                        connection.setCallToActive();
                         Log.i(mTag, "transitionCallStateTo: setActive");
                     }
                     case STATE_HOLDING -> {
-                        connection.setOnHold();
+                        connection.setCallToInactive();
                         Log.i(mTag, "transitionCallStateTo: setOnHold");
                     }
                     case STATE_DISCONNECTED -> {
-                        connection.setDisconnected(new DisconnectCause(DisconnectCause.LOCAL));
+                        connection.setCallToDisconnected(getApplicationContext());
                         Log.i(mTag, "transitionCallStateTo: setDisconnected");
                         mIdToConnection.remove(id);
                     }
@@ -183,7 +213,7 @@ public class VoipConnectionServiceControlMain extends Service {
         public BooleanTransaction isMuted(String id) {
             Log.i(mTag, String.format("isMuted: id=[%s]", id));
             try {
-                TestAppConnection connection = getConnectionOrThrow(id,
+                VoipConnection connection = getConnectionOrThrow(id,
                         createStackTraceList(mClassName + ".isMuted(" + (id) + ")"));
                 return new BooleanTransaction(TestAppTransaction.Success,
                         connection.isMuted());
@@ -196,7 +226,7 @@ public class VoipConnectionServiceControlMain extends Service {
         public NoDataTransaction setMuteState(String id, boolean isMuted) {
             Log.i(mTag, String.format("setMuteState: id=[%s]", id));
             try {
-                TestAppConnection connection = getConnectionOrThrow(id,
+                VoipConnection connection = getConnectionOrThrow(id,
                         createStackTraceList(mClassName + ".setMuteState(" + (id) + ")"));
                 connection.onMuteStateChanged(isMuted);
                 return new NoDataTransaction(TestAppTransaction.Success);
@@ -210,13 +240,14 @@ public class VoipConnectionServiceControlMain extends Service {
             Log.i(mTag, String.format("getCurrentCallEndpoint: id=[%s]", id));
 
             try {
-                TestAppConnection connection = getConnectionOrThrow(id,
+                VoipConnection connection = getConnectionOrThrow(id,
                         createStackTraceList(mClassName + ".getCurrentCallEndpoint(" + (id) + ")"));
 
                 waitUntilCallAudioStateIsSet(
                         mPackageName,
                         createStackTraceList(mClassName
                                 + ".getCurrentCallEndpoint(id=" + id + ")"),
+                        false /*isManagedConnection*/,
                         connection);
 
                 return new CallEndpointTransaction(
@@ -235,7 +266,7 @@ public class VoipConnectionServiceControlMain extends Service {
         public AvailableEndpointsTransaction getAvailableCallEndpoints(String id) {
             Log.i(mTag, String.format("getAvailableCallEndpoints: id=[%s]", id));
             try {
-                TestAppConnection connection = getConnectionOrThrow(id,
+                VoipConnection connection = getConnectionOrThrow(id,
                         createStackTraceList(
                                 mClassName + ".getAvailableCallEndpoints(" + (id) + ")"));
 
@@ -243,6 +274,7 @@ public class VoipConnectionServiceControlMain extends Service {
                         mPackageName,
                         createStackTraceList(mClassName
                                 + ".getAvailableCallEndpoints(id=" + id + ")"),
+                        false /*isManagedConnection*/,
                         connection);
 
                 return new AvailableEndpointsTransaction(
@@ -264,7 +296,7 @@ public class VoipConnectionServiceControlMain extends Service {
                 List<String> stackTrace = createStackTraceList(mClassName
                         + ".requestCallEndpointChange(" + (id) + ")");
 
-                TestAppConnection connection = getConnectionOrThrow(id, stackTrace);
+                VoipConnection connection = getConnectionOrThrow(id, stackTrace);
                 final CountDownLatch latch = new CountDownLatch(1);
                 final LatchedEndpointOutcomeReceiver outcome = new LatchedEndpointOutcomeReceiver(
                         latch);
@@ -276,7 +308,7 @@ public class VoipConnectionServiceControlMain extends Service {
                         stackTrace,
                         "expected:<CallControl#requestCallEndpointChange to complete via"
                                 + " onResult or onError>  "
-                        + "actual<Timeout waiting for the CountDownLatch to complete.>",
+                                + "actual<Timeout waiting for the CountDownLatch to complete.>",
                         latch);
 
                 return new NoDataTransaction(TestAppTransaction.Success);
@@ -322,7 +354,37 @@ public class VoipConnectionServiceControlMain extends Service {
             return mTelecomManager.getRegisteredPhoneAccounts();
         }
 
-        private TestAppConnection getConnectionOrThrow(String id, List<String> stackTrace) {
+        public BooleanTransaction isNotificationPostedForCall(String callId) {
+            List<String> stackTrace = createStackTraceList(mClassName
+                    + ".isNotificationPostedForCall(" + (callId) + ")");
+            try {
+                int targetNotificationId = getConnectionOrThrow(callId,
+                        stackTrace).getCallResources()
+                        .getNotificationId();
+
+                return new BooleanTransaction(TestAppTransaction.Success,
+                        isTargetNotificationPosted(getApplicationContext(),
+                                targetNotificationId));
+            } catch (TestAppException e) {
+                return new BooleanTransaction(TestAppTransaction.Failure, e);
+            }
+        }
+
+        @Override
+        public NoDataTransaction removeNotificationForCall(String callId) {
+            List<String> stackTrace = createStackTraceList(mClassName
+                    + ".removeNotificationForCall(" + (callId) + ")");
+            try {
+                CallResources callResources =
+                        getConnectionOrThrow(callId, stackTrace).getCallResources();
+                callResources.clearCallNotification(getApplicationContext());
+                return new NoDataTransaction(TestAppTransaction.Success);
+            } catch (TestAppException e) {
+                return new NoDataTransaction(TestAppTransaction.Failure, e);
+            }
+        }
+
+        private VoipConnection getConnectionOrThrow(String id, List<String> stackTrace) {
             if (!mIdToConnection.containsKey(id)) {
                 throw new TestAppException(mPackageName,
                         appendStackTraceList(stackTrace, mClassName + ".getConnectionOrThrow"),
@@ -340,6 +402,7 @@ public class VoipConnectionServiceControlMain extends Service {
             Log.i(mTag, "onBind: return control interface.");
             mIsBound = true;
             maybeInitTelecomManager();
+            maybeInitNotificationChannel();
             setDefaultPhoneAccountBasedOffIntent(intent);
             mTelecomManager.registerPhoneAccount(mPhoneAccount);
             return mBinder;
@@ -351,20 +414,35 @@ public class VoipConnectionServiceControlMain extends Service {
     @Override
     public boolean onUnbind(Intent intent) {
         Log.i(mTag, "VoipConnectionServiceControlClone: onUnbind");
-        for (TestAppConnection connection : mIdToConnection.values()) {
+        for (VoipConnection connection : mIdToConnection.values()) {
             connection.setDisconnected(
                     new DisconnectCause(DisconnectCause.LOCAL, "VoipCS is Unbinding"));
         }
         mIdToConnection.clear();
         mTelecomManager.unregisterPhoneAccount(mPhoneAccount.getAccountHandle());
+        // delete the call channel
+        NotificationUtils.deleteNotificationChannel(
+                getApplicationContext(),
+                NOTIFICATION_CHANNEL_ID);
         mIsBound = false;
         return super.onUnbind(intent);
     }
 
     private void maybeInitTelecomManager() {
-        Log.i(mTag, "maybeInitTelecomManager:");
+        Log.d(mTag, "maybeInitTelecomManager:");
         if (mTelecomManager == null) {
             mTelecomManager = getSystemService(TelecomManager.class);
+        }
+    }
+
+    private void maybeInitNotificationChannel() {
+        Log.d(mTag, "maybeInitNotificationChannel:");
+        if (mNotificationManager == null) {
+            mNotificationManager = getSystemService(NotificationManager.class);
+            mNotificationManager.createNotificationChannel(new NotificationChannel(
+                    NOTIFICATION_CHANNEL_ID,
+                    NOTIFICATION_CHANNEL_NAME,
+                    NotificationManager.IMPORTANCE_DEFAULT));
         }
     }
 

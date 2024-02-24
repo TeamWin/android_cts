@@ -148,6 +148,8 @@ class InputAtomsTest : DeviceTestCase() {
         assertThat(touchpadUsage, Matchers.allOf<TouchpadUsage>(
                 member("vendorId", { vendorId }, equalTo(0x18d1)),
                 member("productId", { productId }, equalTo(0xabcd)),
+                member("deviceBus", { deviceBus },
+                        equalTo(InputDeviceBus.USB)),
                 member("fingerCount", { fingerCount }, equalTo(3)),
                 member("palmCount", { palmCount }, equalTo(2)),
         ))

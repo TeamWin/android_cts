@@ -398,7 +398,7 @@ public class ActivityEmbeddingUtil {
     }
 
     @NonNull
-    public static Rect getTaskBounds(@NonNull Activity activity, boolean shouldWaitForResume) {
+    private static Rect getTaskBounds(@NonNull Activity activity, boolean shouldWaitForResume) {
         final WindowManagerStateHelper wmState = new WindowManagerStateHelper();
         final ComponentName activityName = activity.getComponentName();
         if (shouldWaitForResume) {

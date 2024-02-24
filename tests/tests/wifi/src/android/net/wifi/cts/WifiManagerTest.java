@@ -7119,69 +7119,73 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
         }
     }
 
+    class TestTwtSessionCallback implements TwtSessionCallback {
+        final AtomicReference<TwtSession> mTwtSession = new AtomicReference<>();
+        final AtomicInteger mTwtTeardownReasonCode = new AtomicInteger(-1);
+        final AtomicInteger mTwtErrorCode = new AtomicInteger(-1);
+
+        @Override
+        public void onFailure(int errorCode) {
+            synchronized (mLock) {
+                mTwtErrorCode.set(errorCode);
+                mLock.notify();
+            }
+        }
+
+        @Override
+        public void onTeardown(int reasonCode) {
+            synchronized (mLock) {
+                mTwtTeardownReasonCode.set(reasonCode);
+                mLock.notify();
+            }
+        }
+
+        @Override
+        public void onCreate(TwtSession twtSession) {
+            synchronized (mLock) {
+                mTwtSession.set(twtSession);
+            }
+        }
+    }
+
     /**
-     * Validate setting up a TWT session if device supports and get stats and finally teardown.
+     * Validate setting up a TWT session if device supports and get stats and finally close. If the
+     * connection is multi-link, pick the first link and set up the TWT session.
      */
-    @ApiTest(apis = {"android.net.wifi.WifiManager#getTwtCapabilities",
-            "android.net.wifi.WifiManager#twtSessionSetup",
-            "android.net.wifi.twt.TwtSession#getStats", "android.net.wifi.twt.TwtSession#teardown",
-            "android.net.wifi.twt.TwtSession#getWakeDurationMicros",
-            "android.net.wifi.twt.TwtSession#getWakeIntervalMicros",
-            "android.net.wifi.twt.TwtSession#getMloLinkId"})
     @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM, codeName =
             "VanillaIceCream")
     @Test
+    @ApiTest(apis = {"android.net.wifi.WifiManager#getTwtCapabilities",
+            "android.net.wifi.WifiManager#twtSessionSetup",
+            "android.net.wifi.twt.TwtSession#getStats",
+            "android.net.wifi.twt.TwtSession#close",
+            "android.net.wifi.twt.TwtSession#getWakeDurationMicros",
+            "android.net.wifi.twt.TwtSession#getWakeIntervalMicros",
+            "android.net.wifi.twt.TwtSession#getMloLinkId",
+            "android.net.wifi.twt.TwtRequest#Builder",
+            "android.net.wifi.twt.TwtRequest.Builder#setLinkId",
+            "android.net.wifi.twt.TwtRequest#getMinWakeDurationMicros",
+            "android.net.wifi.twt.TwtRequest#getMaxWakeDurationMicros",
+            "android.net.wifi.twt.TwtRequest#getMinWakeIntervalMicros",
+            "android.net.wifi.twt.TwtRequest#getMaxWakeIntervalMicros",
+            "android.net.wifi.twt.TwtRequest#getLinkId"})
     public void testTwt() throws Exception {
         AtomicReference<Bundle> twtCapabilities = new AtomicReference<>();
         AtomicReference<Bundle> twtStats = new AtomicReference<>();
         long now, deadline;
-        Consumer<Bundle> twtCapabilityCallback = new Consumer<Bundle>() {
-            @Override
-            public void accept(Bundle capabilities) {
-                synchronized (mLock) {
-                    twtCapabilities.set(capabilities);
-                    mLock.notify();
-                }
+        Consumer<Bundle> twtCapabilityCallback = capabilities -> {
+            synchronized (mLock) {
+                twtCapabilities.set(capabilities);
+                mLock.notify();
             }
         };
-        Consumer<Bundle> twtStatsCallback = new Consumer<Bundle>() {
-            @Override
-            public void accept(Bundle stats) {
-                synchronized (mLock) {
-                    twtStats.set(stats);
-                    mLock.notify();
-                }
+        Consumer<Bundle> twtStatsCallback = stats -> {
+            synchronized (mLock) {
+                twtStats.set(stats);
+                mLock.notify();
             }
         };
-        class TestTwtSessionCallback implements TwtSessionCallback {
-            final AtomicReference<TwtSession> mTwtSession = new AtomicReference<>();
-            final AtomicInteger mTwtTeardownReasonCode = new AtomicInteger(-1);
-            final AtomicInteger mTwtErrorCode = new AtomicInteger(-1);
-
-            @Override
-            public void onFailure(int errorCode) {
-                synchronized (mLock) {
-                    mTwtErrorCode.set(errorCode);
-                    mLock.notify();
-                }
-            }
-
-            @Override
-            public void onTeardown(int reasonCode) {
-                synchronized (mLock) {
-                    mTwtTeardownReasonCode.set(reasonCode);
-                    mLock.notify();
-                }
-            }
-
-            @Override
-            public void onCreate(TwtSession twtSession) {
-                synchronized (mLock) {
-                    mTwtSession.set(twtSession);
-                }
-            }
-        }
         TestTwtSessionCallback testTwtSessionCallback = new TestTwtSessionCallback();
         TestActionListener actionListener = new TestActionListener(mLock);
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
@@ -7221,16 +7225,36 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
             sWifiManager.connect(twtNetwork.networkId, actionListener);
             waitForConnection();
 
+            // Get the first link id, if the connection is multi-link
+            List<MloLink> mloLinks = sWifiManager.getConnectionInfo().getAssociatedMloLinks();
+            int linkId = MloLink.INVALID_MLO_LINK_ID;
+            if (!mloLinks.isEmpty()) {
+                linkId = mloLinks.getFirst().getLinkId();
+            }
+
+            // Build and validate twtRequest
+            int minWakeDuration = twtCapabilities.get().getInt(
+                    WifiManager.TWT_CAPABILITIES_KEY_INT_MIN_WAKE_DURATION_MICROS);
+            int maxWakeDuration = twtCapabilities.get().getInt(
+                    WifiManager.TWT_CAPABILITIES_KEY_INT_MAX_WAKE_DURATION_MICROS);
+            long minWakeInterval = twtCapabilities.get().getLong(
+                    WifiManager.TWT_CAPABILITIES_KEY_LONG_MIN_WAKE_INTERVAL_MICROS);
+            long maxWakeInterval = twtCapabilities.get().getLong(
+                    WifiManager.TWT_CAPABILITIES_KEY_LONG_MAX_WAKE_INTERVAL_MICROS);
+            TwtRequest.Builder builder = new TwtRequest.Builder(minWakeDuration, maxWakeDuration,
+                    minWakeInterval, maxWakeInterval);
+            if (linkId != MloLink.INVALID_MLO_LINK_ID) {
+                builder.setLinkId(linkId);
+            }
+            TwtRequest twtRequest = builder.build();
+            assertEquals(twtRequest.getMinWakeDurationMicros(), minWakeDuration);
+            assertEquals(twtRequest.getMaxWakeDurationMicros(), maxWakeDuration);
+            assertEquals(twtRequest.getMinWakeIntervalMicros(), minWakeInterval);
+            assertEquals(twtRequest.getMaxWakeIntervalMicros(), maxWakeInterval);
+            assertEquals(twtRequest.getLinkId(), linkId);
+
             // Verify TWT session setup
-            sWifiManager.setupTwtSession(new TwtRequest.Builder(twtCapabilities.get().getInt(
-                            WifiManager.TWT_CAPABILITIES_KEY_INT_MIN_WAKE_DURATION_MICROS),
-                            twtCapabilities.get().getInt(
-                                    WifiManager.TWT_CAPABILITIES_KEY_INT_MAX_WAKE_DURATION_MICROS),
-                            twtCapabilities.get().getLong(
-                                    WifiManager.TWT_CAPABILITIES_KEY_LONG_MIN_WAKE_INTERVAL_MICROS),
-                            twtCapabilities.get().getLong(
-                                    WifiManager.TWT_CAPABILITIES_KEY_LONG_MAX_WAKE_INTERVAL_MICROS)).build(),
-                    mExecutor, testTwtSessionCallback);
+            sWifiManager.setupTwtSession(twtRequest, mExecutor, testTwtSessionCallback);
             synchronized (mLock) {
                 now = System.currentTimeMillis();
                 deadline = now + TEST_WAIT_DURATION_MS;
@@ -7243,8 +7267,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
                     testTwtSessionCallback.mTwtSession.get());
             assertTrue(testTwtSessionCallback.mTwtSession.get().getWakeDurationMicros() > 0);
             assertTrue(testTwtSessionCallback.mTwtSession.get().getWakeIntervalMicros() > 0);
-            assertTrue(testTwtSessionCallback.mTwtSession.get().getMloLinkId()
-                    == MloLink.INVALID_MLO_LINK_ID);
+            assertTrue(testTwtSessionCallback.mTwtSession.get().getMloLinkId() == linkId);
 
             // Verify TWT session get stats
             testTwtSessionCallback.mTwtSession.get().getStats(mExecutor, twtStatsCallback);
@@ -7297,43 +7320,12 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     public void testTwtSessionAutoCloseable() throws Exception {
         AtomicReference<Bundle> twtCapabilities = new AtomicReference<>();
         long now, deadline;
-        Consumer<Bundle> twtCapabilityCallback = new Consumer<Bundle>() {
-            @Override
-            public void accept(Bundle capabilities) {
-                synchronized (mLock) {
-                    twtCapabilities.set(capabilities);
-                    mLock.notify();
-                }
+        Consumer<Bundle> twtCapabilityCallback = capabilities -> {
+            synchronized (mLock) {
+                twtCapabilities.set(capabilities);
+                mLock.notify();
             }
         };
-        class TestTwtSessionCallback implements TwtSessionCallback {
-            final AtomicReference<TwtSession> mTwtSession = new AtomicReference<>();
-            final AtomicInteger mTwtTeardownReasonCode = new AtomicInteger(-1);
-            final AtomicInteger mTwtErrorCode = new AtomicInteger(-1);
-
-            @Override
-            public void onFailure(int errorCode) {
-                synchronized (mLock) {
-                    mTwtErrorCode.set(errorCode);
-                    mLock.notify();
-                }
-            }
-
-            @Override
-            public void onTeardown(int reasonCode) {
-                synchronized (mLock) {
-                    mTwtTeardownReasonCode.set(reasonCode);
-                    mLock.notify();
-                }
-            }
-
-            @Override
-            public void onCreate(TwtSession twtSession) {
-                synchronized (mLock) {
-                    mTwtSession.set(twtSession);
-                }
-            }
-        }
         TestTwtSessionCallback testTwtSessionCallback = new TestTwtSessionCallback();
         TestActionListener actionListener = new TestActionListener(mLock);
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();

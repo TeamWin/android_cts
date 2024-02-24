@@ -214,15 +214,16 @@ public class DataObjectUnitTests extends InstrumentationTestCase {
         final CharSequence description = "Mobile network not available";
         final String reason = "CTS Testing";
         ImsReasonInfo reasonInfo = new ImsReasonInfo(ImsReasonInfo.CODE_UNSPECIFIED, 0, "");
-        DisconnectCause cause = new DisconnectCause(
-                DisconnectCause.ERROR,
-                label,
-                description,
-                reason,
-                ToneGenerator.TONE_CDMA_CALLDROP_LITE,
-                android.telephony.DisconnectCause.NORMAL,
-                PreciseDisconnectCause.NORMAL,
-                reasonInfo);
+        DisconnectCause cause = new DisconnectCause.Builder()
+                .setCode(DisconnectCause.ERROR)
+                .setLabel(label)
+                .setDescription(description)
+                .setReason(reason)
+                .setTone(ToneGenerator.TONE_CDMA_CALLDROP_LITE)
+                .setTelephonyDisconnectCause(android.telephony.DisconnectCause.NORMAL)
+                .setTelephonyPreciseDisconnectCause(PreciseDisconnectCause.NORMAL)
+                .setImsReasonInfo(reasonInfo)
+                .build();
         assertEquals(DisconnectCause.ERROR, cause.getCode());
         assertEquals(label, cause.getLabel());
         assertEquals(description, cause.getDescription());
