@@ -947,3 +947,32 @@ def draw_green_boxes_around_faces(img, faces_cropped, img_name):
     cv2.rectangle(img, (l, t), (r, b), CV2_GREEN, 2)
   image_processing_utils.write_image(img, img_name)
 
+
+def find_aruco_markers(input_img, output_img_path):
+  """Detects ArUco markers in the input_img.
+
+  Finds ArUco markers in the input_img and draws the contours
+  around them.
+  Args:
+    input_img: input img in numpy array with ArUco markers
+      to be detected
+    output_img_path: path of the image to be saved with contours
+      around the markers detected
+  Returns:
+    corners: list of detected corners
+    ids: list of int ids for each ArUco markers in the input_img
+  """
+  parameters = cv2.aruco.DetectorParameters_create()
+  # ArUco markers used are 4x4
+  aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_100)
+  corners, ids, _ = cv2.aruco.detectMarkers(
+      input_img, aruco_dict, parameters=parameters)
+  if ids is None:
+    e_msg = 'ArUco markers not detected.'
+    raise AssertionError(e_msg)
+  logging.debug('Number of ArUco markers detected: %d', len(ids))
+  logging.debug('IDs of the ArUco markers detected: %s', ids)
+  logging.debug('Corners of the ArUco markers detected: %s', corners)
+  cv2.aruco.drawDetectedMarkers(input_img, corners, ids)
+  image_processing_utils.write_image(input_img/255, output_img_path)
+  return corners, ids
