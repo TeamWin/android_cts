@@ -48,6 +48,7 @@ public final class ClusterHomeManagerTest {
     private static final long TIMEOUT_MS = 5_000;
     private static final String CLUSTER_HOME_SERVICE = "ClusterHomeService";
     private static final String DUMP_TPL_COUNT = "mTrustedPresentationListenerCount";
+    private static final String DUMP_CLUSTER_SURFACE = "mClusterActivitySurface";
     private static final String DUMP_CLUSTER_VISIBLE = "mClusterActivityVisible";
 
     private final Instrumentation mInstrumentation =
@@ -69,11 +70,8 @@ public final class ClusterHomeManagerTest {
 
     @After
     public void tearDown() throws Exception {
-        if (mTestActivity != null) {
-            mTestActivity.finishAndRemoveTask();
-            mTestActivity.waitForDestroyed();
-            mTestActivity = null;
-        }
+        // mTestActivity is not cleaned up here so each test that uses it needs to clean it up.
+
         mUiAutomation.dropShellPermissionIdentity();
     }
 
@@ -113,6 +111,19 @@ public final class ClusterHomeManagerTest {
             int count = Integer.valueOf(dump.get(DUMP_TPL_COUNT));
             boolean visible = Boolean.parseBoolean(dump.get(DUMP_CLUSTER_VISIBLE));
             return count > oldCount2 && !visible;
+        });
+
+        // Destroy the test activity.
+        if (mTestActivity != null) {
+            mTestActivity.finishAndRemoveTask();
+            mTestActivity.waitForDestroyed();
+            mTestActivity = null;
+        }
+        // Ensure that visibility monitoring has stopped.
+        PollingCheck.waitFor(TIMEOUT_MS, () -> {
+            String monitoringSurface = DumpUtils.executeDumpShellCommand(CLUSTER_HOME_SERVICE)
+                    .get(DUMP_CLUSTER_SURFACE);
+            return monitoringSurface.equals("null");
         });
     }
 
