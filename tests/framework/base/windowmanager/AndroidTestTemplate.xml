@@ -128,4 +128,8 @@
         <option name="cleanup" value="true" />
         <option name="push-file" key="CtsDeviceDeprecatedAbiApp.apk" value="/data/local/tmp/cts/CtsDeviceDeprecatedAbiApp.apk" />
     </target_preparer>
+    <object class="com.android.tradefed.testtype.suite.module.TestFailureModuleController" type="module_controller">
+        <!-- Take screenshot upon test failure -->
+        <option name="screenshot-on-failure" value="true" />
+    </object>
 </configuration>
