@@ -52,6 +52,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.os.Vibrator;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeSdkSandbox;
 import android.platform.test.annotations.RequiresFlagsEnabled;
@@ -122,6 +123,7 @@ public class AudioFocusTest {
     private int mInitialNotificationVolume;
     /** ringer mode to restore */
     private int mInitialRingerMode;
+    private boolean mHasVibration;
 
     @ClassRule
     @Rule
@@ -135,6 +137,9 @@ public class AudioFocusTest {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = mInstrumentation.getTargetContext();
         mAM = new AudioManager(mContext);
+
+        Vibrator vibrator = mContext.getSystemService(Vibrator.class);
+        mHasVibration = (vibrator != null) && vibrator.hasVibrator();
 
         mInitialRingerMode = mAM.getRingerMode();
         // need to set ringer mode to normal before starting the test so the volume (to be restored)
@@ -661,10 +666,13 @@ public class AudioFocusTest {
             assertTrue("Wrong shouldNotificationSoundPlay for ringer NORMAL + focus exclusive",
                     mAM.shouldNotificationSoundPlay(NOTIFICATION_ATTRIBUTES));
 
-            mAM.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
-            // RINGER_MODE_VIBRATE + GAIN_TRANSIENT_EXCLUSIVE expect shouldNotifSoundPlay false
-            assertFalse("Wrong shouldNotificationSoundPlay for ringer VIBRATE + focus exclusive",
-                    mAM.shouldNotificationSoundPlay(NOTIFICATION_ATTRIBUTES));
+            if (mHasVibration) {
+                mAM.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
+                // RINGER_MODE_VIBRATE + GAIN_TRANSIENT_EXCLUSIVE expect shouldNotifSoundPlay false
+                assertFalse(
+                        "Wrong shouldNotificationSoundPlay for ringer VIBRATE + focus exclusive",
+                        mAM.shouldNotificationSoundPlay(NOTIFICATION_ATTRIBUTES));
+            }
 
             mAM.setRingerMode(AudioManager.RINGER_MODE_SILENT);
             // RINGER_MODE_SILENT + GAIN_TRANSIENT_EXCLUSIVE expect shouldNotifSoundPlay false
