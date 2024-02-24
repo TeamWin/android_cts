@@ -29,7 +29,8 @@ public class RecordingResult {
         CaptureResult.CONTROL_ZOOM_RATIO,
         CaptureResult.LENS_FOCAL_LENGTH,
         CaptureResult.LENS_FOCUS_DISTANCE,
-        CaptureResult.SCALER_CROP_REGION
+        CaptureResult.SCALER_CROP_REGION,
+        CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID
     );
 
     HashMap<CaptureResult.Key<?>, Object> mMap;
