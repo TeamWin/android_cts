@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package android.graphics.pdf.cts.module;
+package android.graphics.pdf.cts;
 
-import static android.graphics.pdf.cts.module.Utils.createPreVRenderer;
+import static android.graphics.pdf.cts.Utils.createRenderer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
@@ -25,7 +25,7 @@ import static org.junit.Assert.assertTrue;
 import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.graphics.pdf.PdfRendererPreV;
+import android.graphics.pdf.PdfRenderer;
 import android.graphics.pdf.models.ChoiceOption;
 import android.graphics.pdf.models.FormEditRecord;
 import android.graphics.pdf.models.FormWidgetInfo;
@@ -44,7 +44,7 @@ import java.util.List;
 import java.util.Set;
 
 @RunWith(AndroidJUnit4.class)
-public class PdfFormFillingPreVTest {
+public class PdfFormFillingTest {
     private static final int CLICK_FORM = R.raw.click_form;
     private static final int COMBOBOX_FORM = R.raw.combobox_form;
     private static final int LISTBOX_FORM = R.raw.listbox_form;
@@ -185,22 +185,22 @@ public class PdfFormFillingPreVTest {
 
     @Test
     public void getFormType_none() throws Exception {
-        verifyFormType(NOT_FORM, PdfRendererPreV.PDF_FORM_TYPE_NONE);
+        verifyFormType(NOT_FORM, PdfRenderer.PDF_FORM_TYPE_NONE);
     }
 
     @Test
     public void getFormType_acro() throws Exception {
-        verifyFormType(TEXT_FORM, PdfRendererPreV.PDF_FORM_TYPE_ACRO_FORM);
+        verifyFormType(TEXT_FORM, PdfRenderer.PDF_FORM_TYPE_ACRO_FORM);
     }
 
     @Test
     public void getFormType_xfa() throws Exception {
-        verifyFormType(XFA_FORM, PdfRendererPreV.PDF_FORM_TYPE_XFA_FULL);
+        verifyFormType(XFA_FORM, PdfRenderer.PDF_FORM_TYPE_XFA_FULL);
     }
 
     @Test
     public void getFormType_xfaf() throws Exception {
-        verifyFormType(XFAF_FORM, PdfRendererPreV.PDF_FORM_TYPE_XFA_FOREGROUND);
+        verifyFormType(XFAF_FORM, PdfRenderer.PDF_FORM_TYPE_XFA_FOREGROUND);
     }
 
     // getFormWidgetInfo
@@ -539,8 +539,8 @@ public class PdfFormFillingPreVTest {
 
     @Test
     public void getFormWidgetInfo_invalidIndex() throws Exception {
-        try (PdfRendererPreV renderer = createPreVRenderer(CLICK_FORM, mContext, null)) {
-            try (PdfRendererPreV.Page page = renderer.openPage(0)) {
+        try (PdfRenderer renderer = createRenderer(CLICK_FORM, mContext)) {
+            try (PdfRenderer.Page page = renderer.openPage(0)) {
                 int emptyIndex = 999;
                 assertThrows(
                         IllegalArgumentException.class,
@@ -551,8 +551,8 @@ public class PdfFormFillingPreVTest {
 
     @Test
     public void getFormWidgetInfo_emptyPoint() throws Exception {
-        try (PdfRendererPreV renderer = createPreVRenderer(CLICK_FORM, mContext, null)) {
-            try (PdfRendererPreV.Page page = renderer.openPage(0)) {
+        try (PdfRenderer renderer = createRenderer(CLICK_FORM, mContext)) {
+            try (PdfRenderer.Page page = renderer.openPage(0)) {
                 Point emptyPos = new Point(0, 0);
                 assertThrows(
                         IllegalArgumentException.class,
@@ -1319,8 +1319,7 @@ public class PdfFormFillingPreVTest {
         List<FormEditRecord> records =
                 List.of(new FormEditRecord[] {checkboxRecord, radioButtonRecord});
 
-        verifyApplyEditsPreV(
-                CLICK_FORM, 0, positions, beforeWidgetInfos, records, afterWidgetInfos);
+        verifyApplyEdits(CLICK_FORM, 0, positions, beforeWidgetInfos, records, afterWidgetInfos);
     }
 
     @Test
@@ -1381,7 +1380,7 @@ public class PdfFormFillingPreVTest {
         List<FormEditRecord> records =
                 List.of(new FormEditRecord[] {checkboxRecord, radioButtonRecord});
 
-        verifyApplyEditsPreVNotNull(
+        verifyApplyEditsNotNull(
                 CLICK_FORM,
                 0,
                 positions,
@@ -1449,7 +1448,7 @@ public class PdfFormFillingPreVTest {
         List<FormEditRecord> records =
                 List.of(new FormEditRecord[] {checkboxRecord, radioButtonRecord});
 
-        verifyApplyEditsPreVNotNull(
+        verifyApplyEditsNotNull(
                 CLICK_FORM,
                 0,
                 positions,
@@ -1510,7 +1509,7 @@ public class PdfFormFillingPreVTest {
                         /* accessibilityLabel= */ "");
         List<FormEditRecord> records =
                 List.of(new FormEditRecord[] {checkboxRecord, radioButtonRecord});
-        verifyApplyEditsPreVDocumentClosed(CLICK_FORM, 0, records);
+        verifyApplyEditsDocumentClosed(CLICK_FORM, 0, records);
     }
 
     @Test
@@ -1564,118 +1563,10 @@ public class PdfFormFillingPreVTest {
                         /* accessibilityLabel= */ "");
         List<FormEditRecord> records =
                 List.of(new FormEditRecord[] {checkboxRecord, radioButtonRecord});
-        verifyApplyEditsPreVPageClosed(CLICK_FORM, 0, records);
+        verifyApplyEditsPageClosed(CLICK_FORM, 0, records);
     }
 
-    private void verifyFormType(@RawRes int docRes, int expectedFormType) throws Exception {
-        verifyFormTypePreV(docRes, expectedFormType);
-    }
-
-    private void verifyFormTypePreV(@RawRes int docRes, int expectedFormType) throws Exception {
-        try (PdfRendererPreV renderer = createPreVRenderer(docRes, mContext, null)) {
-            int formType = renderer.getPdfFormType();
-            assertEquals(expectedFormType, formType);
-        }
-    }
-
-    private void verifyFormWidgetInfo(
-            @RawRes int docRes, int pageNum, Point position, FormWidgetInfo expectedInfo)
-            throws Exception {
-        verifyFormWidgetInfoPreV(docRes, pageNum, position, expectedInfo);
-    }
-
-    private void verifyFormWidgetInfoPreV(
-            @RawRes int docRes, int pageNum, Point position, FormWidgetInfo expectedInfo)
-            throws Exception {
-        try (PdfRendererPreV renderer = createPreVRenderer(docRes, mContext, null)) {
-            try (PdfRendererPreV.Page page = renderer.openPage(pageNum)) {
-                // Verify position API
-                FormWidgetInfo foundInfo = page.getFormWidgetInfoAtPosition(position.x, position.y);
-
-                assertEquals(expectedInfo, foundInfo);
-                // Verify index API
-                assertEquals(foundInfo, page.getFormWidgetInfoAtIndex(foundInfo.getWidgetIndex()));
-            }
-        }
-    }
-
-    private void verifyFormWidgetInfos(
-            @RawRes int docRes,
-            int pageNum,
-            Set<Integer> widgetTypes,
-            List<FormWidgetInfo> expectedInfos)
-            throws Exception {
-        verifyFormWidgetInfosPreV(docRes, pageNum, widgetTypes, expectedInfos);
-    }
-
-    private void verifyFormWidgetInfosPreV(
-            @RawRes int docRes,
-            int pageNum,
-            Set<Integer> widgetTypes,
-            List<FormWidgetInfo> expectedInfos)
-            throws Exception {
-        try (PdfRendererPreV renderer = createPreVRenderer(docRes, mContext, null)) {
-            try (PdfRendererPreV.Page page = renderer.openPage(pageNum)) {
-                List<FormWidgetInfo> foundInfos = page.getFormWidgetInfos(widgetTypes);
-
-                assertEquals(expectedInfos.size(), foundInfos.size());
-                for (int i = 0; i < foundInfos.size(); i++) {
-                    FormWidgetInfo expectedInfo = expectedInfos.get(i);
-                    assertEquals(expectedInfo, foundInfos.get(i));
-                }
-            }
-        }
-    }
-
-    private void verifyApplyEdit(
-            @RawRes int docRes,
-            int pageNum,
-            Point position,
-            FormWidgetInfo expectedInfoBefore,
-            FormEditRecord editRecord,
-            FormWidgetInfo expectedInfoAfter,
-            List<Rect> expectedInvalidRects)
-            throws Exception {
-        verifyApplyEditPreV(
-                docRes,
-                pageNum,
-                position,
-                expectedInfoBefore,
-                editRecord,
-                expectedInfoAfter,
-                expectedInvalidRects);
-    }
-
-    private void verifyApplyEditPreV(
-            @RawRes int docRes,
-            int pageNum,
-            Point position,
-            FormWidgetInfo expectedInfoBefore,
-            FormEditRecord editRecord,
-            FormWidgetInfo expectedInfoAfter,
-            List<Rect> expectedInvalidRects)
-            throws Exception {
-        try (PdfRendererPreV renderer = createPreVRenderer(docRes, mContext, null)) {
-            try (PdfRendererPreV.Page page = renderer.openPage(pageNum)) {
-                FormWidgetInfo beforeInfo =
-                        page.getFormWidgetInfoAtPosition(position.x, position.y);
-                assertEquals(expectedInfoBefore, beforeInfo);
-
-                List<Rect> invalidatedRects = page.applyEdit(editRecord);
-
-                FormWidgetInfo afterInfo = page.getFormWidgetInfoAtPosition(position.x, position.y);
-                assertEquals(expectedInfoAfter, afterInfo);
-                // A compatible implementation of this API may invalidate a larger area than we
-                // expect, but it cannot invalidate a smaller area than we expect.
-                assertTrue(
-                        fullyContain(
-                                /* innerRects= */ expectedInvalidRects,
-                                /* outerRects= */ invalidatedRects));
-            }
-        }
-    }
-
-    private void verifyApplyEditsPreV(
+    private void verifyApplyEdits(
             @RawRes int docRes,
             int pageNum,
             List<Point> positions,
@@ -1683,8 +1574,8 @@ public class PdfFormFillingPreVTest {
             List<FormEditRecord> editRecords,
             List<FormWidgetInfo> expectedInfosAfter)
             throws IOException {
-        try (PdfRendererPreV renderer = createPreVRenderer(docRes, mContext, null)) {
-            try (PdfRendererPreV.Page page = renderer.openPage(pageNum)) {
+        try (PdfRenderer renderer = createRenderer(docRes, mContext)) {
+            try (PdfRenderer.Page page = renderer.openPage(pageNum)) {
                 for (int i = 0; i < positions.size(); i++) {
                     FormWidgetInfo beforeInfo =
                             page.getFormWidgetInfoAtPosition(
@@ -1705,7 +1596,7 @@ public class PdfFormFillingPreVTest {
         }
     }
 
-    private void verifyApplyEditsPreVNotNull(
+    private void verifyApplyEditsNotNull(
             @RawRes int docRes,
             int pageNum,
             List<Point> positions,
@@ -1714,8 +1605,8 @@ public class PdfFormFillingPreVTest {
             List<FormWidgetInfo> expectedInfosAfter,
             List<FormEditRecord> invalidRecords)
             throws IOException {
-        try (PdfRendererPreV renderer = createPreVRenderer(docRes, mContext, null)) {
-            try (PdfRendererPreV.Page page = renderer.openPage(pageNum)) {
+        try (PdfRenderer renderer = createRenderer(docRes, mContext)) {
+            try (PdfRenderer.Page page = renderer.openPage(pageNum)) {
                 for (int i = 0; i < positions.size(); i++) {
                     FormWidgetInfo beforeInfo =
                             page.getFormWidgetInfoAtPosition(
@@ -1736,33 +1627,141 @@ public class PdfFormFillingPreVTest {
         }
     }
 
-    private void verifyApplyEditsPreVDocumentClosed(
+    private void verifyApplyEditsDocumentClosed(
             @RawRes int docRes, int pageNum, List<FormEditRecord> editRecords) throws IOException {
-        PdfRendererPreV renderer = createPreVRenderer(docRes, mContext, null);
-        PdfRendererPreV.Page page = renderer.openPage(pageNum);
+        PdfRenderer renderer = createRenderer(docRes, mContext);
+        PdfRenderer.Page page = renderer.openPage(pageNum);
         page.close();
         renderer.close();
         assertThrows(IllegalStateException.class, () -> page.applyEdits(editRecords));
     }
 
-    private void verifyApplyEditsPreVPageClosed(
+    private void verifyApplyEditsPageClosed(
             @RawRes int docRes, int pageNum, List<FormEditRecord> editRecords) throws IOException {
-        try (PdfRendererPreV renderer = createPreVRenderer(docRes, mContext, null)) {
-            PdfRendererPreV.Page page = renderer.openPage(pageNum);
+        try (PdfRenderer renderer = createRenderer(docRes, mContext)) {
+            PdfRenderer.Page page = renderer.openPage(pageNum);
             page.close();
             assertThrows(IllegalStateException.class, () -> page.applyEdits(editRecords));
         }
     }
 
-    private void verifyApplyEditThrowsException(
-            @RawRes int docRes, int pageNum, FormEditRecord editRecord) throws Exception {
-        verifyApplyEditThrowsExceptionPreV(docRes, pageNum, editRecord);
+    private void verifyFormType(@RawRes int docRes, int expectedFormType) throws Exception {
+        verifyFormTypeVPlus(docRes, expectedFormType);
     }
 
-    private void verifyApplyEditThrowsExceptionPreV(
+    private void verifyFormTypeVPlus(@RawRes int docRes, int expectedFormType) throws Exception {
+        try (PdfRenderer renderer = createRenderer(docRes, mContext)) {
+            int formType = renderer.getPdfFormType();
+            assertEquals(expectedFormType, formType);
+        }
+    }
+
+    private void verifyFormWidgetInfo(
+            @RawRes int docRes, int pageNum, Point position, FormWidgetInfo expectedInfo)
+            throws Exception {
+        verifyFormWidgetInfoVPlus(docRes, pageNum, position, expectedInfo);
+    }
+
+    private void verifyFormWidgetInfoVPlus(
+            @RawRes int docRes, int pageNum, Point position, FormWidgetInfo expectedInfo)
+            throws Exception {
+        try (PdfRenderer renderer = createRenderer(docRes, mContext)) {
+            try (PdfRenderer.Page page = renderer.openPage(pageNum)) {
+                // Verify position API
+                FormWidgetInfo foundInfo = page.getFormWidgetInfoAtPosition(position.x, position.y);
+
+                assertEquals(expectedInfo, foundInfo);
+                // Verify index API
+                assertEquals(foundInfo, page.getFormWidgetInfoAtIndex(foundInfo.getWidgetIndex()));
+            }
+        }
+    }
+
+    private void verifyFormWidgetInfos(
+            @RawRes int docRes,
+            int pageNum,
+            Set<Integer> widgetTypes,
+            List<FormWidgetInfo> expectedInfos)
+            throws Exception {
+        verifyFormWidgetInfosVPlus(docRes, pageNum, widgetTypes, expectedInfos);
+    }
+
+    private void verifyFormWidgetInfosVPlus(
+            @RawRes int docRes,
+            int pageNum,
+            Set<Integer> widgetTypes,
+            List<FormWidgetInfo> expectedInfos)
+            throws Exception {
+        try (PdfRenderer renderer = createRenderer(docRes, mContext)) {
+            try (PdfRenderer.Page page = renderer.openPage(pageNum)) {
+                List<FormWidgetInfo> foundInfos = page.getFormWidgetInfos(widgetTypes);
+
+                assertEquals(expectedInfos.size(), foundInfos.size());
+                for (int i = 0; i < foundInfos.size(); i++) {
+                    FormWidgetInfo expectedInfo = expectedInfos.get(i);
+                    assertEquals(expectedInfo, foundInfos.get(i));
+                }
+            }
+        }
+    }
+
+    private void verifyApplyEdit(
+            @RawRes int docRes,
+            int pageNum,
+            Point position,
+            FormWidgetInfo expectedInfoBefore,
+            FormEditRecord editRecord,
+            FormWidgetInfo expectedInfoAfter,
+            List<Rect> expectedInvalidRects)
+            throws Exception {
+        verifyApplyEditVPlus(
+                docRes,
+                pageNum,
+                position,
+                expectedInfoBefore,
+                editRecord,
+                expectedInfoAfter,
+                expectedInvalidRects);
+    }
+
+    private void verifyApplyEditVPlus(
+            @RawRes int docRes,
+            int pageNum,
+            Point position,
+            FormWidgetInfo expectedInfoBefore,
+            FormEditRecord editRecord,
+            FormWidgetInfo expectedInfoAfter,
+            List<Rect> expectedInvalidRects)
+            throws Exception {
+        try (PdfRenderer renderer = createRenderer(docRes, mContext)) {
+            try (PdfRenderer.Page page = renderer.openPage(pageNum)) {
+                FormWidgetInfo beforeInfo =
+                        page.getFormWidgetInfoAtPosition(position.x, position.y);
+                assertEquals(expectedInfoBefore, beforeInfo);
+
+                List<Rect> invalidatedRects = page.applyEdit(editRecord);
+
+                FormWidgetInfo afterInfo = page.getFormWidgetInfoAtPosition(position.x, position.y);
+                assertEquals(expectedInfoAfter, afterInfo);
+                // A compatible implementation of this API may invalidate a larger area than we
+                // expect, but it cannot invalidate a smaller area than we expect.
+                assertTrue(
+                        fullyContain(
+                                /* innerRects= */ expectedInvalidRects,
+                                /* outerRects= */ invalidatedRects));
+            }
+        }
+    }
+
+    private void verifyApplyEditThrowsException(
             @RawRes int docRes, int pageNum, FormEditRecord editRecord) throws Exception {
-        try (PdfRendererPreV renderer = createPreVRenderer(docRes, mContext, null)) {
-            try (PdfRendererPreV.Page page = renderer.openPage(pageNum)) {
+        verifyApplyEditThrowsExceptionVPlus(docRes, pageNum, editRecord);
+    }
+
+    private void verifyApplyEditThrowsExceptionVPlus(
+            @RawRes int docRes, int pageNum, FormEditRecord editRecord) throws Exception {
+        try (PdfRenderer renderer = createRenderer(docRes, mContext)) {
+            try (PdfRenderer.Page page = renderer.openPage(pageNum)) {
                 assertThrows(IllegalArgumentException.class, () -> page.applyEdit(editRecord));
             }
         }

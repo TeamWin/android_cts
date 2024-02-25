@@ -20,7 +20,13 @@ import static org.junit.Assert.assertTrue;
 
 import android.annotation.NonNull;
 import android.media.MediaCodec;
+import android.os.Build;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.util.Pair;
+
+import androidx.test.filters.SdkSuppress;
+
+import com.android.media.codec.flags.Flags;
 
 import java.util.ArrayDeque;
 import java.util.LinkedList;
@@ -30,6 +36,8 @@ import java.util.LinkedList;
  * callback events are registered in this object so that the client can take appropriate action
  * in time.
  */
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM, codeName = "VanillaIceCream")
+@RequiresFlagsEnabled(Flags.FLAG_LARGE_AUDIO_FRAME)
 public class CodecAsyncHandlerMultiAccessUnits extends CodecAsyncHandler {
     private final LinkedList<Pair<Integer, ArrayDeque<MediaCodec.BufferInfo>>> mCbOutputQueue;
 

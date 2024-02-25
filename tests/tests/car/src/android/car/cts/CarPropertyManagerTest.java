@@ -8328,8 +8328,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
 
                     speedListenerUI.resetCountDownLatch(UI_RATE_EVENT_COUNTER);
                     speedListenerUI.assertOnChangeEventCalled();
-                    mCarPropertyManager.unsubscribePropertyEvents(speedListenerNormal,
-                            vehicleSpeed);
+                    mCarPropertyManager.unsubscribePropertyEvents(vehicleSpeed,
+                            speedListenerNormal);
 
                     int currentEventUI = speedListenerUI.receivedEvent(vehicleSpeed);
                     // Because we copy the callback outside the lock, so even after

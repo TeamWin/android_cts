@@ -26,10 +26,12 @@ import java.util.Set;
 /** Convenience class to record certain fields of a CaptureResult. */
 public class RecordingResult {
     public static final List<CaptureResult.Key<?>> PREVIEW_RESULT_TRACKED_KEYS = List.of(
-        CaptureResult.CONTROL_ZOOM_RATIO,
-        CaptureResult.LENS_FOCAL_LENGTH,
-        CaptureResult.LENS_FOCUS_DISTANCE,
-        CaptureResult.SCALER_CROP_REGION
+            CaptureResult.CONTROL_ZOOM_RATIO,
+            CaptureResult.LENS_FOCAL_LENGTH,
+            CaptureResult.LENS_FOCUS_DISTANCE,
+            CaptureResult.SCALER_CROP_REGION,
+            CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID,
+            CaptureResult.LENS_INTRINSIC_CALIBRATION
     );
 
     HashMap<CaptureResult.Key<?>, Object> mMap;

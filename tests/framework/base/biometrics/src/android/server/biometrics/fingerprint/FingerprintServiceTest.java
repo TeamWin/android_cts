@@ -33,17 +33,16 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
-import android.content.pm.PackageManager;
 import android.hardware.biometrics.BiometricTestSession;
 import android.hardware.biometrics.SensorProperties;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.Bundle;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.Presubmit;
-import android.server.biometrics.fingerprint.util.FingerprintCallbackHelper;
-import android.server.biometrics.util.SensorStates;
-import android.server.biometrics.util.TestSessionList;
-import android.server.biometrics.util.Utils;
+import android.server.biometrics.BiometricServiceState;
+import android.server.biometrics.SensorStates;
+import android.server.biometrics.TestSessionList;
+import android.server.biometrics.Utils;
 import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.TestJournalProvider.TestJournal;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
@@ -60,6 +59,7 @@ import androidx.test.uiautomator.Until;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.server.biometrics.nano.SensorServiceStateProto;
+import com.android.server.biometrics.nano.SensorStateProto;
 
 import org.junit.After;
 import org.junit.Before;
@@ -69,9 +69,11 @@ import java.util.List;
 
 @SuppressWarnings("deprecation")
 @Presubmit
-public class FingerprintManagerTest extends ActivityManagerTestBase
+public class FingerprintServiceTest extends ActivityManagerTestBase
         implements TestSessionList.Idler {
-    private static final String TAG = "FingerprintManagerTest";
+    private static final String TAG = "FingerprintServiceTest";
+    private static final String DESCRIPTOR =
+            "android.hardware.biometrics.fingerprint.IFingerprint";
     private static final String DUMPSYS_FINGERPRINT = "dumpsys fingerprint --proto --state";
     private static final int FINGERPRINT_ERROR_VENDOR_BASE = 1000;
     private static final long WAIT_MS = 2000;
@@ -150,29 +152,6 @@ public class FingerprintManagerTest extends ActivityManagerTestBase
         Utils.waitForIdleService(this::getSensorStates);
 
         mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
-    }
-
-    @ApiTest(apis = {
-            "android.hardware.fingerprint."
-                    + "FingerprintManager#isHardwareDetected"})
-    @Test
-    public void testIsHardwareDetected() {
-        assertTrue(mFingerprintManager.isHardwareDetected());
-    }
-
-    @ApiTest(apis = {
-            "android.hardware.fingerprint."
-                    + "FingerprintManager#hasEnrolledFingerprints"})
-    @Test
-    public void testHasEnrolledFingerprints() {
-        assertFalse(mFingerprintManager.hasEnrolledFingerprints());
-    }
-
-    @Test
-    public void testHasFingerprintFeature() {
-        final boolean hasFingerprintFeature = mContext.getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_FINGERPRINT);
-        assertTrue(hasFingerprintFeature);
     }
 
     @ApiTest(apis = {
@@ -386,5 +365,10 @@ public class FingerprintManagerTest extends ActivityManagerTestBase
             waitForIdleSensors();
         }
         return testSessions;
+    }
+
+    private boolean hasUdfps() throws Exception {
+        final BiometricServiceState state = Utils.getBiometricServiceCurrentState();
+        return state.mSensorStates.containsModalityFlag(SensorStateProto.FINGERPRINT_UDFPS);
     }
 }

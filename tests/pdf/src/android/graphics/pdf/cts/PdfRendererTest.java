@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,24 @@
  * limitations under the License.
  */
 
-package android.graphics.pdf.cts.module;
+package android.graphics.pdf.cts;
 
 import static android.graphics.pdf.PdfRendererPreV.DOCUMENT_LINEARIZED_TYPE_LINEARIZED;
 import static android.graphics.pdf.PdfRendererPreV.DOCUMENT_LINEARIZED_TYPE_NON_LINEARIZED;
-import static android.graphics.pdf.cts.module.Utils.A4_HEIGHT_PTS;
-import static android.graphics.pdf.cts.module.Utils.A4_PORTRAIT;
-import static android.graphics.pdf.cts.module.Utils.A4_WIDTH_PTS;
-import static android.graphics.pdf.cts.module.Utils.A5_PORTRAIT;
-import static android.graphics.pdf.cts.module.Utils.INCORRECT_LOAD_PARAMS;
-import static android.graphics.pdf.cts.module.Utils.LOAD_PARAMS;
-import static android.graphics.pdf.cts.module.Utils.PROTECTED_PDF;
-import static android.graphics.pdf.cts.module.Utils.SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR;
-import static android.graphics.pdf.cts.module.Utils.SAMPLE_PDF;
-import static android.graphics.pdf.cts.module.Utils.calculateArea;
-import static android.graphics.pdf.cts.module.Utils.createRenderer;
-import static android.graphics.pdf.cts.module.Utils.createRendererUsingNewConstructor;
-import static android.graphics.pdf.cts.module.Utils.getFile;
-import static android.graphics.pdf.cts.module.Utils.getParcelFileDescriptorFromResourceId;
-
-import static com.android.modules.utils.build.SdkLevel.isAtLeastV;
+import static android.graphics.pdf.cts.Utils.A4_HEIGHT_PTS;
+import static android.graphics.pdf.cts.Utils.A4_PORTRAIT;
+import static android.graphics.pdf.cts.Utils.A4_WIDTH_PTS;
+import static android.graphics.pdf.cts.Utils.A5_PORTRAIT;
+import static android.graphics.pdf.cts.Utils.INCORRECT_LOAD_PARAMS;
+import static android.graphics.pdf.cts.Utils.LOAD_PARAMS;
+import static android.graphics.pdf.cts.Utils.PROTECTED_PDF;
+import static android.graphics.pdf.cts.Utils.SAMPLE_LOAD_PARAMS_FOR_TESTING_NEW_CONSTRUCTOR;
+import static android.graphics.pdf.cts.Utils.SAMPLE_PDF;
+import static android.graphics.pdf.cts.Utils.calculateArea;
+import static android.graphics.pdf.cts.Utils.createRenderer;
+import static android.graphics.pdf.cts.Utils.createRendererUsingNewConstructor;
+import static android.graphics.pdf.cts.Utils.getFile;
+import static android.graphics.pdf.cts.Utils.getParcelFileDescriptorFromResourceId;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -814,7 +812,6 @@ public class PdfRendererTest {
 
     @Test
     public void getPageGotoLinks_pageWithGotoLink() throws Exception {
-        isAtLeastV();
         assertPageGotoLinks_pageWithGotoLink(createRenderer(R.raw.sample_links, mContext));
 
         assertPageGotoLinks_pageWithGotoLink(

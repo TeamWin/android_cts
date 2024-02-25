@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.biometrics.util;
+package android.server.biometrics;
 
 
 import android.hardware.biometrics.BiometricTestSession;

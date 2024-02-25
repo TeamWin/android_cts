@@ -32,6 +32,7 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.mediav2.common.cts.CodecDecoderBlockModelTestBase;
 import android.mediav2.common.cts.CodecDecoderTestBase;
 import android.mediav2.common.cts.OutputManager;
 import android.util.Log;
@@ -359,12 +360,14 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
      * to be same as input timestamp list (no frame drops) and for completely normative codecs,
      * the output checksum has to be identical to reference checksum. For non-normative codecs,
      * the output has to be consistent. The test also verifies if the component / framework
-     * behavior is consistent between SDK and NDK.
+     * behavior is consistent between SDK and NDK. The test also verifies if the
+     * component / framework behavior is consistent between block model mode and normal mode.
      */
     @CddTest(requirements = {"2.2.2", "2.3.2", "2.5.2", "5.1.2"})
     @ApiTest(apis = {"android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
             "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatYUVP010",
-            "android.media.AudioFormat#ENCODING_PCM_16BIT"})
+            "android.media.AudioFormat#ENCODING_PCM_16BIT",
+            "android.media.MediaCodec#CONFIGURE_FLAG_USE_BLOCK_MODEL"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleDecode() throws IOException, InterruptedException {
@@ -413,6 +416,17 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
             }
             mCodec.release();
             mExtractor.release();
+            if (IS_AT_LEAST_R && mSaveToMem && mIsAudio) {
+                test.reset();
+                CodecDecoderBlockModelTestBase cdbmtb = new CodecDecoderBlockModelTestBase(
+                        mCodecName, mMediaType, null, mAllTestParams);
+                cdbmtb.decodeToMemory(mTestFile, mCodecName, test, 0,
+                        MediaExtractor.SEEK_TO_CLOSEST_SYNC, Integer.MAX_VALUE);
+                if (!ref.equals(test)) {
+                    fail("Output in block model mode is not same as output in normal mode. \n"
+                            + mTestConfig + mTestEnv + test.getErrMsg());
+                }
+            }
             int colorFormat = mIsAudio ? 0 : format.getInteger(MediaFormat.KEY_COLOR_FORMAT);
             boolean isPass = nativeTestSimpleDecode(mCodecName, null, mMediaType, mTestFile,
                     mRefFile, colorFormat, mRmsError, ref.getCheckSumBuffer(), mTestConfig);

@@ -23,7 +23,6 @@ import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.Handler;
 import android.os.Looper;
-import android.server.biometrics.util.BiometricCallbackHelper;
 
 import androidx.annotation.Nullable;
 

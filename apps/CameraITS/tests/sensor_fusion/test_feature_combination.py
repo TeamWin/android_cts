@@ -201,7 +201,7 @@ class FeatureCombinationTest(its_base_test.ItsBaseTest):
 
               recording_obj = preview_stabilization_utils.collect_data(
                   cam, self.tablet_device, preview_size, is_stabilized,
-                  rot_rig, fps_range, hlg10)
+                  ois=False, rot_rig=rot_rig, fps_range=fps_range, hlg10=hlg10)
 
               if is_stabilized:
                 # Get gyro events

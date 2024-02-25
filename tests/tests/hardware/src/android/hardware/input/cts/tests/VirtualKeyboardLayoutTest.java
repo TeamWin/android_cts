@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 
 import android.companion.virtual.VirtualDeviceManager;
 import android.content.Context;
+import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.input.InputManager;
 import android.hardware.input.VirtualKeyboard;
@@ -62,7 +63,10 @@ public class VirtualKeyboardLayoutTest {
         Settings.Global.putString(
                 mContext.getContentResolver(), "settings_new_keyboard_ui", "true");
         mVirtualDevice = mRule.createManagedVirtualDevice();
-        mVirtualDisplay = mRule.createManagedVirtualDisplay(mVirtualDevice);
+        mVirtualDisplay = mRule.createManagedVirtualDisplayWithFlags(mVirtualDevice,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
+                        | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY
+                        | DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED);
     }
 
     @After
