@@ -61,6 +61,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.compatibility.common.util.FeatureUtil;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -88,6 +89,13 @@ public class StreamedAppClipboardTest {
             READ_CLIPBOARD_IN_BACKGROUND);
 
     private final ArrayList<DeviceEnvironment> mDeviceEnvironments = new ArrayList<>();
+
+    @Before
+    public void setUp() throws Exception {
+        // Skip tests on devices that don't support Autofill (such as WearOS)
+        assumeTrue(InstrumentationRegistry.getInstrumentation().getTargetContext()
+                .getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOFILL));
+    }
 
     @After
     public void tearDown() {
