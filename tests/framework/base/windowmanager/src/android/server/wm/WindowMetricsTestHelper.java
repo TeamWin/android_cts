@@ -26,6 +26,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Insets;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -35,6 +36,10 @@ import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.WindowMetrics;
+
+import androidx.test.core.app.ApplicationProvider;
+
+import com.android.modules.utils.build.SdkLevel;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -103,7 +108,7 @@ public class WindowMetricsTestHelper {
         // Max window bounds should match either DisplayArea bounds, or current window bounds.
         if (maxWindowBoundsSandboxed(displayAreaBounds, maxBounds)) {
             final Rect currentBounds = isFreeForm ? currentMetrics.getBounds()
-                    : getBoundsExcludingNavigationBarAndCutout(currentMetrics);
+                    : getBoundsExcludingInsetsTypes(currentMetrics, configExcludedInsetsTypes());
             // Max window bounds are sandboxed, so max window bounds and real display size
             // should match current window bounds.
             assertEquals("Max window size matches current window size, due to sandboxing",
@@ -138,7 +143,7 @@ public class WindowMetricsTestHelper {
         final DisplayMetrics displayMetrics = new DisplayMetrics();
         display.getMetrics(displayMetrics);
         final Rect currentBounds = shouldBoundsIncludeInsets ? currentMetrics.getBounds()
-                : getBoundsExcludingNavigationBarAndCutout(currentMetrics);
+                : getBoundsExcludingInsetsTypes(currentMetrics, configExcludedInsetsTypes());
         assertEquals("Reported display width must match window width",
                 displayMetrics.widthPixels, currentBounds.width());
         assertEquals("Reported display height must match window height",
@@ -158,13 +163,14 @@ public class WindowMetricsTestHelper {
                 realDisplayMetrics.density, currentMetrics.getDensity(), 0.0f);
     }
 
-    public static Rect getBoundsExcludingNavigationBarAndCutout(WindowMetrics windowMetrics) {
+    public static Rect getBoundsExcludingInsetsTypes(WindowMetrics windowMetrics,
+            int excludingTypes) {
         WindowInsets windowInsets = windowMetrics.getWindowInsets();
-        final Insets insetsWithCutout =
-                windowInsets.getInsetsIgnoringVisibility(navigationBars() | displayCutout());
+        final Insets excludingInsets =
+                windowInsets.getInsetsIgnoringVisibility(excludingTypes);
 
         final Rect bounds = windowMetrics.getBounds();
-        return inset(bounds, insetsWithCutout);
+        return inset(bounds, excludingInsets);
     }
 
     /**
@@ -182,6 +188,27 @@ public class WindowMetricsTestHelper {
         final int right = original.right - insets.right;
         final int bottom = original.bottom - insets.bottom;
         return new Rect(left, top, right, bottom);
+    }
+
+    private static int configExcludedInsetsTypes() {
+        // The device owners can choose to decouple the display cutout from the configuration app
+        // bounds to ensure a better experience. Return the legacy value if the decouple config is
+        // not set to true.
+        final int legacyNonDecorTypes = navigationBars() | displayCutout();
+        if (!SdkLevel.isAtLeastU()) {
+            return legacyNonDecorTypes;
+        }
+        try {
+            final boolean isScreenSizeDecoupledFromStatusBarAndCutout =
+                    ApplicationProvider.getApplicationContext().getResources().getBoolean(
+                            Resources.getSystem().getIdentifier(
+                            "config_decoupleStatusBarAndDisplayCutoutFromScreenSize",
+                            "bool", "android"));
+            return isScreenSizeDecoupledFromStatusBarAndCutout
+                    ? navigationBars() : legacyNonDecorTypes;
+        } catch (Resources.NotFoundException e) {
+            return legacyNonDecorTypes;
+        }
     }
 
     public static class OnLayoutChangeListener implements View.OnLayoutChangeListener {
