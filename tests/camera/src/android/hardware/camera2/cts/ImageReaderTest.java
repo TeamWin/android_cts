@@ -935,6 +935,29 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
     }
 
     /**
+     * Test two image stream (YUV420_888 and PRIVATE) capture by using ImageReader.
+     */
+    @Test
+    public void testImageReaderYuvAndPrivate() throws Exception {
+        for (String id : getCameraIdsUnderTest()) {
+            try {
+                Log.v(TAG, "YUV and PRIVATE testing for camera " + id);
+                if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + id
+                            + " does not support color outputs, skipping");
+                    continue;
+                }
+                openDevice(id);
+                // YUV PREVIEW + PRIVATE PREVIEW is a mandatory legacy stream combination.
+                bufferFormatWithYuvTestByCamera(ImageFormat.PRIVATE,
+                        /*setUsageFlag*/false, /*useYuvSize*/true);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    /**
      * If the camera device advertises the SECURE_IAMGE_DATA capability, test
      * ImageFormat.PRIVATE + PROTECTED usage capture by using ImageReader with the
      * ImageReader factory method that has usage flag argument, and uses a custom usage flag.
@@ -1483,14 +1506,32 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
      */
     private void bufferFormatWithYuvTestByCamera(int format, boolean setUsageFlag)
             throws Exception {
+        bufferFormatWithYuvTestByCamera(format, setUsageFlag, /*useYuvSize*/false);
+    }
+
+    /**
+     * Test capture a given format stream with yuv stream simultaneously.
+     *
+     * <p>Compared to bufferFormatWithYuvTestByCamera(int, boolean), this function
+     * provide an option to use the same size between the 2 streams.</p>
+     *
+     * @param format The capture format to be tested along with yuv format.
+     * @param setUsageFlag The ImageReader factory method to be used (with or without specifying
+     *                     usage flag)
+     * @param useYuvSize The capture size will be the same as the yuv size
+     */
+    private void bufferFormatWithYuvTestByCamera(int format, boolean setUsageFlag,
+            boolean useYuvSize) throws Exception {
         if (format != ImageFormat.JPEG && format != ImageFormat.RAW_SENSOR
+                && format != ImageFormat.PRIVATE
                 && format != ImageFormat.YUV_420_888) {
             throw new IllegalArgumentException("Unsupported format: " + format);
         }
 
         final int NUM_SINGLE_CAPTURE_TESTED = MAX_NUM_IMAGES - 1;
         Size maxYuvSz = mOrderedPreviewSizes.get(0);
-        Size[] targetCaptureSizes = mStaticInfo.getAvailableSizesForFormatChecked(format,
+        Size[] targetCaptureSizes = useYuvSize ? new Size[]{maxYuvSz} :
+                mStaticInfo.getAvailableSizesForFormatChecked(format,
                 StaticMetadata.StreamDirection.Output);
 
         for (Size captureSz : targetCaptureSizes) {
