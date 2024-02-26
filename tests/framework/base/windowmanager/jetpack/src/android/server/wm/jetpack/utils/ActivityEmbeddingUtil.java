@@ -375,7 +375,7 @@ public class ActivityEmbeddingUtil {
     public static void waitAndAssertResumedAndFillsTask(@NonNull String activityId) {
         waitAndAssertResumed(activityId);
         final Activity activity = getResumedActivityById(activityId);
-        final Rect taskBounds = getTaskBounds(activity, false /* shouldWaitForResume */);
+        final Rect taskBounds = waitAndGetTaskBounds(activity, false /* shouldWaitForResume */);
         PollingCheck.waitFor(WAIT_FOR_LIFECYCLE_TIMEOUT_MS, () ->
                 getActivityBounds(activity).equals(taskBounds));
         assertEquals(taskBounds, getActivityBounds(activity));
@@ -383,16 +383,20 @@ public class ActivityEmbeddingUtil {
 
     /** Waits for the {@code activity} to be in resumed state and verifies if it fills the task. */
     public static void waitAndAssertResumedAndFillsTask(@NonNull Activity activity) {
-        final Rect taskBounds = getTaskBounds(activity, true /* shouldWaitForResume */);
+        final Rect taskBounds = waitAndGetTaskBounds(activity, true /* shouldWaitForResume */);
         PollingCheck.waitFor(WAIT_FOR_LIFECYCLE_TIMEOUT_MS, () ->
                 getActivityBounds(activity).equals(taskBounds));
         assertEquals(taskBounds, getActivityBounds(activity));
     }
 
     @NonNull
-    private static Rect getTaskBounds(@NonNull Activity activity, boolean shouldWaitForResume) {
+    public static Rect waitAndGetTaskBounds(@NonNull Activity activity,
+                                            boolean shouldWaitForResume) {
         final WindowManagerStateHelper wmState = new WindowManagerStateHelper();
         final ComponentName activityName = activity.getComponentName();
+        // Wait for display idle before getting the task bounds since the display may be still
+        // resizing.
+        wmState.waitForAppTransitionIdleOnDisplay(activity.getDisplayId());
         if (shouldWaitForResume) {
             wmState.waitAndAssertActivityState(activityName, STATE_RESUMED);
         } else {
@@ -517,7 +521,7 @@ public class ActivityEmbeddingUtil {
             @NonNull SplitAttributes splitAttributes) {
         SplitType splitType = splitAttributes.getSplitType();
 
-        final Rect parentTaskBounds = getTaskBounds(primaryActivity,
+        final Rect parentTaskBounds = waitAndGetTaskBounds(primaryActivity,
                 false /* shouldWaitForResume */);
         if (splitType instanceof SplitType.ExpandContainersSplitType) {
             return new Pair<>(new Rect(parentTaskBounds), new Rect(parentTaskBounds));

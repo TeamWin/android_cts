@@ -52,7 +52,7 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.server.wm.NestedShellPermission;
-import android.view.WindowManager;
+
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -247,19 +247,6 @@ public class WindowManagerJetpackTestBase {
 
     public static Rect getMaximumActivityBounds(Activity activity) {
         return activity.getWindowManager().getMaximumWindowMetrics().getBounds();
-    }
-
-    /**
-     * Gets the width of a full-screen task.
-     */
-    public int getTaskWidth() {
-        return mContext.getSystemService(WindowManager.class).getMaximumWindowMetrics().getBounds()
-                .width();
-    }
-
-    public int getTaskHeight() {
-        return mContext.getSystemService(WindowManager.class).getMaximumWindowMetrics().getBounds()
-                .height();
     }
 
     public static void setActivityOrientationActivityHandlesOrientationChanges(
