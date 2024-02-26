@@ -58,7 +58,7 @@ import java.util.function.Supplier;
 @Presubmit
 @ApiTest(apis = {"android.view.WindowManager#getCurrentWindowMetrics",
         "android.view.WindowManager#getMaximumWindowMetrics",
-        "android.app.Activity"})
+        "android.app.Activity#getWindowManager"})
 public class WindowMetricsActivityTests extends WindowManagerTestBase {
     private static final Rect WINDOW_BOUNDS = new Rect(100, 100, 400, 400);
     private static final Rect RESIZED_WINDOW_BOUNDS = new Rect(100, 100, 900, 900);
