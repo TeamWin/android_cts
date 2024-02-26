@@ -49,6 +49,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
@@ -88,6 +89,7 @@ public class PackageInstallerArchiveMultiUserTest {
 
     @Before
     public void setup() throws Exception {
+        assumeTrue("Form factor is not supported", isFormFactorSupported());
         mPrimaryUser = sDeviceState.initialUser();
         mSecondaryUser = sDeviceState.secondaryUser();
         assumeTrue(UserManager.supportsMultipleUsers());
@@ -158,6 +160,14 @@ public class PackageInstallerArchiveMultiUserTest {
                         String.format("pm list packages --user %s %s", user.id(), packageName))
                 .split("\\r?\\n"))
                 .anyMatch(pkg -> pkg.equals(String.format("package:%s", packageName)));
+    }
+
+    private static boolean isFormFactorSupported() {
+        return !FeatureUtil.isArc()
+                && !FeatureUtil.isAutomotive()
+                && !FeatureUtil.isTV()
+                && !FeatureUtil.isWatch()
+                && !FeatureUtil.isVrHeadset();
     }
 
     static class ArchiveIntentSender extends IIntentSender.Stub {
