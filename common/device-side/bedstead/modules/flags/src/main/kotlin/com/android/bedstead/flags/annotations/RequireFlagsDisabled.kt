@@ -22,7 +22,7 @@ import com.android.bedstead.harrier.annotations.UsesAnnotationExecutor
  * enforced by default using [DeviceState] rather than requiring a separate rule.
  */
 @Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.FUNCTION, AnnotationTarget.TYPE)
+@Target(AnnotationTarget.FUNCTION, AnnotationTarget.TYPE, AnnotationTarget.CLASS)
 @UsesAnnotationExecutor(FlagsAnnotationExecutor::class)
 annotation class RequireFlagsDisabled(
     /**
