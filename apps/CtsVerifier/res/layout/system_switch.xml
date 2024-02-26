@@ -21,7 +21,7 @@
     android:layout_height="match_parent"
     android:orientation="horizontal" >
   <Switch
-      android:id="@+id/switch_button"
+      android:id="@+id/system_switch_button"
       android:text="@string/system"
       android:textOn="@string/system_on"
       android:textOff="@string/system_off"

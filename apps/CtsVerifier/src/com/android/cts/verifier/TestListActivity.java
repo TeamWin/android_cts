@@ -184,23 +184,26 @@ public class TestListActivity extends AbstractTestListActivity implements View.O
 
         // Switch button for verifier-system plan.
         item = (MenuItem) menu.findItem(R.id.system_switch_item);
-        item.setActionView(R.layout.system_switch);
-        final Switch systemSwitch = item.getActionView().findViewById(R.id.switch_button);
+        if (item != null) {
+            item.setActionView(R.layout.system_switch);
+            final Switch systemSwitch = item.getActionView().findViewById(
+                    R.id.system_switch_button);
 
-        systemSwitch.setChecked(sIsSystemEnabled);
-        systemSwitch.setOnCheckedChangeListener(
-                new CompoundButton.OnCheckedChangeListener() {
+            systemSwitch.setChecked(sIsSystemEnabled);
+            systemSwitch.setOnCheckedChangeListener(
+                    new CompoundButton.OnCheckedChangeListener() {
 
-                    @Override
-                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        if (!sHasSystemToggled && isChecked) {
-                            sHasSystemToggled = true;
-                            notifyUserSystemPlan(systemSwitch);
-                        } else {
-                            updateIsSystemEnabled(isChecked);
+                        @Override
+                        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                            if (!sHasSystemToggled && isChecked) {
+                                sHasSystemToggled = true;
+                                notifyUserSystemPlan(systemSwitch);
+                            } else {
+                                updateIsSystemEnabled(isChecked);
+                            }
                         }
-                    }
-                });
+                    });
+        }
 
         SearchView searchView = (SearchView) menu.findItem(R.id.search_test).getActionView();
         searchView.setOnQueryTextListener(
