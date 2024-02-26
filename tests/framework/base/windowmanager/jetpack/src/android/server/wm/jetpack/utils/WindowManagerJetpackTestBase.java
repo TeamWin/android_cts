@@ -51,6 +51,7 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.NestedShellPermission;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
