@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Connects The CTS test ImsService to the Telephony Framework.
  */
-class ImsServiceConnector {
+public class ImsServiceConnector {
 
     private static final String TAG = "CtsImsServiceConnector";
 
@@ -485,11 +485,16 @@ class ImsServiceConnector {
     private Connection mCarrierServiceConnection;
     private Connection mDefaultSmsAppConnection;
 
-    ImsServiceConnector(Instrumentation instrumentation) {
+    public ImsServiceConnector(Instrumentation instrumentation) {
         mInstrumentation = instrumentation;
     }
 
-    void clearAllActiveImsServices(int slotId) throws Exception {
+    /**
+     * Clear all active IMS services.
+     * @param slotId SIM slot ID
+     * @throws Exception
+     */
+    public void clearAllActiveImsServices(int slotId) throws Exception {
         mDeviceServiceConnection = new Connection(Connection.CONNECTION_TYPE_IMS_SERVICE_DEVICE,
                 slotId);
         mDeviceServiceConnection.storeOriginalPackage();
@@ -511,7 +516,7 @@ class ImsServiceConnector {
      * telephony to allow additional configuration steps.
      * @return true if this request succeeded, false otherwise.
      */
-    boolean connectCarrierImsServiceLocally() {
+    public boolean connectCarrierImsServiceLocally() {
         if (!setupLocalCarrierImsService()) {
             Log.w(TAG, "connectCarrierImsService: couldn't set up service.");
             return false;
@@ -529,7 +534,7 @@ class ImsServiceConnector {
      * Trigger the telephony framework to bind to the local ImsService implementation.
      * @return true if this request succeeded, false otherwise.
      */
-    boolean triggerFrameworkConnectionToCarrierImsService(
+    public boolean triggerFrameworkConnectionToCarrierImsService(
             ImsFeatureConfiguration config) throws Exception {
         return mCarrierServiceConnection.overrideService(config);
     }
@@ -617,8 +622,11 @@ class ImsServiceConnector {
         }
     }
 
-    // Detect and disconnect all active services.
-    void disconnectServices() throws Exception {
+    /**
+     * Detect and disconnect all active services.
+     * @throws Exception
+     */
+    public void disconnectServices() throws Exception {
         // Remove local connections
         removeLocalCarrierServiceConnection();
         removeLocalExternalServiceConnection();
@@ -674,7 +682,7 @@ class ImsServiceConnector {
         TelephonyUtils.executeShellCommand(mInstrumentation, cmdBuilder.toString());
     }
 
-    TestImsService getCarrierService() {
+    public TestImsService getCarrierService() {
         return mCarrierService;
     }
 

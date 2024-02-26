@@ -16,16 +16,20 @@
 
 package android.telephony.satellite.cts;
 
+import static android.telephony.ims.stub.ImsRegistrationImplBase.REGISTRATION_TECH_LTE;
+
 import static junit.framework.Assert.assertTrue;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
 
 import android.annotation.NonNull;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.os.PersistableBundle;
 import android.telephony.CarrierConfigManager;
 import android.telephony.Rlog;
@@ -34,6 +38,14 @@ import android.telephony.SmsManager;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyCallback;
 import android.telephony.TelephonyManager;
+import android.telephony.cts.util.DefaultSmsAppHelper;
+import android.telephony.ims.ImsReasonInfo;
+import android.telephony.ims.cts.ImsServiceConnector;
+import android.telephony.ims.cts.ImsUtils;
+import android.telephony.ims.cts.TestImsService;
+import android.telephony.ims.feature.ImsFeature;
+import android.telephony.ims.feature.MmTelFeature;
+import android.telephony.ims.stub.ImsFeatureConfiguration;
 import android.telephony.mockmodem.MockModemConfigBase;
 import android.telephony.mockmodem.MockModemManager;
 
@@ -42,6 +54,8 @@ import androidx.test.InstrumentationRegistry;
 import com.android.compatibility.common.util.CarrierPrivilegeUtils;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.internal.annotations.GuardedBy;
+
+import junit.framework.Assert;
 
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +69,10 @@ public class CarrierRoamingSatelliteTestBase {
     protected static MockModemManager sMockModemManager;
     protected static TelephonyManager sTelephonyManager;
     protected static SubscriptionManager sSubscriptionManager;
+    protected static ImsServiceConnector sServiceConnector;
     private static CarrierConfigReceiver sCarrierConfigReceiver;
+
+    private static boolean sSupportsImsHal = false;
 
     protected static void beforeAllTestsBase() throws Exception {
         logd(TAG, "beforeAllTestsBase");
@@ -85,6 +102,97 @@ public class CarrierRoamingSatelliteTestBase {
             getContext().unregisterReceiver(sCarrierConfigReceiver);
             sCarrierConfigReceiver = null;
         }
+    }
+
+    protected static boolean shouldTestSatelliteWithMockService() {
+        if (!getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_TELEPHONY)) {
+            logd(TAG, "Skipping tests because FEATURE_TELEPHONY is not available");
+            return false;
+        }
+        try {
+            getContext().getSystemService(TelephonyManager.class)
+                    .getHalVersion(TelephonyManager.HAL_SERVICE_RADIO);
+        } catch (IllegalStateException e) {
+            logd(TAG, "Skipping tests because Telephony service is null, exception=" + e);
+            return false;
+        }
+        return true;
+    }
+
+    protected static void beforeAllTestBaseForIms() throws Exception {
+        logd(TAG, "beforeAllTestBaseForIms");
+
+        assumeTrue("ImsService is not supported.", ImsUtils.shouldTestImsService());
+
+        sServiceConnector = new ImsServiceConnector(
+                androidx.test.platform.app.InstrumentationRegistry.getInstrumentation());
+        sServiceConnector.clearAllActiveImsServices(SLOT_ID_0);
+        DefaultSmsAppHelper.ensureDefaultSmsApp();
+
+        assertTrue(sServiceConnector.connectCarrierImsServiceLocally());
+        sServiceConnector.getCarrierService().addCapabilities(ImsFeature.FEATURE_MMTEL);
+        // Connect to the ImsService with the MmTel feature.
+        assertTrue(sServiceConnector.triggerFrameworkConnectionToCarrierImsService(
+                new ImsFeatureConfiguration.Builder()
+                        .addFeature(SLOT_ID_0, ImsFeature.FEATURE_MMTEL)
+                        .addFeature(SLOT_ID_0, ImsFeature.FEATURE_EMERGENCY_MMTEL)
+                        .build()));
+
+        // The MmTelFeature is created when the ImsService is bound. If it wasn't created, then the
+        // Framework did not call it.
+        assertTrue("Did not receive createMmTelFeature", sServiceConnector.getCarrierService()
+                .waitForLatchCountdown(TestImsService.LATCH_CREATE_MMTEL));
+        assertTrue("Did not receive MmTelFeature#onReady", sServiceConnector.getCarrierService()
+                .waitForLatchCountdown(TestImsService.LATCH_MMTEL_READY));
+        Assert.assertNotNull(
+                "ImsService created, but ImsService#createMmTelFeature was not called!",
+                sServiceConnector.getCarrierService().getMmTelFeature());
+        int serviceSlot = sServiceConnector.getCarrierService().getMmTelFeature().getSlotIndex();
+        assertEquals("The slot specified for the test (" + SLOT_ID_0 + ") does not match the "
+                        + "assigned slot (" + serviceSlot + "+ for the associated MmTelFeature",
+                SLOT_ID_0, serviceSlot);
+        // Wait until ImsSmsDispatcher connects and calls onReady.
+        assertTrue(sServiceConnector.getCarrierService().getMmTelFeature().getSmsImplementation()
+                .waitForOnReadyLatch());
+        MmTelFeature.MmTelCapabilities capabilities = new MmTelFeature.MmTelCapabilities(
+                MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_SMS);
+        // Set Registered and SMS capable
+        sServiceConnector.getCarrierService().getMmTelFeature().setCapabilities(capabilities);
+        int subId = SubscriptionManager.getSubscriptionId(SLOT_ID_0);
+        sServiceConnector.getCarrierService().getImsService()
+                .getRegistrationForSubscription(SLOT_ID_0, subId)
+                .onRegistered(REGISTRATION_TECH_LTE);
+        sServiceConnector.getCarrierService().getMmTelFeature()
+                .notifyCapabilitiesStatusChanged(capabilities);
+
+        // Wait a second for the notifyCapabilitiesStatusChanged indication to be processed on the
+        // main telephony thread - currently no better way of knowing that telephony has processed
+        // this command. SmsManager#isImsSmsSupported() is @hide and must be updated to use new API.
+        Thread.sleep(1000);
+    }
+
+    protected static void afterAllTestBaseForIms() throws Exception {
+        logd(TAG, "afterAllTestBaseForIms");
+
+        DefaultSmsAppHelper.stopBeingDefaultSmsApp();
+        if (sServiceConnector != null) {
+            // release capability and trigger de-registration.
+            MmTelFeature.MmTelCapabilities capabilities = new MmTelFeature.MmTelCapabilities(
+                    MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_NONE);
+            sServiceConnector.getCarrierService().getMmTelFeature().notifyCapabilitiesStatusChanged(
+                    capabilities);
+            int subId = SubscriptionManager.getSubscriptionId(SLOT_ID_0);
+            sServiceConnector.getCarrierService().getImsService().getRegistrationForSubscription(
+                    SLOT_ID_0, subId).onDeregistered(new ImsReasonInfo());
+            sServiceConnector.disconnectServices();
+            sServiceConnector = null;
+        }
+
+        // Wait a second for the notifyCapabilitiesStatusChanged indication to be processed on the
+        // main telephony thread - currently no better way of knowing that telephony has processed
+        // this command. SmsManager#isImsSmsSupported() is @hide and must be updated to use new API.
+        Thread.sleep(1000);
     }
 
     private static class CarrierConfigReceiver extends BroadcastReceiver {

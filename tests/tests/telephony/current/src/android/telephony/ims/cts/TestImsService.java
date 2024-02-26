@@ -515,7 +515,11 @@ public class TestImsService extends Service {
         }
     }
 
-    protected ImsService getImsService() {
+    /**
+     * Returns IMS service for CTS test purpose.
+     * @return test Ims service.
+     */
+    public ImsService getImsService() {
         synchronized (mLock) {
             if (mTestImsService != null) {
                 return mTestImsService;
