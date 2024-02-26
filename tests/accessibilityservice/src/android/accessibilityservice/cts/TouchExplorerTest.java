@@ -44,6 +44,8 @@ import static android.view.accessibility.AccessibilityEvent.TYPE_TOUCH_INTERACTI
 import static android.view.accessibility.AccessibilityEvent.TYPE_TOUCH_INTERACTION_START;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
 
+import static com.google.common.truth.TruthJUnit.assume;
+
 import static org.hamcrest.CoreMatchers.both;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -192,10 +194,10 @@ public class TouchExplorerTest {
                 mView.getWidth()
                         > TypedValue.applyDimension(
                                 TypedValue.COMPLEX_UNIT_MM, MIN_SCREEN_WIDTH_MM, metrics);
-        if (!mHasTouchscreen || !mScreenBigEnough) return;
-
         mView.setOnHoverListener(mMotionEventListener);
         mView.setOnTouchListener(mMotionEventListener);
+        assume().that(mHasTouchscreen).isTrue();
+        assume().that(mScreenBigEnough).isTrue();
         sInstrumentation.runOnMainSync(
                 () -> {
                     int[] viewLocation = new int[2];
@@ -220,7 +222,6 @@ public class TouchExplorerTest {
     @Test
     @AppModeFull
     public void testSlowSwipe_initiatesTouchExploration() {
-        if (!mHasTouchscreen || !mScreenBigEnough) return;
         PointF endPoint = add(mTapLocation, mSwipeDistance, 0);
         dispatch(swipe(mTapLocation, add(mTapLocation, mSwipeDistance, 0), mSwipeTimeMillis));
         mMotionEventListener.assertPropagated(
@@ -236,7 +237,6 @@ public class TouchExplorerTest {
     @Test
     @AppModeFull
     public void testFastSwipe_doesNotInitiateTouchExploration() {
-        if (!mHasTouchscreen || !mScreenBigEnough) return;
         PointF endPoint = add(mTapLocation, mSwipeDistance, 0);
         dispatch(swipe(mTapLocation, endPoint));
         mMotionEventListener.assertNonePropagated();
@@ -259,7 +259,6 @@ public class TouchExplorerTest {
     @Test
     @AppModeFull
     public void testTwoFingerDrag_dispatchesEventsBetweenFingers() {
-        if (!mHasTouchscreen || !mScreenBigEnough) return;
         // A two point moving that are in the same direction can perform a drag gesture by
         // TouchExplorer while one point moving can not perform a drag gesture. We use two swipes
         // to emulate a two finger drag gesture.
@@ -280,7 +279,6 @@ public class TouchExplorerTest {
     @Test
     @AppModeFull
     public void testSingleTap_initiatesTouchExploration() {
-        if (!mHasTouchscreen || !mScreenBigEnough) return;
         dispatch(click(mTapLocation));
         mMotionEventListener.assertPropagated(ACTION_HOVER_ENTER, ACTION_HOVER_EXIT);
         mService.assertPropagated(
@@ -300,7 +298,6 @@ public class TouchExplorerTest {
     @Test
     @AppModeFull
     public void testSloppyDoubleTapAccessibilityFocus_performsClick() {
-        if (!mHasTouchscreen || !mScreenBigEnough) return;
         syncAccessibilityFocusToInputFocus();
         int slop = ViewConfiguration.get(sInstrumentation.getContext()).getScaledDoubleTapSlop();
         dispatch(multiTap(mTapLocation, 2, slop));
@@ -322,7 +319,6 @@ public class TouchExplorerTest {
     @Test
     @AppModeFull
     public void testDoubleTapAccessibilityFocus_performsClick() {
-        if (!mHasTouchscreen || !mScreenBigEnough) return;
         syncAccessibilityFocusToInputFocus();
         dispatch(doubleTap(mTapLocation));
         // The click should not be delivered via touch events in this case.
@@ -340,7 +336,6 @@ public class TouchExplorerTest {
     @Test
     @AppModeFull
     public void testDoubleTapNoFocus_doesNotPerformClick() {
-        if (!mHasTouchscreen || !mScreenBigEnough) return;
         dispatch(doubleTap(mTapLocation));
         mMotionEventListener.assertNonePropagated();
         mService.assertPropagated(TYPE_TOUCH_INTERACTION_START, TYPE_TOUCH_INTERACTION_END);
@@ -360,7 +355,6 @@ public class TouchExplorerTest {
     @Test
     @AppModeFull
     public void testDoubleTapAndHoldNoFocus_doesNotPerformLongClick() {
-        if (!mHasTouchscreen || !mScreenBigEnough) return;
         dispatch(doubleTap(mTapLocation));
         mMotionEventListener.assertNonePropagated();
         mService.assertPropagated(TYPE_TOUCH_INTERACTION_START, TYPE_TOUCH_INTERACTION_END);
@@ -375,7 +369,7 @@ public class TouchExplorerTest {
     @Test
     @AppModeFull
     public void testSecondFingerDoubleTapTouchExploring_performsClick() {
-        if (!mHasTouchscreen || !mScreenBigEnough) return;
+
         syncAccessibilityFocusToInputFocus();
         // hold the first finger for long enough to trigger touch exploration before double-tapping.
         // Touch exploration is triggered after the double tap timeout.
@@ -402,7 +396,6 @@ public class TouchExplorerTest {
     @Test
     @AppModeFull
     public void testDoubleTapNoAccessibilityFocus_sendsTouchEvents() {
-        if (!mHasTouchscreen || !mScreenBigEnough) return;
 
         // Do a single tap so there is a valid last touch-explored location.
         dispatch(click(mTapLocation));
@@ -430,7 +423,6 @@ public class TouchExplorerTest {
     @Test
     @AppModeFull
     public void testDoubleTapAndHoldNoAccessibilityFocus_sendsTouchEvents() {
-        if (!mHasTouchscreen || !mScreenBigEnough) return;
         // Do a single tap so there is a valid last touch-explored location.
         dispatch(click(mTapLocation));
         mMotionEventListener.assertPropagated(ACTION_HOVER_ENTER, ACTION_HOVER_EXIT);
@@ -456,7 +448,6 @@ public class TouchExplorerTest {
     @Test
     @AppModeFull
     public void testSecondFingerDoubleTapNotTouchExploring_performsClick() {
-        if (!mHasTouchscreen || !mScreenBigEnough) return;
         syncAccessibilityFocusToInputFocus();
         // Hold the first finger for less than the double tap timeout which will not trigger touch
         // exploration.
@@ -484,7 +475,6 @@ public class TouchExplorerTest {
     @Test
     @AppModeFull
     public void testThreeFingerMovement_shouldDelegate() {
-        if (!mHasTouchscreen || !mScreenBigEnough) return;
         // Move three fingers down the screen slowly.
         PointF finger1Start = add(mTapLocation, -mSwipeDistance, 0);
         PointF finger1End = add(mTapLocation, -mSwipeDistance, mSwipeDistance);
@@ -514,7 +504,6 @@ public class TouchExplorerTest {
     @Test
     @AppModeFull
     public void testTwoFingersMovingIndependently_shouldDelegate() {
-        if (!mHasTouchscreen || !mScreenBigEnough) return;
         // Move two fingers towards eacher slowly.
         PointF finger1Start = add(mTapLocation, -mSwipeDistance, 0);
         PointF finger1End = add(mTapLocation, -10, 0);
@@ -534,7 +523,6 @@ public class TouchExplorerTest {
     @Test
     @AppModeFull
     public void testGestureDetectionPassthrough_initiatesTouchExploration() {
-        if (!mHasTouchscreen || !mScreenBigEnough) return;
         setRightSideOfActivityWindowGestureDetectionPassthrough();
         // Swipe in the passthrough region. This should generate hover events.
         dispatch(swipe(mTapLocation, add(mTapLocation, mSwipeDistance, 0)));
@@ -578,7 +566,6 @@ public class TouchExplorerTest {
     @Test
     @AppModeFull
     public void testTouchExplorationPassthrough_sendsTouchEvents() {
-        if (!mHasTouchscreen || !mScreenBigEnough) return;
         setRightSideOfActivityWindowTouchExplorationPassthrough();
         // Swipe in the passthrough region. This should generate  touch events.
         dispatch(swipe(mTapLocation, add(mTapLocation, mSwipeDistance, 0)));
@@ -620,6 +607,16 @@ public class TouchExplorerTest {
 
     /** Set the accessibility focus to the element that has input focus. */
     private void syncAccessibilityFocusToInputFocus() {
+        try {
+            syncAccessibilityFocusToInputFocusInternal();
+        } catch (Exception e) {
+            // Try again in case it's a transient issue.
+            syncAccessibilityFocusToInputFocusInternal();
+        }
+    }
+
+    /** Do the actual accessibility focus / input focus syncing. */
+    private void syncAccessibilityFocusToInputFocusInternal() {
         mService.runOnServiceSync(
                 () -> {
                     AccessibilityNodeInfo focus =
