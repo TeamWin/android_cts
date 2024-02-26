@@ -42,6 +42,7 @@ import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.View;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.CorrectionInfo;
 import android.view.inputmethod.DeleteGesture;
@@ -1806,6 +1807,23 @@ public class MockImeSession implements AutoCloseable {
     public void callSetInlineSuggestionsExtras(@NonNull Bundle bundle) {
         mContext.getContentResolver().call(mMockImeSettingsProviderAuthority,
                 SettingsProvider.SET_INLINE_SUGGESTION_EXTRAS_COMMAND, null, bundle);
+    }
+
+    /**
+     * Lets {@link MockIme} call
+     * {@link android.inputmethodservice.InputMethodService#setExtractView(View)} with a custom
+     * extract view hierarchy.
+     *
+     * @param label The label text to show in the extract view hierarchy.
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}.
+     */
+    @NonNull
+    public ImeCommand callSetExtractView(String label) {
+        Bundle params = new Bundle();
+        params.putString("label", label);
+        return callCommandInternal("setExtractView", params);
     }
 
     @NonNull

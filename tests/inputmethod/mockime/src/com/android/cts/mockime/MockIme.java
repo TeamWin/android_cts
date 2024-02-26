@@ -28,6 +28,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.RectF;
+import android.inputmethodservice.ExtractEditText;
 import android.inputmethodservice.InputMethodService;
 import android.os.Bundle;
 import android.os.CancellationSignal;
@@ -71,6 +72,7 @@ import android.view.inputmethod.InputMethodSubtype;
 import android.view.inputmethod.PreviewableHandwritingGesture;
 import android.view.inputmethod.TextAttribute;
 import android.view.inputmethod.TextBoundsInfoResult;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
@@ -111,6 +113,11 @@ public final class MockIme extends InputMethodService {
     private static final String TAG = "MockIme";
 
     private static final long DELAY_CANCELLATION_SIGNAL_MILLIS = 500;
+
+    /** Default label for the custom extract text view. */
+    public static final String CUSTOM_EXTRACT_EDIT_TEXT_LABEL =
+            "MockIme Custom Extract Edit Text Label";
+
     private ArrayList<MotionEvent> mEvents;
 
     private View mExtractView;
@@ -522,6 +529,10 @@ public final class MockIme extends InputMethodService {
                         final int height = command.getExtras().getInt("height");
                         mView.setHeight(height);
                         return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    case "setExtractView":
+                        final String label = command.getExtras().getString("label");
+                        setExtractView(createCustomExtractTextView(label));
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     case "verifyExtractViewNotNull":
                         if (mExtractView == null) {
                             return false;
@@ -862,8 +873,40 @@ public final class MockIme extends InputMethodService {
 
     @Override
     public View onCreateExtractTextView() {
-        mExtractView =  super.onCreateExtractTextView();
+        if (mSettings != null && mSettings.isCustomExtractTextViewEnabled()) {
+            mExtractView = createCustomExtractTextView(CUSTOM_EXTRACT_EDIT_TEXT_LABEL);
+        } else {
+            mExtractView = super.onCreateExtractTextView();
+        }
         return mExtractView;
+    }
+
+    private View createCustomExtractTextView(String label) {
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+
+        TextView labelView = new TextView(this);
+        labelView.setText(label);
+        container.addView(labelView, new LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT));
+
+        // Using a subclass of ExtractEditText should be allowed.
+        ExtractEditText extractEditText = new ExtractEditText(this) {};
+        Log.d(TAG, "Using custom ExtractEditText: " + extractEditText);
+        extractEditText.setId(android.R.id.inputExtractEditText);
+        container.addView(extractEditText, new LinearLayout.LayoutParams(
+                MATCH_PARENT, 0 /* height */, 1f /* weight */
+        ));
+
+        FrameLayout accessories = new FrameLayout(this);
+        accessories.setId(android.R.id.inputExtractAccessories);
+        container.addView(accessories, new LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT));
+
+        Button actionButton = new Button(this);
+        actionButton.setId(android.R.id.inputExtractAction);
+        actionButton.setText("inputExtractAction");
+        accessories.addView(actionButton, new FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT));
+
+        return container;
     }
 
     private static final class KeyboardLayoutView extends LinearLayout {
