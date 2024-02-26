@@ -17,7 +17,6 @@ package android.telecom.cts.cuj.app.integration;
 
 import static android.telecom.Call.STATE_DISCONNECTED;
 import static android.telecom.cts.apps.TelecomTestApp.ConnectionServiceVoipAppMain;
-import static android.telecom.cts.apps.TelecomTestApp.ManagedConnectionServiceApp;
 import static android.telecom.cts.apps.TelecomTestApp.TransactionalVoipAppMain;
 
 import android.app.Notification;
@@ -72,6 +71,9 @@ public class CallStyleNotificationsTest extends BaseAppVerifier {
      */
     @Test
     public void testCallStyleNotificationBehavior_ConnectionServiceVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper csVoipApp = null;
         try {
             csVoipApp = bindToApp(ConnectionServiceVoipAppMain);
@@ -109,6 +111,9 @@ public class CallStyleNotificationsTest extends BaseAppVerifier {
      */
     @Test
     public void testCallStyleNotificationBehavior_TransactionalVoipAppMain() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         AppControlWrapper transactionalVoipApp = null;
         try {
             transactionalVoipApp = bindToApp(TransactionalVoipAppMain);
