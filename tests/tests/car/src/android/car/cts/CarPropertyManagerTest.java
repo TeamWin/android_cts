@@ -709,7 +709,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     .add(
                             VehiclePropertyIds.VALET_MODE_ENABLED)
                     .build();
-    private static final ImmutableList<Integer> PERMISSION_READ_HEAD_UP_DISPLAY_PROPERTIES =
+    private static final ImmutableList<Integer> PERMISSION_READ_HEAD_UP_DISPLAY_STATUS_PROPERTIES =
             ImmutableList.<Integer>builder()
                     .add(
                             VehiclePropertyIds.HEAD_UP_DISPLAY_ENABLED)
@@ -5835,7 +5835,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Boolean.class, mCarPropertyManager)
-                .addReadPermission(Car.PERMISSION_READ_HEAD_UP_DISPLAY)
+                .addReadPermission(Car.PERMISSION_READ_HEAD_UP_DISPLAY_STATUS)
                 .addReadPermission(Car.PERMISSION_CONTROL_HEAD_UP_DISPLAY)
                 .addWritePermission(Car.PERMISSION_CONTROL_HEAD_UP_DISPLAY)
                 .build();
@@ -8821,10 +8821,10 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_ANDROID_VIC_VEHICLE_PROPERTIES)
-    public void testPermissionReadHeadUpDisplayGranted() {
+    public void testPermissionReadHeadUpDisplayStatusGranted() {
         verifyExpectedPropertiesWhenPermissionsGranted(
-                PERMISSION_READ_HEAD_UP_DISPLAY_PROPERTIES,
-                Car.PERMISSION_READ_HEAD_UP_DISPLAY);
+                PERMISSION_READ_HEAD_UP_DISPLAY_STATUS_PROPERTIES,
+                Car.PERMISSION_READ_HEAD_UP_DISPLAY_STATUS);
     }
 
     @Test
