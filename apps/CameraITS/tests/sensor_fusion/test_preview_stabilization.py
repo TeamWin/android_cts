@@ -106,7 +106,7 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
 
       for preview_size in supported_preview_sizes:
         recording_obj = preview_stabilization_utils.collect_data(
-            cam, self.tablet_device, preview_size, stabilize=True, ois=False,
+            cam, self.tablet_device, preview_size, stabilize=True,
             rot_rig=rot_rig)
 
         # Get gyro events

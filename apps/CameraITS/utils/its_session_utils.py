@@ -772,7 +772,7 @@ class ItsSession(object):
           f'Invalid response from command{cmd[_CMD_NAME_STR]}')
     return data[_OBJ_VALUE_STR]
 
-  def do_preview_recording(self, video_size, duration, stabilize, ois,
+  def do_preview_recording(self, video_size, duration, stabilize, ois=False,
                            zoom_ratio=None, ae_target_fps_min=None,
                            ae_target_fps_max=None, hlg10_enabled=False):
     """Issue a preview request and read back the preview recording object.
