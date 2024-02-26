@@ -47,4 +47,8 @@
     <metrics_collector class="com.android.tradefed.device.metric.FilePullerLogCollector">
         <option name="pull-pattern-keys" value="view_.*" />
     </metrics_collector>
+    <object class="com.android.tradefed.testtype.suite.module.TestFailureModuleController" type="module_controller">
+        <!-- Take screenshot upon test failure -->
+        <option name="screenshot-on-failure" value="true" />
+    </object>
 </configuration>
