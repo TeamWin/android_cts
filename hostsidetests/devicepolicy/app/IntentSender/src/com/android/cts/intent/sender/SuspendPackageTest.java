@@ -30,6 +30,10 @@ public class SuspendPackageTest extends InstrumentationTestCase {
             .clazz(android.widget.TextView.class.getName())
             .res("com.google.android.apps.wearable.settings:id/wear_alertdialog_title_text")
             .pkg("com.google.android.apps.wearable.settings");
+    private static final BySelector POPUP_TITLE_WATCH_SELECTOR_KR1 = By
+            .clazz(android.widget.TextView.class.getName())
+            .res("android:id/alertTitle")
+            .pkg("com.google.android.apps.wearable.settings");
     private static final BySelector POPUP_TITLE_AUTOMOTIVE_SELECTOR = By
             .clazz(android.widget.TextView.class.getName())
             .res("com.android.car.settings:id/car_ui_alert_title")
@@ -122,7 +126,13 @@ public class SuspendPackageTest extends InstrumentationTestCase {
         final UiDevice device = UiDevice.getInstance(getInstrumentation());
         if (isWatch()) {
             device.wait(Until.hasObject(POPUP_TITLE_WATCH_SELECTOR), WAIT_DIALOG_TIMEOUT_IN_MS);
-            final UiObject2 title = device.findObject(POPUP_TITLE_WATCH_SELECTOR);
+            UiObject2 title = device.findObject(POPUP_TITLE_WATCH_SELECTOR);
+
+            // Allow the previous title at only android13 only to keep the backward compatibility.
+            if (title == null) {
+                title = device.findObject(POPUP_TITLE_WATCH_SELECTOR_KR1);
+            }
+
             assertWithMessage("Policy transparency dialog title").that(title).isNotNull();
             title.swipe(Direction.RIGHT, 1.0f);
         } else if (isAutomotive()) {
