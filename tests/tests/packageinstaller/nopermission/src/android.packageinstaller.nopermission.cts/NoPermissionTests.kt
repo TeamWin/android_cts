@@ -20,11 +20,15 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.Flags
 import android.content.pm.PackageInstaller
 import android.content.pm.PackageInstaller.EXTRA_STATUS
 import android.content.pm.PackageInstaller.STATUS_FAILURE_INVALID
 import android.os.Build
 import android.platform.test.annotations.AppModeFull
+import android.platform.test.annotations.RequiresFlagsEnabled
+import android.platform.test.flag.junit.CheckFlagsRule
+import android.platform.test.flag.junit.DeviceFlagsValueProvider
 import androidx.core.content.FileProvider
 import androidx.test.InstrumentationRegistry
 import androidx.test.filters.MediumTest
@@ -38,6 +42,7 @@ import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -62,6 +67,10 @@ class NoPermissionTests {
     private var packageName = context.packageName
     private var apkFile = File(context.filesDir, TEST_APK_NAME)
     private var uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+
+    @JvmField
+    @Rule
+    val mCheckFlagsRule: CheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule()
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -154,6 +163,7 @@ class NoPermissionTests {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun noPermissionsTestSession() {
         launchPackageInstallerViaSession()
 

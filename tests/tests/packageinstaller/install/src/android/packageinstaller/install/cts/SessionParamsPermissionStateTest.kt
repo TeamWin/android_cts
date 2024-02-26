@@ -16,6 +16,7 @@
 
 package android.packageinstaller.install.cts
 
+import android.content.pm.Flags
 import android.content.pm.PackageInfo
 import android.content.pm.PackageInstaller
 import android.content.pm.PackageInstaller.SessionParams.PERMISSION_STATE_DEFAULT
@@ -27,6 +28,9 @@ import android.Manifest
 import android.content.AttributionSource
 import android.permission.PermissionManager
 import android.platform.test.annotations.AppModeFull
+import android.platform.test.annotations.RequiresFlagsEnabled
+import android.platform.test.flag.junit.CheckFlagsRule
+import android.platform.test.flag.junit.DeviceFlagsValueProvider
 import com.android.compatibility.common.util.SystemUtil
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
@@ -34,6 +38,7 @@ import java.io.File
 import kotlin.test.assertFailsWith
 import org.junit.BeforeClass
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -41,6 +46,10 @@ import org.junit.runners.Parameterized
 @RunWith(Parameterized::class)
 @AppModeFull(reason = "Instant apps cannot create installer sessions")
 class SessionParamsPermissionStateTest : PackageInstallerTestBase() {
+
+    @JvmField
+    @Rule
+    val mCheckFlagsRule: CheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule()
 
     companion object {
         private const val FULL_SCREEN_INTENT_APK = "CtsEmptyTestApp_FullScreenIntent.apk"
@@ -222,6 +231,7 @@ class SessionParamsPermissionStateTest : PackageInstallerTestBase() {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun checkInstall() {
         val block = {
             startInstallationViaSession(
