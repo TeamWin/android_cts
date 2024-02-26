@@ -23,7 +23,6 @@ import static android.content.res.Configuration.SCREENLAYOUT_SIZE_LARGE;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_MASK;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_NORMAL;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_XLARGE;
-import static android.server.wm.ActivityManagerTestBase.isTablet;
 import static android.view.WindowInsets.Type.displayCutout;
 import static android.view.WindowInsets.Type.systemBars;
 
@@ -68,12 +67,6 @@ public class ConfigurationScreenLayoutTest
             // with non-rotated landscape physical screen, the portrait window/activity has special
             // behavior with black background on both sides to make the window/activity look
             // portrait, which returns smaller screen layout size.
-            tearDown();
-            return;
-        }
-        if (isTablet()) {
-            // TODO (b/228380863): re-enable it once the configuration calculation issue is resolved
-            // on taskbar devices.
             tearDown();
             return;
         }
