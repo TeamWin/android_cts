@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package com.android.cts.graphics.framerateoverride;
+package android.gameframerate.cts;
 
 import android.Manifest;
 import android.app.compat.CompatChanges;
+import android.gameframerate.cts.GameFrameRateCtsActivity.FrameRateObserver;
 import android.hardware.display.DisplayManager;
 import android.os.Handler;
 import android.os.Looper;
@@ -33,7 +34,6 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.cts.graphics.framerateoverride.FrameRateOverrideTestActivity.FrameRateObserver;
 
 import org.junit.After;
 import org.junit.Before;
@@ -50,10 +50,12 @@ import java.util.List;
  * {@link Display.Mode#getRefreshRate()} Api.
  */
 @RunWith(AndroidJUnit4.class)
-public final class FrameRateOverrideTest {
-    private static final String TAG = "FrameRateOverrideTest";
+public final class GameFrameRateTest {
+    private static final String TAG = "GameFrameRateTest";
     // See b/170503758 for more details
     private static final long DISPLAY_MODE_RETURNS_PHYSICAL_REFRESH_RATE_CHANGEID = 170503758;
+
+    private static final String TEST_PKG = "android.gameframerate.cts";
 
     // The tolerance within which we consider refresh rates are equal
     private static final float REFRESH_RATE_TOLERANCE = 0.01f;
@@ -63,21 +65,25 @@ public final class FrameRateOverrideTest {
     private UiDevice mUiDevice;
     private final Handler mHandler = new Handler(Looper.getMainLooper());
 
+    private static final int[] refreshRateDivisorsToTest =
+            {120, 110, 100, 90, 80, 70, 60, 50, 40, 30};
+
 
     @Rule
-    public ActivityTestRule<FrameRateOverrideTestActivity> mActivityRule =
-            new ActivityTestRule<>(FrameRateOverrideTestActivity.class);
+    public ActivityTestRule<GameFrameRateCtsActivity> mActivityRule =
+            new ActivityTestRule<>(GameFrameRateCtsActivity.class);
 
     @Before
     public void setUp() throws Exception {
         mUiDevice = UiDevice.getInstance(
-                        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation());
+                androidx.test.platform.app.InstrumentationRegistry.getInstrumentation());
         mUiDevice.wakeUp();
         mUiDevice.executeShellCommand("wm dismiss-keyguard");
+        mUiDevice.executeShellCommand("device_config put game_overlay"
+                                      + TEST_PKG + " mode=2:mode=3");
 
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity(Manifest.permission.LOG_COMPAT_CHANGE,
-                        Manifest.permission.READ_COMPAT_CHANGE_CONFIG,
+                .adoptShellPermissionIdentity(
                         Manifest.permission.MODIFY_REFRESH_RATE_SWITCHING_TYPE,
                         Manifest.permission.OVERRIDE_DISPLAY_MODE_REQUESTS,
                         Manifest.permission.MANAGE_GAME_MODE);
@@ -95,7 +101,8 @@ public final class FrameRateOverrideTest {
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws Exception {
+        mUiDevice.executeShellCommand("device_config delete game_overlay " + TEST_PKG);
         mDisplayManager.setRefreshRateSwitchingType(mInitialMatchContentFrameRate);
         mDisplayManager.setShouldAlwaysRespectAppRequestedMode(false);
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
@@ -132,7 +139,7 @@ public final class FrameRateOverrideTest {
     // so backpressure tests will always fail.
     private boolean isTvEmulator() {
         return SystemProperties.get("ro.build.characteristics").equals("emulator")
-            && SystemProperties.get("ro.product.system.name").equals("atv_generic");
+                && SystemProperties.get("ro.product.system.name").equals("atv_generic");
     }
 
     // Find refresh rates with the same resolution.
@@ -160,22 +167,20 @@ public final class FrameRateOverrideTest {
 
     private void testGameModeFrameRateOverride(FrameRateObserver frameRateObserver)
             throws InterruptedException, IOException {
-        FrameRateOverrideTestActivity activity = mActivityRule.getActivity();
-        for (Display.Mode mode : getModesToTest()) {
+        GameFrameRateCtsActivity activity = mActivityRule.getActivity();
+        List<Display.Mode> modesToTest = getModesToTest();
+
+        for (Display.Mode mode : modesToTest) {
             setMode(mode);
             activity.testFrameRateOverride(
                     activity.new GameModeTest(mUiDevice),
-                    frameRateObserver, mode.getRefreshRate());
+                    frameRateObserver, mode.getRefreshRate(), refreshRateDivisorsToTest);
             Log.i(TAG, "\n");
         }
+
         Log.i(TAG, "\n");
     }
 
-    /**
-     * Test run by
-     * FrameRateOverrideHostTest
-     * .testGameModeBackpressureDisplayModeReturnsPhysicalRefreshRateEnabled
-     */
     @Test
     public void testGameModeBackpressure() throws InterruptedException, IOException {
         if (isTvEmulator()) {
@@ -184,61 +189,30 @@ public final class FrameRateOverrideTest {
         }
 
         Log.i(TAG, "**** Starting Game Mode Backpressure Test ****");
-        FrameRateOverrideTestActivity activity = mActivityRule.getActivity();
+        GameFrameRateCtsActivity activity = mActivityRule.getActivity();
         testGameModeFrameRateOverride(activity.new BackpressureFrameRateObserver());
     }
 
-    /**
-     * Test run by
-     * FrameRateOverrideHostTest
-     * .testGameModeChoreographerDisplayModeReturnsPhysicalRefreshRateEnabled
-     */
     @Test
     public void testGameModeChoreographer() throws InterruptedException, IOException {
         Log.i(TAG, "**** Starting Game Mode Choreographer Test ****");
-        FrameRateOverrideTestActivity activity = mActivityRule.getActivity();
+        GameFrameRateCtsActivity activity = mActivityRule.getActivity();
         testGameModeFrameRateOverride(activity.new ChoreographerFrameRateObserver());
     }
 
-    /**
-     * Test run by
-     * FrameRateOverrideHostTest
-     * .testGameModeDisplayGetRefreshRateDisplayModeReturnsPhysicalRefreshRateEnabled
-     */
     @Test
     public void testGameModeDisplayGetRefreshRate() throws InterruptedException, IOException {
         Log.i(TAG, "**** Starting Game Mode Display#getRefreshRate Test ****");
-        FrameRateOverrideTestActivity activity = mActivityRule.getActivity();
+        GameFrameRateCtsActivity activity = mActivityRule.getActivity();
         testGameModeFrameRateOverride(activity.new DisplayGetRefreshRateFrameRateObserver());
     }
 
-    /**
-     * Test run by
-     * FrameRateOverrideHostTest
-     * .testGameModeDisplayModeGetRefreshRateDisplayModeReturnsPhysicalRefreshRateDisabled
-     */
     @Test
-    public void testGameModeDisplayModeGetRefreshRateDisplayModeReturnsPhysicalRefreshRateDisabled()
+    public void testGameModeDisplayModeGetRefreshRateDisplayModeReturnsPhysicalRefreshRate()
             throws InterruptedException, IOException {
         Log.i(TAG, "**** Starting Game Mode Display.Mode#getRefreshRate Test ****");
-        FrameRateOverrideTestActivity activity = mActivityRule.getActivity();
+        GameFrameRateCtsActivity activity = mActivityRule.getActivity();
         testGameModeFrameRateOverride(
-                activity.new DisplayModeGetRefreshRateFrameRateObserver(
-                        /*displayModeReturnsPhysicalRefreshRateEnabled*/ false));
-    }
-
-    /**
-     * Test run by
-     * FrameRateOverrideHostTest
-     * .testGameModeDisplayModeGetRefreshRateDisplayModeReturnsPhysicalRefreshRateEnabled
-     */
-    @Test
-    public void testGameModeDisplayModeGetRefreshRateDisplayModeReturnsPhysicalRefreshRateEnabled()
-            throws InterruptedException, IOException {
-        Log.i(TAG, "**** Starting Game Mode Display.Mode#getRefreshRate Test ****");
-        FrameRateOverrideTestActivity activity = mActivityRule.getActivity();
-        testGameModeFrameRateOverride(
-                activity.new DisplayModeGetRefreshRateFrameRateObserver(
-                        /*displayModeReturnsPhysicalRefreshRateEnabled*/ true));
+                activity.new DisplayModeGetRefreshRateFrameRateObserver());
     }
 }
