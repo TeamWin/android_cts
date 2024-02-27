@@ -18,7 +18,6 @@ package android.media.cts;
 
 import static org.junit.Assert.assertTrue;
 
-import android.annotation.NonNull;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
@@ -55,14 +54,11 @@ public class MediaProjectionActivity extends Activity {
     private static final int PERMISSION_CODE = 1;
     public static final int PERMISSION_DIALOG_WAIT_MS = 1000;
     public static final String ACCEPT_RESOURCE_ID = "android:id/button1";
-    public static final String CANCEL_RESOURCE_ID = "android:id/button2";
     public static final String SYSTEM_UI_PACKAGE = "com.android.systemui";
     public static final String SPINNER_RESOURCE_ID =
             SYSTEM_UI_PACKAGE + ":id/screen_share_mode_spinner";
     public static final String ENTIRE_SCREEN_STRING_RES_NAME =
             "screen_share_permission_dialog_option_entire_screen";
-    public static final String SINGLE_APP_STRING_RES_NAME =
-            "screen_share_permission_dialog_option_single_app";
 
     private MediaProjectionManager mProjectionManager;
     private MediaProjection mMediaProjection;
@@ -151,7 +147,7 @@ public class MediaProjectionActivity extends Activity {
             assertTrue("Can't get the permission", count <= retryCount);
             dismissPermissionDialog(/* isWatch= */
                     getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH),
-                    getResourceString(this, ENTIRE_SCREEN_STRING_RES_NAME));
+                    getEntireScreenString(this));
             count++;
         } while (!mCountDownLatch.await(timeOutMs, TimeUnit.MILLISECONDS));
         return mMediaProjection;
@@ -191,7 +187,7 @@ public class MediaProjectionActivity extends Activity {
     /**
      * Returns the string for the drop down option to capture the entire screen.
      */
-    public static String getResourceString(@NonNull Context context, String resName) {
+    public static String getEntireScreenString(Context context) {
         Resources sysUiResources;
         try {
             sysUiResources = context.getPackageManager()
@@ -200,7 +196,8 @@ public class MediaProjectionActivity extends Activity {
             return null;
         }
         int resourceId =
-                sysUiResources.getIdentifier(resName, /* defType= */ "string", SYSTEM_UI_PACKAGE);
+                sysUiResources.getIdentifier(
+                        ENTIRE_SCREEN_STRING_RES_NAME, /* defType= */ "string", SYSTEM_UI_PACKAGE);
         return sysUiResources.getString(resourceId);
     }
 
