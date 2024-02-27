@@ -24,6 +24,8 @@ import android.app.UiAutomation;
 import android.graphics.Color;
 import android.media.projection.MediaProjection;
 import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.view.cts.surfacevalidator.BitmapPixelChecker;
 
 import androidx.test.core.app.ActivityScenario;
@@ -40,6 +42,10 @@ public class ViewSensitiveContentTest {
             new SensitiveContentMediaProjectionHelper();
     @Rule
     public TestName mName = new TestName();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+        DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Test
     @RequiresFlagsEnabled(FLAG_SENSITIVE_CONTENT_APP_PROTECTION)
