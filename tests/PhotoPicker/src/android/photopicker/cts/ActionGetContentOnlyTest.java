@@ -222,7 +222,7 @@ public class ActionGetContentOnlyTest extends PhotoPickerBaseTest {
     public void testPickerAccentColorWithGetContent() throws Exception {
         final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("image/*");
-        intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_ACCENT_COLOR, "#FF5A5F");
+        intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_ACCENT_COLOR, 0xFFFF5A5F);
 
         mActivity.startActivityForResult(Intent.createChooser(intent, TAG), REQUEST_CODE);
         sDevice.waitForIdle();
