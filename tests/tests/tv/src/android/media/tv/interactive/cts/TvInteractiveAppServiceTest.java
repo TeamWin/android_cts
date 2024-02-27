@@ -937,6 +937,17 @@ public class TvInteractiveAppServiceTest {
     }
 
     @Test
+    public void testNotifyVideoFreezeUpdated() throws Throwable {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        mTvIAppView.notifyVideoFreezeUpdated(true);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mVideoFreezeUpdatedCount > 0);
+        assertThat(mSession.mVideoFreezeUpdatedCount).isEqualTo(1);
+        assertThat(mSession.mVideoFrozen).isEqualTo(true);
+    }
+
+    @Test
     public void testNotifyError() {
         assertNotNull(mSession);
         mSession.resetValues();

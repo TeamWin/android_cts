@@ -113,6 +113,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public int mSendSelectedTrackInfoCount;
         public int mTrackSelectedCount;
         public int mSendCertificateCount;
+        public int mVideoFreezeUpdatedCount;
 
         public Integer mKeyDownCode;
         public Integer mKeyUpCode;
@@ -147,6 +148,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public SslCertificate mCertificate;
         public String mHost;
         public Integer mPort;
+        public Boolean mVideoFrozen;
 
         StubSessionImpl(Context context) {
             super(context);
@@ -189,6 +191,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mSendSelectedTrackInfoCount = 0;
             mTrackSelectedCount = 0;
             mSendCertificateCount = 0;
+            mVideoFreezeUpdatedCount = 0;
 
             mKeyDownCode = null;
             mKeyUpCode = null;
@@ -223,6 +226,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mCertificate = null;
             mHost = null;
             mPort = null;
+            mVideoFrozen = null;
         }
 
         @Override
@@ -682,6 +686,13 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mHost = host;
             mPort = port;
             mCertificate = certificate;
+        }
+
+        @Override
+        public void onVideoFreezeUpdated(boolean isFrozen) {
+            super.onVideoFreezeUpdated(isFrozen);
+            mVideoFreezeUpdatedCount++;
+            mVideoFrozen = isFrozen;
         }
     }
 }
