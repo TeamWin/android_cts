@@ -22,6 +22,7 @@ import android.hardware.radio.RadioResponseInfo;
 import android.hardware.radio.messaging.IRadioMessaging;
 import android.hardware.radio.messaging.IRadioMessagingIndication;
 import android.hardware.radio.messaging.IRadioMessagingResponse;
+import android.hardware.radio.messaging.SendSmsResult;
 import android.os.RemoteException;
 import android.support.annotation.GuardedBy;
 import android.util.ArraySet;
@@ -50,6 +51,7 @@ public class IRadioMessagingImpl extends IRadioMessaging.Stub {
     private MockModemConfigInterface mMockModemConfigInterface;
     private int mSubId;
     private String mTag;
+    private final MockMessagingService mMockMessagingService;
 
     public interface BroadcastCallback {
         void onGsmBroadcastActivated();
@@ -74,6 +76,7 @@ public class IRadioMessagingImpl extends IRadioMessaging.Stub {
         this.mService = service;
         mMockModemConfigInterface = configInterface;
         mSubId = instanceId;
+        mMockMessagingService = new MockMessagingService(instanceId);
     }
 
     // Implementation of IRadioMessaging functions
@@ -176,8 +179,8 @@ public class IRadioMessagingImpl extends IRadioMessaging.Stub {
     public void getSmscAddress(int serial) {
         Log.d(mTag, "getSmscAddress");
 
-        String smsc = "";
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        String smsc = mMockMessagingService.getSmscAddress();
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioMessagingResponse.getSmscAddressResponse(rsp, smsc);
         } catch (RemoteException ex) {
@@ -244,9 +247,13 @@ public class IRadioMessagingImpl extends IRadioMessaging.Stub {
     public void sendSms(int serial, android.hardware.radio.messaging.GsmSmsMessage message) {
         Log.d(mTag, "sendSms");
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        android.hardware.radio.messaging.SendSmsResult sms = new SendSmsResult();
+        sms.messageRef = 0;
+        sms.ackPDU = "ack";
+        sms.errorCode = 0;
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
-            mRadioMessagingResponse.sendSmsResponse(rsp, null);
+            mRadioMessagingResponse.sendSmsResponse(rsp, sms);
         } catch (RemoteException ex) {
             Log.e(mTag, "Failed to sendSms from AIDL. Exception" + ex);
         }
