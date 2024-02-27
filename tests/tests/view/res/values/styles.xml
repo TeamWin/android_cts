@@ -195,4 +195,11 @@
     </style>
 
     <style name="ExplicitStyle2" />
+
+    <!--
+        TODO(b/309578419): Make activities handle insets properly and then remove this.
+    -->
+    <style name="OptOutEdgeToEdgeEnforcement">
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+    </style>
 </resources>

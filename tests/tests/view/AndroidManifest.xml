@@ -357,6 +357,7 @@
         </activity>
 
         <activity android:name="android.view.cts.HoverCtsActivity"
+             android:theme="@style/OptOutEdgeToEdgeEnforcement"
              android:screenOrientation="locked"
              android:exported="true">
             <intent-filter>
