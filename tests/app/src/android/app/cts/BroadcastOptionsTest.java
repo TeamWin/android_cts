@@ -31,6 +31,7 @@ import android.os.PowerExemptionManager;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
+import android.platform.test.flag.junit.RavenwoodFlagsValueProvider;
 import android.platform.test.ravenwood.RavenwoodRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -45,7 +46,8 @@ import org.junit.runner.RunWith;
 public class BroadcastOptionsTest {
     @Rule
     public final CheckFlagsRule mCheckFlagsRule = RavenwoodRule.isOnRavenwood()
-            ? null : DeviceFlagsValueProvider.createCheckFlagsRule();
+            ? RavenwoodFlagsValueProvider.createAllOnCheckFlagsRule()
+            : DeviceFlagsValueProvider.createCheckFlagsRule();
 
     /**
      * Creates a clone of BroadcastOptions, using toBundle().

@@ -37,6 +37,7 @@ import android.platform.test.annotations.IgnoreUnderRavenwood;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
+import android.platform.test.flag.junit.RavenwoodFlagsValueProvider;
 import android.platform.test.ravenwood.RavenwoodRule;
 import android.util.Log;
 
@@ -62,7 +63,8 @@ public class ProcessTest {
 
     // Required for RequiresFlagsEnabled and RequiresFlagsDisabled annotations to take effect.
     @Rule
-    public final CheckFlagsRule mCheckFlagsRule = RavenwoodRule.isUnderRavenwood() ? null
+    public final CheckFlagsRule mCheckFlagsRule = RavenwoodRule.isOnRavenwood()
+            ? RavenwoodFlagsValueProvider.createAllOnCheckFlagsRule()
             : DeviceFlagsValueProvider.createCheckFlagsRule();
 
     public static final int THREAD_PRIORITY_HIGHEST = -20;
