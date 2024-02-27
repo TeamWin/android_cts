@@ -542,7 +542,6 @@ public class AudioDisconnectActivity
             stopAudio();
         }
 
-        boolean wasMMapEnabled = Globals.isMMapEnabled();
         Globals.setMMapEnabled(config.isMMap());
         if (config.mDirection == TestConfiguration.IO_OUTPUT) {
             AudioSourceProvider sourceProvider = new SilenceAudioSourceProvider();
@@ -591,7 +590,7 @@ public class AudioDisconnectActivity
                 mIsAudioRunning = false;
             }
         }
-        Globals.setMMapEnabled(wasMMapEnabled);
+        Globals.setMMapEnabled(Globals.isMMapSupported());
 
         Log.i(TAG, "  mIsAudioRunning: " + mIsAudioRunning);
         return mIsAudioRunning;
