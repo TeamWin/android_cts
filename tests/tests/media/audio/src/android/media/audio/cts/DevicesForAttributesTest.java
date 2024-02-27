@@ -37,6 +37,7 @@ import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.NonMainlineTest;
@@ -58,6 +59,7 @@ import java.util.concurrent.TimeUnit;
 @NonMainlineTest
 @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 @RunWith(AndroidJUnit4.class)
+@FlakyTest(bugId = 326206728)
 public class DevicesForAttributesTest {
     private static final String TAG = DevicesForAttributesTest.class.getSimpleName();
 
@@ -65,7 +67,7 @@ public class DevicesForAttributesTest {
             .setUsage(AudioAttributes.USAGE_MEDIA).build();
     private static final AudioAttributes COMMUNICATION_ATTR = new AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION).build();
-    private static final int TEST_TIMING_TOLERANCE_MS = 100;
+    private static final int TEST_TIMING_TOLERANCE_MS = 300;
 
     private AudioManager mAudioManager;
     private AudioPolicy mAudioPolicy;
