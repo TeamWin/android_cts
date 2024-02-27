@@ -71,6 +71,7 @@ import android.accessibilityservice.GestureDescription.StrokeDescription;
 import android.accessibilityservice.MagnificationConfig;
 import android.accessibilityservice.cts.activities.AccessibilityEndToEndActivity;
 import android.accessibilityservice.cts.utils.EventCapturingMotionEventListener;
+import android.accessibilityservice.cts.utils.ProviderCustomView;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Instrumentation;
@@ -1080,6 +1081,31 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
 
         autoImportantLinearLayoutNode.refresh();
         assertThat(autoImportantLinearLayoutNode.isImportantForAccessibility()).isTrue();
+    }
+
+    @MediumTest
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityNodeInfo"
+            + "#isImportantForAccessibility"})
+    public void testProviderView_ImportantForAccessibility() {
+        final ProviderCustomView customProviderView = mActivity.findViewById(
+                R.id.autoImportantProviderView);
+        sInstrumentation.runOnMainSync(() ->
+                customProviderView.setImportantForAccessibility(
+                        View.IMPORTANT_FOR_ACCESSIBILITY_AUTO));
+        // Verify first that the node is not important if there is no provider.
+        customProviderView.setReturnProvider(false);
+        final AccessibilityNodeInfo autoImportantProviderViewNode =
+                sUiAutomation.getRootInActiveWindow().findAccessibilityNodeInfosByViewId(
+                        mActivity.getResources().getResourceName(
+                                R.id.autoImportantProviderView)).get(0);
+        assertThat(autoImportantProviderViewNode.isImportantForAccessibility()).isFalse();
+
+        customProviderView.setReturnProvider(true);
+
+        autoImportantProviderViewNode.refresh();
+
+        assertThat(autoImportantProviderViewNode.isImportantForAccessibility()).isTrue();
     }
 
     @MediumTest
