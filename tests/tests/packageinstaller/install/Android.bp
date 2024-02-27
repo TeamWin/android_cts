@@ -51,6 +51,7 @@ android_test {
         ":CtsEmptyTestAppV2",
         ":CtsEmptyInstallerApp",
         ":CtsEmptyTestApp_FullScreenIntent",
+        ":CtsEmptyTestApp_AppMetadataInApk",
     ],
     java_resources: [
         ":HelloWorldSdk1",

@@ -19,6 +19,8 @@ import android.app.UiAutomation
 import android.content.pm.Flags
 import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager
+import android.content.pm.PackageManager.APP_METADATA_SOURCE_APK
+import android.content.pm.PackageManager.APP_METADATA_SOURCE_INSTALLER
 import android.content.pm.PackageManager.NameNotFoundException
 import android.os.PersistableBundle
 import android.platform.test.annotations.AppModeFull
@@ -40,6 +42,7 @@ import org.junit.runner.RunWith
 class InstallAppMetadataTest : PackageInstallerTestBase() {
 
     private val TEST_FIELD = "testField"
+    private val TEST_APK2_NAME = "CtsEmptyTestApp_AppMetadataInApk.apk"
 
     private val uiAutomation: UiAutomation =
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
@@ -102,6 +105,42 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
         }
     }
 
+    @RequiresFlagsEnabled(Flags.FLAG_ASL_IN_APK_APP_METADATA_SOURCE)
+    @Test
+    fun getAppMetadataInApk() {
+        installPackage(TEST_APK2_NAME)
+
+        uiAutomation.adoptShellPermissionIdentity()
+        try {
+            val data = pm.getAppMetadata(TEST_APK_PACKAGE_NAME)
+            assertThat(data.size()).isEqualTo(2)
+            assertThat(data.getString("source")).isEqualTo("apk")
+            assertThat(data.getLong("version")).isEqualTo(2)
+            assertThat(pm.getAppMetadataSource(TEST_APK_PACKAGE_NAME))
+                .isEqualTo(APP_METADATA_SOURCE_APK)
+        } finally {
+            uiAutomation.dropShellPermissionIdentity()
+        }
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_ASL_IN_APK_APP_METADATA_SOURCE)
+    @Test
+    fun installViaSessionWithAppMetadataInApk() {
+        File(TEST_APK_LOCATION, TEST_APK2_NAME)
+            .copyTo(target = File(context.filesDir, TEST_APK2_NAME), overwrite = true)
+        val data = createAppMetadata()
+        installTestApp(data, TEST_APK2_NAME)
+
+        uiAutomation.adoptShellPermissionIdentity()
+        try {
+            assertAppMetadata(data.getString(TEST_FIELD), pm.getAppMetadata(TEST_APK_PACKAGE_NAME))
+            assertThat(pm.getAppMetadataSource(TEST_APK_PACKAGE_NAME))
+                .isEqualTo(APP_METADATA_SOURCE_INSTALLER)
+        } finally {
+            uiAutomation.dropShellPermissionIdentity()
+        }
+    }
+
     @Test
     fun installViaSession() {
         installTestApp(null)
@@ -119,8 +158,13 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
         installTestApp(data)
 
         uiAutomation.adoptShellPermissionIdentity()
-        assertAppMetadata(data.getString(TEST_FIELD), pm.getAppMetadata(TEST_APK_PACKAGE_NAME))
-        uiAutomation.dropShellPermissionIdentity()
+        try {
+            assertAppMetadata(data.getString(TEST_FIELD), pm.getAppMetadata(TEST_APK_PACKAGE_NAME))
+            assertThat(pm.getAppMetadataSource(TEST_APK_PACKAGE_NAME))
+                .isEqualTo(APP_METADATA_SOURCE_INSTALLER)
+        } finally {
+            uiAutomation.dropShellPermissionIdentity()
+        }
     }
 
     @Test(expected = SecurityException::class)
@@ -139,9 +183,7 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
     fun noInstallGetAppMetadata() {
         uiAutomation.adoptShellPermissionIdentity()
         try {
-            val data = pm.getAppMetadata(TEST_APK_PACKAGE_NAME)
-        } catch (e: Exception) {
-            throw e
+            pm.getAppMetadata(TEST_APK_PACKAGE_NAME)
         } finally {
             uiAutomation.dropShellPermissionIdentity()
         }
@@ -173,8 +215,11 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
         assertThat(result.status).isEqualTo(PackageInstaller.STATUS_SUCCESS)
 
         uiAutomation.adoptShellPermissionIdentity()
-        assertThat(pm.getAppMetadata(TEST_APK_PACKAGE_NAME).isEmpty()).isTrue()
-        uiAutomation.dropShellPermissionIdentity()
+        try {
+            assertThat(pm.getAppMetadata(TEST_APK_PACKAGE_NAME).isEmpty()).isTrue()
+        } finally {
+            uiAutomation.dropShellPermissionIdentity()
+        }
     }
 
     @Test
@@ -206,9 +251,9 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
         PersistableBundle.readFromStream(file.inputStream())
     }
 
-    private fun installTestApp(data: PersistableBundle?) {
+    private fun installTestApp(data: PersistableBundle?, apkName: String = TEST_APK_NAME) {
         val (sessionId, session) = createSession(0, false, null)
-        writeSession(session, TEST_APK_NAME)
+        writeSession(session, apkName)
         if (data != null) {
             setAppMetadata(session, data)
             assertAppMetadata(data.getString(TEST_FIELD), session.getAppMetadata())
