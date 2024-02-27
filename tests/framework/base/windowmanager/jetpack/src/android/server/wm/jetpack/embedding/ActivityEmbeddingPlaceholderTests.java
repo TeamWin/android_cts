@@ -22,15 +22,16 @@ import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAsser
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertNotResumed;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumedAndFillsTask;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndGetTaskBounds;
 import static android.server.wm.jetpack.utils.TestActivityLauncher.KEY_ACTIVITY_ID;
-import static android.view.Surface.ROTATION_0;
 
 import static androidx.window.extensions.embedding.SplitRule.FINISH_NEVER;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.RotationSession;
+import android.server.wm.WindowManagerStateHelper;
 import android.server.wm.jetpack.utils.TestActivity;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.util.Pair;
@@ -171,40 +172,38 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
      */
     @Test
     public void testPlaceholderFinishedWhenTaskWidthDecreased() {
-        try (RotationSession rotationSession = new RotationSession()) {
-            rotationSession.set(ROTATION_0);
-            final int taskWidth = getTaskWidth();
-            final int taskHeight = getTaskHeight();
+        final Rect taskBounds = getTaskBounds();
+        final int taskWidth = taskBounds.width();
+        final int taskHeight = taskBounds.height();
 
-            // Set embedding rules with the parent window metrics only allowing side-by-side
-            // activities on a task bounds at least the current bounds.
-            final SplitPlaceholderRule splitPlaceholderRule =
-                    new SplitPlaceholderRuleBuilderWithDefaults(PRIMARY_ACTIVITY_ID,
-                            PLACEHOLDER_ACTIVITY_ID)
-                            .setParentWindowMetrics(windowMetrics ->
-                                    windowMetrics.getBounds().width() >= taskWidth
-                                            && windowMetrics.getBounds().height() >= taskHeight)
-                            .build();
-            mActivityEmbeddingComponent.setEmbeddingRules(
-                    Collections.singleton(splitPlaceholderRule));
+        // Set embedding rules with the parent window metrics only allowing side-by-side
+        // activities on a task bounds at least the current bounds.
+        final SplitPlaceholderRule splitPlaceholderRule =
+                new SplitPlaceholderRuleBuilderWithDefaults(PRIMARY_ACTIVITY_ID,
+                        PLACEHOLDER_ACTIVITY_ID)
+                        .setParentWindowMetrics(windowMetrics ->
+                                windowMetrics.getBounds().width() >= taskWidth
+                                        && windowMetrics.getBounds().height() >= taskHeight)
+                        .build();
+        mActivityEmbeddingComponent.setEmbeddingRules(
+                Collections.singleton(splitPlaceholderRule));
 
-            // Launch activity with placeholder
-            final Pair<Activity, Activity> activityPair =
-                    launchActivityWithPlaceholderAndVerifySplit(
-                            PRIMARY_ACTIVITY_ID, PLACEHOLDER_ACTIVITY_ID, splitPlaceholderRule);
-            final TestActivity primaryActivity = (TestActivity) activityPair.first;
-            final Activity placeholderActivity = activityPair.second;
+        // Launch activity with placeholder
+        final Pair<Activity, Activity> activityPair =
+                launchActivityWithPlaceholderAndVerifySplit(
+                        PRIMARY_ACTIVITY_ID, PLACEHOLDER_ACTIVITY_ID, splitPlaceholderRule);
+        final TestActivity primaryActivity = (TestActivity) activityPair.first;
+        final Activity placeholderActivity = activityPair.second;
 
-            // Shrink display size by 10% so that the primary and placeholder activities are stacked
-            final Size currentSize = mReportedDisplayMetrics.getSize();
-            mReportedDisplayMetrics.setSize(new Size((int) (currentSize.getWidth() * 0.9),
-                    (int) (currentSize.getHeight() * 0.9)));
+        // Shrink display size by 10% so that the primary and placeholder activities are stacked
+        final Size currentSize = mReportedDisplayMetrics.getSize();
+        mReportedDisplayMetrics.setSize(new Size((int) (currentSize.getWidth() * 0.9),
+                (int) (currentSize.getHeight() * 0.9)));
 
-            // Verify that the placeholder activity was finished and that the primary activity now
-            // fills the task.
-            waitAndAssertFinishing(placeholderActivity);
-            waitAndAssertResumedAndFillsTask(primaryActivity);
-        }
+        // Verify that the placeholder activity was finished and that the primary activity now
+        // fills the task.
+        waitAndAssertFinishing(placeholderActivity);
+        waitAndAssertResumedAndFillsTask(primaryActivity);
     }
 
     /**
@@ -213,50 +212,47 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
      */
     @Test
     public void testPlaceholderLaunchedWhenTaskWidthIncreased() {
-        try (RotationSession rotationSession = new RotationSession()) {
-            rotationSession.set(ROTATION_0);
+        // Reduce display size by 50% so that display size won't exceed the maximum display
+        // size during the test.
+        final Size currentSize = mReportedDisplayMetrics.getSize();
+        final Size displaySize = new Size((int) (currentSize.getWidth() * 0.5),
+                (int) (currentSize.getHeight() * 0.5));
+        mReportedDisplayMetrics.setSize(displaySize);
 
-            // Reduce display size by 50% so that display size won't exceed the maximum display
-            // size during the test.
-            final Size currentSize = mReportedDisplayMetrics.getSize();
-            final Size displaySize = new Size((int) (currentSize.getWidth() * 0.5),
-                    (int) (currentSize.getHeight() * 0.5));
-            mReportedDisplayMetrics.setSize(displaySize);
+        final Rect taskBounds = getTaskBounds();
+        final double splitTaskWidth = taskBounds.width() * 1.05;
+        final double splitTaskHeight = taskBounds.height() * 1.05;
 
-            final double splitTaskWidth = getTaskWidth() * 1.05;
-            final double splitTaskHeight = getTaskHeight() * 1.05;
+        // Set embedding rules with the parent window metrics only allowing side-by-side
+        // activities on a task bounds 5% larger than the current task bounds.
+        final SplitPlaceholderRule splitPlaceholderRule =
+                new SplitPlaceholderRuleBuilderWithDefaults(PRIMARY_ACTIVITY_ID,
+                        PLACEHOLDER_ACTIVITY_ID)
+                        .setParentWindowMetrics(windowMetrics ->
+                                windowMetrics.getBounds().width() >= splitTaskWidth
+                                        && windowMetrics.getBounds().height()
+                                        >= splitTaskHeight)
+                        .build();
+        mActivityEmbeddingComponent.setEmbeddingRules(
+                Collections.singleton(splitPlaceholderRule));
 
-            // Set embedding rules with the parent window metrics only allowing side-by-side
-            // activities on a task bounds 5% larger than the current task bounds.
-            final SplitPlaceholderRule splitPlaceholderRule =
-                    new SplitPlaceholderRuleBuilderWithDefaults(PRIMARY_ACTIVITY_ID,
-                            PLACEHOLDER_ACTIVITY_ID)
-                            .setParentWindowMetrics(windowMetrics ->
-                                    windowMetrics.getBounds().width() >= splitTaskWidth
-                                            && windowMetrics.getBounds().height()
-                                            >= splitTaskHeight)
-                            .build();
-            mActivityEmbeddingComponent.setEmbeddingRules(
-                    Collections.singleton(splitPlaceholderRule));
+        // Launch activity and verify that it fills the task and that a placeholder activity is
+        // not launched
+        Activity primaryActivity = startFullScreenActivityNewTask(TestActivityWithId.class,
+                PRIMARY_ACTIVITY_ID);
+        waitAndAssertResumedAndFillsTask(primaryActivity);
+        waitAndAssertNotResumed(PLACEHOLDER_ACTIVITY_ID);
 
-            // Launch activity and verify that it fills the task and that a placeholder activity is
-            // not launched
-            Activity primaryActivity = startFullScreenActivityNewTask(TestActivityWithId.class,
-                    PRIMARY_ACTIVITY_ID);
-            waitAndAssertResumedAndFillsTask(primaryActivity);
-            waitAndAssertNotResumed(PLACEHOLDER_ACTIVITY_ID);
+        // Increase display size by 10% so that the primary and placeholder activities are
+        // stacked
+        mReportedDisplayMetrics.setSize(new Size((int) (displaySize.getWidth() * 1.1),
+                (int) (displaySize.getHeight() * 1.1)));
 
-            // Increase display size by 10% so that the primary and placeholder activities are
-            // stacked
-            mReportedDisplayMetrics.setSize(new Size((int) (displaySize.getWidth() * 1.1),
-                    (int) (displaySize.getHeight() * 1.1)));
-
-            // Verify that the placeholder activity is launched into a split with the primary
-            // activity
-            waitAndAssertResumed(PLACEHOLDER_ACTIVITY_ID);
-            Activity placeholderActivity = getResumedActivityById(PLACEHOLDER_ACTIVITY_ID);
-            assertValidSplit(primaryActivity, placeholderActivity, splitPlaceholderRule);
-        }
+        // Verify that the placeholder activity is launched into a split with the primary
+        // activity
+        waitAndAssertResumed(PLACEHOLDER_ACTIVITY_ID);
+        Activity placeholderActivity = getResumedActivityById(PLACEHOLDER_ACTIVITY_ID);
+        assertValidSplit(primaryActivity, placeholderActivity, splitPlaceholderRule);
     }
 
     /**
@@ -266,39 +262,37 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
      */
     @Test
     public void testStickyPlaceholder() {
-        try (RotationSession rotationSession = new RotationSession()) {
-            rotationSession.set(ROTATION_0);
-            final int taskWidth = getTaskWidth();
-            final int taskHeight = getTaskHeight();
+        final Rect taskBounds = getTaskBounds();
+        final int taskWidth = taskBounds.width();
+        final int taskHeight = taskBounds.height();
 
-            // Set embedding rules with isSticky set to true and the parent window metrics only
-            // allowing side-by-side activities on a task width at least the current width.
-            final SplitPlaceholderRule splitPlaceholderRule =
-                    new SplitPlaceholderRuleBuilderWithDefaults(PRIMARY_ACTIVITY_ID,
-                            PLACEHOLDER_ACTIVITY_ID).setIsSticky(true)
-                            .setParentWindowMetrics(windowMetrics ->
-                                    windowMetrics.getBounds().width() >= taskWidth
-                                            && windowMetrics.getBounds().height() >= taskHeight)
-                            .build();
-            mActivityEmbeddingComponent.setEmbeddingRules(
-                    Collections.singleton(splitPlaceholderRule));
+        // Set embedding rules with isSticky set to true and the parent window metrics only
+        // allowing side-by-side activities on a task width at least the current width.
+        final SplitPlaceholderRule splitPlaceholderRule =
+                new SplitPlaceholderRuleBuilderWithDefaults(PRIMARY_ACTIVITY_ID,
+                        PLACEHOLDER_ACTIVITY_ID).setIsSticky(true)
+                        .setParentWindowMetrics(windowMetrics ->
+                                windowMetrics.getBounds().width() >= taskWidth
+                                        && windowMetrics.getBounds().height() >= taskHeight)
+                        .build();
+        mActivityEmbeddingComponent.setEmbeddingRules(
+                Collections.singleton(splitPlaceholderRule));
 
-            // Launch activity with placeholder
-            final Pair<Activity, Activity> activityPair =
-                    launchActivityWithPlaceholderAndVerifySplit(
-                            PRIMARY_ACTIVITY_ID, PLACEHOLDER_ACTIVITY_ID, splitPlaceholderRule);
-            final TestActivity placeholderActivity = (TestActivity) activityPair.second;
+        // Launch activity with placeholder
+        final Pair<Activity, Activity> activityPair =
+                launchActivityWithPlaceholderAndVerifySplit(
+                        PRIMARY_ACTIVITY_ID, PLACEHOLDER_ACTIVITY_ID, splitPlaceholderRule);
+        final TestActivity placeholderActivity = (TestActivity) activityPair.second;
 
-            // Shrink display width by 10% so that the primary and placeholder activities are
-            // stacked
-            final Size currentSize = mReportedDisplayMetrics.getSize();
-            mReportedDisplayMetrics.setSize(new Size((int) (currentSize.getWidth() * 0.9),
-                    (int) (currentSize.getHeight() * 0.9)));
+        // Shrink display width by 10% so that the primary and placeholder activities are
+        // stacked
+        final Size currentSize = mReportedDisplayMetrics.getSize();
+        mReportedDisplayMetrics.setSize(new Size((int) (currentSize.getWidth() * 0.9),
+                (int) (currentSize.getHeight() * 0.9)));
 
-            // Verify that the placeholder was not finished and fills the task
-            waitAndAssertResumedAndFillsTask(placeholderActivity);
-            waitAndAssertResumed(Arrays.asList(placeholderActivity));
-        }
+        // Verify that the placeholder was not finished and fills the task
+        waitAndAssertResumedAndFillsTask(placeholderActivity);
+        waitAndAssertResumed(Arrays.asList(placeholderActivity));
     }
 
     /**
@@ -388,5 +382,15 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
         // Verify they are correctly split
         assertValidSplit(primaryActivity, placeholderActivity, splitPlaceholderRule);
         return new Pair<>(primaryActivity, placeholderActivity);
+    }
+
+    @NonNull
+    private Rect getTaskBounds() {
+        final Activity activity = startFullScreenActivityNewTask(TestActivity.class);
+        final Rect taskBounds = waitAndGetTaskBounds(activity, true /* shouldWaitForResume */);
+        activity.finish();
+        new WindowManagerStateHelper().waitAndAssertActivityRemoved(activity.getComponentName());
+
+        return taskBounds;
     }
 }
