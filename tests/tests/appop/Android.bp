@@ -81,6 +81,7 @@ android_test {
         "androidx.test.uiautomator_uiautomator",
         "flag-junit",
         "android.permission.flags-aconfig-java",
+        "CtsVirtualDeviceCommonLib",
     ],
 
     jni_libs: [
@@ -121,7 +122,6 @@ android_test {
     test_suites: [
         "cts",
         "general-tests",
-        "mts",
     ],
     data: [
         ":AppWithLongAttributionTag",
