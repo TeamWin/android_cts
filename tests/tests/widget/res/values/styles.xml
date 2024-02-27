@@ -377,6 +377,10 @@
 
     <style name="Theme_NoSwipeDismiss">
         <item name="android:windowSwipeToDismiss">false</item>
+        <!--
+            TODO(b/309578419): Make activities handle insets properly and then remove this.
+        -->
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
 
     <style name="PopupEmptyStyle" />
@@ -412,6 +416,7 @@
     <style name="Theme.PopupWindowCtsActivity" parent="@android:style/Theme.Holo">
         <item name="android:windowSwipeToDismiss">false</item>
         <item name="android:windowLayoutInDisplayCutoutMode">never</item>
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
 
     <style name="TextView_FontResource">
@@ -462,5 +467,12 @@
     <style name="LineBreakConfig_loose_phrase">
         <item name="android:lineBreakStyle">loose</item>
         <item name="android:lineBreakWordStyle">phrase</item>
+    </style>
+
+    <!--
+        TODO(b/309578419): Make activities handle insets properly and then remove this.
+    -->
+    <style name="OptOutEdgeToEdgeEnforcement">
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
 </resources>

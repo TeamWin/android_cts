@@ -26,5 +26,10 @@
           back presses. This disables it.
         -->
         <item name="android:windowSwipeToDismiss">false</item>
+
+        <!--
+            TODO(b/309578419): Make activities handle insets properly and then remove this.
+        -->
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
 </resources>

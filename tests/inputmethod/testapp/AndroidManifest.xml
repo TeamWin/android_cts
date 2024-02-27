@@ -25,6 +25,7 @@
         android:supportsRtl="true">
         <activity
             android:name=".MainActivity"
+            android:theme="@style/AppTheme"
             android:exported="true"
             android:label="CtsInputMethodStandaloneTestActivity"
             android:windowSoftInputMode="stateAlwaysHidden">

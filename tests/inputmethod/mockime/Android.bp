@@ -17,6 +17,28 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
+android_test_helper_app {
+    name: "CtsMockInputMethodRes",
+    defaults: ["cts_defaults"],
+    optimize: {
+        enabled: false,
+    },
+    sdk_version: "current",
+    min_sdk_version: "21",
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+        "mts",
+        "sts",
+        "mcts",
+    ],
+    manifest: "AndroidManifest_mockime_res.xml",
+    additional_manifests: [
+        "AndroidManifest_template.xml",
+    ],
+}
+
 java_test_helper_library {
     name: "CtsMockInputMethodLib",
     sdk_version: "test_current",
@@ -28,6 +50,7 @@ java_test_helper_library {
     srcs: [
         "src/**/*.java",
         "src/**/*.kt",
+        ":CtsMockInputMethodRes{.aapt.srcjar}",
     ],
     libs: ["junit"],
     static_libs: [
@@ -54,6 +77,7 @@ android_test_helper_app {
         "general-tests",
         "mts",
         "sts",
+        "mcts",
     ],
     static_libs: [
         "CtsMockInputMethodLib",
@@ -78,6 +102,7 @@ android_test_helper_app {
         "general-tests",
         "mts",
         "sts",
+        "mcts",
     ],
     static_libs: [
         "CtsMockInputMethodLib",
