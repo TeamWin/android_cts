@@ -47,6 +47,7 @@ import com.android.cts.verifier.audio.audiolib.AudioUtils;
 import com.android.cts.verifier.audio.audiolib.DisplayUtils;
 import com.android.cts.verifier.audio.audiolib.StatUtils;
 
+import org.hyphonate.megaaudio.common.Globals;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -790,6 +791,9 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
         getPassButton().setEnabled(false);
 
         mTestPhase = 0;
+
+        // Set mmap enabled as mmap supported to get best latency
+        Globals.setMMapEnabled(Globals.isMMapSupported());
 
         mNativeAnalyzerThread = new NativeAnalyzerThread(this);
         if (mNativeAnalyzerThread != null) {
