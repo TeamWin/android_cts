@@ -27,6 +27,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.UiAutomation;
 import android.content.ClipData;
 import android.content.ClipData.Item;
 import android.content.ClipDescription;
@@ -38,6 +39,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.platform.test.annotations.AppModeNonSdkSandbox;
+import android.platform.test.annotations.IgnoreUnderRavenwood;
+import android.platform.test.ravenwood.RavenwoodRule;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -49,6 +52,7 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -59,21 +63,33 @@ import java.util.concurrent.TimeUnit;
 //@AppModeFull // TODO(Instant) Should clip board data be visible?
 @AppModeNonSdkSandbox(reason = "SDK sandboxes cannot access ClipboardManager.")
 public class ClipboardManagerTest {
-    private final Context mContext = InstrumentationRegistry.getTargetContext();
+    @Rule
+    public final RavenwoodRule mRavenwood = new RavenwoodRule.Builder()
+            .setProvideMainThread(true)
+            .setPackageName("android.content.cts")
+            .setServicesRequired(ClipboardManager.class)
+            .build();
+
+    private Context mContext;
     private ClipboardManager mClipboardManager;
     private UiDevice mUiDevice;
 
     @Before
     public void setUp() throws Exception {
         assumeTrue("Skipping Test: Wear-Os does not support ClipboardService", hasAutoFillFeature());
-        mClipboardManager = mContext.getSystemService(ClipboardManager.class);
-        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        mUiDevice.wakeUp();
 
-        // Clear any dialogs and launch an activity as focus is needed to access clipboard.
-        mUiDevice.pressHome();
-        mUiDevice.pressBack();
-        launchActivity(MockActivity.class);
+        mContext = InstrumentationRegistry.getTargetContext();
+        mClipboardManager = mContext.getSystemService(ClipboardManager.class);
+
+        if (!RavenwoodRule.isOnRavenwood()) {
+            mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+            mUiDevice.wakeUp();
+
+            // Clear any dialogs and launch an activity as focus is needed to access clipboard.
+            mUiDevice.pressHome();
+            mUiDevice.pressBack();
+            launchActivity(MockActivity.class);
+        }
     }
 
     @After
@@ -81,8 +97,7 @@ public class ClipboardManagerTest {
         if (mClipboardManager != null) {
             mClipboardManager.clearPrimaryClip();
         }
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .dropShellPermissionIdentity();
+        dropShellPermissionIdentity();
     }
 
     @Test
@@ -137,6 +152,7 @@ public class ClipboardManagerTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = ContentResolver.class)
     public void testSetPrimaryClip_contentUri() {
         Uri contentUri = Uri.parse("content://cts/test/for/clipboardmanager");
         ClipData contentUriData = ClipData.newUri(mContext.getContentResolver(),
@@ -179,6 +195,7 @@ public class ClipboardManagerTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = ContentResolver.class)
     public void testSetPrimaryClip_multipleMimeTypes() {
         ContentResolver contentResolver = mContext.getContentResolver();
 
@@ -266,6 +283,7 @@ public class ClipboardManagerTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = UiAutomation.class)
     public void testPrimaryClipNotAvailableWithoutFocus() throws Exception {
         ClipData textData = ClipData.newPlainText("TextLabel", "Text1");
         assertSetPrimaryClip(textData, "TextLabel",
@@ -304,6 +322,7 @@ public class ClipboardManagerTest {
     }
 
     @Test
+    @IgnoreUnderRavenwood(blockedBy = UiAutomation.class)
     public void testReadInBackgroundRequiresPermission() throws Exception {
         ClipData clip = ClipData.newPlainText("TextLabel", "Text1");
         mClipboardManager.setPrimaryClip(clip);
@@ -334,16 +353,14 @@ public class ClipboardManagerTest {
         ClipData clipData = ClipData.newPlainText("TextLabel", "Text1");
         mClipboardManager.setPrimaryClip(clipData);
 
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity(Manifest.permission.SET_CLIP_SOURCE);
+        adoptShellPermissionIdentity(Manifest.permission.SET_CLIP_SOURCE);
         assertThat(
                 mClipboardManager.getPrimaryClipSource()).isEqualTo("android.content.cts");
     }
 
     @Test
     public void testSetPrimaryClipAsPackage() {
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity(Manifest.permission.SET_CLIP_SOURCE);
+        adoptShellPermissionIdentity(Manifest.permission.SET_CLIP_SOURCE);
 
         ClipData clipData = ClipData.newPlainText("TextLabel", "Text1");
         mClipboardManager.setPrimaryClipAsPackage(clipData, "test.package");
@@ -438,7 +455,34 @@ public class ClipboardManagerTest {
     }
 
     private boolean hasAutoFillFeature() {
-        return mContext.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_AUTOFILL);
+        if (RavenwoodRule.isOnRavenwood()) {
+            // These tests awkwardly depend on FEATURE_AUTOFILL to detect clipboard support;
+            // even though Ravenwood doesn't support autofill feature, we know we support
+            // clipboard, so we return true so tests are executed
+            return true;
+        } else {
+            return InstrumentationRegistry.getTargetContext().getPackageManager()
+                    .hasSystemFeature(PackageManager.FEATURE_AUTOFILL);
+        }
+    }
+
+    private static void adoptShellPermissionIdentity(String permission) {
+        if (RavenwoodRule.isOnRavenwood()) {
+            // TODO: define what "shell permissions" mean on Ravenwood, and offer
+            // a general adoptShellPermissionIdentity implementation; ignored for now
+        } else {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity(permission);
+        }
+    }
+
+    private static void dropShellPermissionIdentity() {
+        if (RavenwoodRule.isOnRavenwood()) {
+            // TODO: define what "shell permissions" mean on Ravenwood, and offer
+            // a general adoptShellPermissionIdentity implementation; ignored for now
+        } else {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
     }
 }
