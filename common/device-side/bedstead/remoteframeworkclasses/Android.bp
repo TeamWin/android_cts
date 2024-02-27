@@ -24,6 +24,7 @@ android_library {
 
 java_library {
     name: "RemoteFrameworkClasses_Annotations",
+    sdk_version: "current",
     srcs: [
         "src/processor/main/java/com/android/bedstead/remoteframeworkclasses/processor/annotations/*.java",
         "src/processor/main/java/com/android/bedstead/remoteframeworkclasses/processor/annotations/*.kt",

@@ -26,6 +26,7 @@ android_library {
         "common/src/main/java/**/*.kt",
     ],
     manifest: "src/main/AndroidManifest.xml",
+    sdk_version: "current",
     min_sdk_version: "29",
     plugins: ["auto_annotation_plugin"],
 }
