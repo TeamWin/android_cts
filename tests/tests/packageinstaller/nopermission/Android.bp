@@ -29,6 +29,7 @@ java_library_static {
         "compatibility-device-util-axt",
         "androidx.legacy_legacy-support-v4",
         "platform-test-annotations",
+        "android.content.pm.flags-aconfig-java",
     ],
 }
 
