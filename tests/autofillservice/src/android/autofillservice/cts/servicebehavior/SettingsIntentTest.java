@@ -80,7 +80,9 @@ public class SettingsIntentTest
         mActivity.startForResult(newSettingsIntent(), MY_REQUEST_CODE);
 
         // Asserts services are shown.
+        mUiBot.scrollToTextObject(InstrumentedAutoFillService.sServiceLabel);
         mUiBot.assertShownByText(InstrumentedAutoFillService.sServiceLabel);
+        mUiBot.scrollToTextObject(InstrumentedAutoFillServiceCompatMode.sServiceLabel);
         mUiBot.assertShownByText(InstrumentedAutoFillServiceCompatMode.sServiceLabel);
         mUiBot.scrollToTextObject(NoOpAutofillService.SERVICE_LABEL);
         mUiBot.assertShownByText(NoOpAutofillService.SERVICE_LABEL);
@@ -99,6 +101,7 @@ public class SettingsIntentTest
         mActivity.startForResult(newSettingsIntent(), MY_REQUEST_CODE);
 
         // Asserts services are shown.
+        mUiBot.scrollToTextObject(InstrumentedAutoFillService.sServiceLabel);
         final UiObject2 object = mUiBot
                 .assertShownByText(InstrumentedAutoFillService.sServiceLabel);
         object.click();
