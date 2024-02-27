@@ -31,6 +31,9 @@ import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.Telephony;
 import android.telephony.cts.util.DefaultSmsAppHelper;
+import android.telephony.cts.util.TelephonyUtils;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.internal.telephony.flags.Flags;
 
@@ -48,6 +51,7 @@ public class CarrierRoamingSatelliteSmsTest extends CarrierRoamingSatelliteTestB
 
     private static final String TAG = "CarrierRoamingSatelliteSmsTest";
     private static final String SMS_SEND_ACTION = "CTS_SMS_SEND_ACTION";
+    private static final String TEST_EMERGENCY_NUMBER = "+14154255486";
 
     /**
      * Setup before all tests.
@@ -124,6 +128,25 @@ public class CarrierRoamingSatelliteSmsTest extends CarrierRoamingSatelliteTestB
         DefaultSmsAppHelper.ensureDefaultSmsApp();
         receiveMessage();
         DefaultSmsAppHelper.stopBeingDefaultSmsApp();
+    }
+
+    @Test
+    public void testSendEmergencySms() throws Exception {
+        logd(TAG, "testSendEmergencySms");
+
+        if (!Flags.carrierEnabledSatelliteFlag()) return;
+
+        TelephonyUtils.addTestEmergencyNumber(
+                InstrumentationRegistry.getInstrumentation(), TEST_EMERGENCY_NUMBER);
+        sendMessage(TEST_EMERGENCY_NUMBER);
+
+        // Test default SMS app
+        DefaultSmsAppHelper.ensureDefaultSmsApp();
+        sendMessage(TEST_EMERGENCY_NUMBER);
+        DefaultSmsAppHelper.stopBeingDefaultSmsApp();
+
+        TelephonyUtils.removeTestEmergencyNumber(
+                InstrumentationRegistry.getInstrumentation(), TEST_EMERGENCY_NUMBER);
     }
 
     private void sendMessage(String destAddr) throws Exception {
