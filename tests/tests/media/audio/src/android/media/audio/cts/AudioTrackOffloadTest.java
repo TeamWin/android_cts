@@ -160,10 +160,11 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
                 /* durationUs= */ 3000 - 44);
     }
 
-    private @Nullable AudioTrack getOffloadAudioTrack(int bitRateInkbps, AudioFormat audioFormat) {
+    private @Nullable AudioTrack getOffloadAudioTrack(int bitRateInkbps, AudioFormat audioFormat,
+            String testName) {
         if (!AudioManager.isOffloadedPlaybackSupported(audioFormat, DEFAULT_ATTR)) {
-            Log.i(TAG, "skipping testAudioTrackOffload as offload encoding "
-                    + audioFormat.getEncoding() + " is not supported");
+            Log.i(TAG, "skipping " + testName + " as offload encoding "
+                    + audioFormat.getEncoding() + " is not currently possible");
             // cannot test if offloading is not supported
             return null;
         }
@@ -195,7 +196,8 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
                 .openRawResourceFd(audioRes);
              InputStream audioInputStream = audioToOffload.createInputStream()) {
 
-            track = getOffloadAudioTrack(bitRateInkbps, audioFormat);
+            track = getOffloadAudioTrack(
+                    bitRateInkbps, audioFormat, /* testName= */"testAudioTrackOffload");
             if (track == null) {
                 return;
             }
@@ -290,8 +292,14 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
             return;
         }
 
-        AudioTrack offloadTrack = getOffloadAudioTrack(bitRateInkbps, audioFormat);
-        assertNotNull(offloadTrack);
+        AudioTrack offloadTrack =
+                getOffloadAudioTrack(bitRateInkbps, audioFormat,
+                                     /* testName= */"testGaplessAudioTrackOffload");
+        if (offloadTrack == null) {
+            // Even through gapless offload is supported by the device, it may not be available
+            // at this moment. Skip the test when offload is not currently possible.
+            return;
+        }
         offloadTrack.registerStreamEventCallback(mExec, mCallback);
 
         try {
@@ -381,7 +389,8 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
     public void testOffloadPadding() {
         AudioTrack track =
                 getOffloadAudioTrack(/* bitRateInkbps= */ 192,
-                                     getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3));
+                                     getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3),
+                                     /* testName= */ "testOffloadPadding");
         if (track == null) {
             return;
         }
@@ -414,7 +423,8 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
         // offloaded case
         AudioTrack offloadTrack =
                 getOffloadAudioTrack(/* bitRateInkbps= */ 192,
-                                     getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3));
+                                     getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3),
+                                     /* testName= */ "testIsOffloadedPlayback");
         if (offloadTrack == null) {
             return;
         }
