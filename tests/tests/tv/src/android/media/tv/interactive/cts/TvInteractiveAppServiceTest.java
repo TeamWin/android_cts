@@ -1115,6 +1115,19 @@ public class TvInteractiveAppServiceTest {
     }
 
     @Test
+    public void testNotifyTrackSelectedFromInput() {
+        linkTvView();
+        String testTrackId = "testTrackId";
+        mInputSession.notifyTrackSelected(0, testTrackId);
+        mInstrumentation.waitForIdleSync();
+
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mTrackSelectedCount > 0);
+
+        assertThat(mSession.mTrackSelectedCount).isEqualTo(1);
+        assertThat(mSession.mSelectedTrackId).isEqualTo(testTrackId);
+    }
+
+    @Test
     public void testVideoAvailable() {
         linkTvView();
 
