@@ -18,8 +18,11 @@ package android.server.wm.jetpack.area;
 
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
+
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static com.android.compatibility.common.util.PollingCheck.waitFor;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -146,16 +149,12 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
 
     @After
     @Override
-    public void tearDown() {
+    public void tearDown() throws Throwable {
         super.tearDown();
         if (mWindowAreaComponent != null) {
             mWindowAreaComponent.removeRearDisplayStatusListener(mStatusListener);
-            try {
-                DeviceStateUtils.runWithControlDeviceStatePermission(
-                        () -> mDeviceStateManager.cancelStateRequest());
-            } catch (Throwable t) {
-                throw new RuntimeException(t);
-            }
+            DeviceStateUtils.runWithControlDeviceStatePermission(
+                    () -> mDeviceStateManager.cancelStateRequest());
         }
     }
 

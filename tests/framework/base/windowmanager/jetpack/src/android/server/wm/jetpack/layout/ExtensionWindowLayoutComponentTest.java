@@ -44,6 +44,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.content.res.Resources;
 import android.graphics.Rect;
 import android.hardware.devicestate.DeviceStateManager;
 import android.hardware.devicestate.DeviceStateRequest;
@@ -66,7 +67,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.FlakyTest;
 import androidx.test.filters.LargeTest;
 import androidx.window.extensions.layout.DisplayFeature;
+import androidx.window.extensions.layout.DisplayFoldFeature;
 import androidx.window.extensions.layout.FoldingFeature;
+import androidx.window.extensions.layout.SupportedWindowFeatures;
 import androidx.window.extensions.layout.WindowLayoutComponent;
 import androidx.window.extensions.layout.WindowLayoutInfo;
 import androidx.window.sidecar.SidecarDisplayFeature;
@@ -78,6 +81,7 @@ import com.android.compatibility.common.util.CddTest;
 import com.google.common.collect.BoundType;
 import com.google.common.collect.Range;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -103,6 +107,7 @@ import java.util.stream.Collectors;
 @RunWith(AndroidJUnit4.class)
 public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTestBase {
 
+    private DeviceStateManager mDeviceStateManager;
     private WindowLayoutComponent mWindowLayoutComponent;
     private WindowLayoutInfo mWindowLayoutInfo;
 
@@ -123,6 +128,15 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
         mWindowLayoutComponent =
                 (WindowLayoutComponent) mWindowExtensionTestRule.getExtensionComponent();
         assumeNotNull(mWindowLayoutComponent);
+        mDeviceStateManager = mContext.getSystemService(DeviceStateManager.class);
+    }
+
+    @After
+    @Override
+    public void tearDown() throws Throwable {
+        // TODO(b/326498471) See how tear down affects other tests.
+        DeviceStateUtils
+                .runWithControlDeviceStatePermission(mDeviceStateManager::cancelStateRequest);
     }
 
     private Context createContextWithNonActivityWindow() {
@@ -230,10 +244,7 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
             "androidx.window.extensions.layout.WindowLayoutComponent#addWindowLayoutInfoListener"})
     public void testWindowLayoutComponent_windowLayoutInfoListener_deviceStateChanged()
             throws Throwable {
-        final Context instrumentationContext = getInstrumentation().getTargetContext();
-        final DeviceStateManager deviceStateManager = instrumentationContext
-                .getSystemService(DeviceStateManager.class);
-        final int[] supportedDeviceStates = deviceStateManager.getSupportedStates();
+        final int[] supportedDeviceStates = mDeviceStateManager.getSupportedStates();
         assumeTrue(supportedDeviceStates.length > 1);
 
         TestActivity testActivity = startFullScreenActivityNewTask(
@@ -250,7 +261,7 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
         for (int deviceState : supportedDeviceStates) {
             DeviceStateRequest request = DeviceStateRequest.newBuilder(deviceState).build();
             DeviceStateUtils.runWithControlDeviceStatePermission(() ->
-                    deviceStateManager.requestBaseStateOverride(
+                    mDeviceStateManager.requestBaseStateOverride(
                             request,
                             getInstrumentation().getTargetContext().getMainExecutor(),
                             new DeviceStateRequest.Callback() {
@@ -262,8 +273,6 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
             deviceStateCallbackConsumer.waitAndGet();
             deviceStateCallbackConsumer.clearQueue();
         }
-        DeviceStateUtils.runWithControlDeviceStatePermission(
-                deviceStateManager::cancelBaseStateOverride);
 
         mWindowLayoutComponent.removeWindowLayoutInfoListener(windowLayoutInfoConsumer);
     }
@@ -687,6 +696,91 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
                 "equals", new Class<?>[]{Object.class}, boolean.class);
         validateClassInfo(windowLayoutInfoClass,
                 "hashCode", new Class<?>[]{}, int.class);
+    }
+
+    /**
+     * Tests that if a device supports half-opened mode then the fold reports half-opened support.
+     */
+    @Test
+    @ApiTest(apis = {"androidx.window.layout.WindowLayoutComponent#getSupportedWindowFeatures"})
+    public void test_half_opened_state_reports_half_opened_property() {
+        SupportedWindowFeatures features = mWindowLayoutComponent.getSupportedWindowFeatures();
+        assumeTrue(isHalfOpenedSupported());
+
+        List<DisplayFoldFeature> foldFeatures = features.getDisplayFoldFeatures();
+
+        boolean hasOneHalfOpenedFeature = false;
+        for (DisplayFoldFeature feature : foldFeatures) {
+            hasOneHalfOpenedFeature = hasOneHalfOpenedFeature
+                    || feature.hasProperty(DisplayFoldFeature.FOLD_PROPERTY_SUPPORTS_HALF_OPENED);
+        }
+        assertTrue("Half opened device must report half opened feature",
+                hasOneHalfOpenedFeature);
+    }
+
+    /**
+     * Test that if a fold is reported through {@link WindowLayoutInfo} then a fold is reported
+     * through {@link SupportedWindowFeatures}.
+     */
+    @Test
+    @ApiTest(apis = {
+            "androidx.window.extensions.layout.WindowLayoutComponent#addWindowLayoutInfoListener",
+            "androidx.window.extensions.layout.WindowLayoutComponent#getSupportedWindowFeatures"})
+    public void test_foldable_reports_all_folds() throws Throwable {
+        List<DisplayFoldFeature> displayFoldFeatures = mWindowLayoutComponent
+                .getSupportedWindowFeatures().getDisplayFoldFeatures();
+
+        TestActivity testActivity = startFullScreenActivityNewTask(
+                TestActivity.class, null /* activityId */);
+
+        mWindowLayoutInfo = getExtensionWindowLayoutInfo(testActivity);
+
+        List<FoldingFeature> foldingFeatures = extractFoldingFeatures(mWindowLayoutInfo);
+        assertTrue("Supported features is an upper bound on folding features",
+                foldingFeatures.size() <= displayFoldFeatures.size());
+    }
+
+    private List<FoldingFeature> extractFoldingFeatures(WindowLayoutInfo windowLayoutInfo) {
+        List<FoldingFeature> foldingFeatures = new ArrayList<>();
+        for (DisplayFeature feature : windowLayoutInfo.getDisplayFeatures()) {
+            if (feature instanceof FoldingFeature) {
+                foldingFeatures.add((FoldingFeature) feature);
+            }
+        }
+        return foldingFeatures;
+    }
+
+    private boolean isHalfOpenedSupported() {
+        DeviceStateManager deviceStateManager = mContext.getSystemService(DeviceStateManager.class);
+
+        final int[] supportedStates = deviceStateManager.getSupportedStates();
+        final int[] halfOpenedDeviceStates = getHalfOpenedDeviceStates(mContext);
+        return containsAny(supportedStates, halfOpenedDeviceStates);
+    }
+
+    // TODO(b/326289376) replace with API from DeviceStateManager.
+    private int[] getHalfOpenedDeviceStates(Context context) {
+        return context.getResources()
+                .getIntArray(Resources.getSystem()
+                        .getIdentifier("config_halfFoldedDeviceStates", "array", "android"));
+    }
+
+    private static boolean containsAny(int[] source, int[] values) {
+        for (int i = 0; i < values.length; i++) {
+            if (contains(source, values[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean contains(int[] source, int value) {
+        for (int i = 0; i < source.length; i++) {
+            if (source[i] == value) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

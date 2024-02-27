@@ -75,7 +75,7 @@ public class ActivityEmbeddingLifecycleTestBase extends ActivityEmbeddingTestBas
 
     @After
     @Override
-    public void tearDown() {
+    public void tearDown() throws Throwable {
         super.tearDown();
         mApplication.unregisterActivityLifecycleCallbacks(mLifecycleCallbacks);
         if (mEventLogClient != null) {
