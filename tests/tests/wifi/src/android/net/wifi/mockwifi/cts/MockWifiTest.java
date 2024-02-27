@@ -53,6 +53,7 @@ import android.util.Log;
 import android.wifi.mockwifi.MockWifiModemManager;
 import android.wifi.mockwifi.nl80211.IClientInterfaceImp;
 import android.wifi.mockwifi.nl80211.IWifiScannerImp;
+import android.wifi.mockwifi.nl80211.WifiNL80211ManagerImp;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SdkSuppress;
@@ -336,7 +337,7 @@ public class MockWifiTest {
 
     private NativeScanResult[] getMockNativeResults() {
         byte[] TestSsid =
-                new byte[] {'G', 'o', 'o', 'g', 'l', 'e', 'G', 'u', 'e', 's', 't'};
+                new byte[] {'M', 'o', 'c', 'k', 'T', 'e', 's', 't', 'A', 'P'};
         byte[] TestBssid =
                 new byte[] {(byte) 0x12, (byte) 0xef, (byte) 0xa1,
                     (byte) 0x2c, (byte) 0x97, (byte) 0x8b};
@@ -469,8 +470,9 @@ public class MockWifiTest {
         try {
             final NativeScanResult[] mockScanData = getMockZeroLengthSubElementIe();
             uiAutomation.adoptShellPermissionIdentity();
+            final String currentStaIfaceName = getIfaceName();
             assertTrue(sMockModemManager.connectMockWifiModemService(sContext));
-            assertTrue(sMockModemManager.configureWifiScannerInterfaceMock(getIfaceName(),
+            assertTrue(sMockModemManager.configureWifiScannerInterfaceMock(currentStaIfaceName,
                     new IWifiScannerImp.WifiScannerInterfaceMock() {
                     @Override
                     public NativeScanResult[] getScanResults() {
@@ -478,8 +480,12 @@ public class MockWifiTest {
                     }
                 }));
             sMockModemManager.updateConfiguredMockedMethods();
+            WifiNL80211ManagerImp mockedWifiNL80211Manager =
+                    sMockModemManager.getWifiNL80211ManagerImp();
+            assertNotNull(mockedWifiNL80211Manager);
+            mockedWifiNL80211Manager.mockScanResultReadyEvent(currentStaIfaceName);
             PollingCheck.check(
-                    "getscanResults fail", 30_000,
+                    "getscanResults fail", 4_000,
                     () -> {
                         List<ScanResult> scanResults = sWifiManager.getScanResults();
                         if (scanResults.size() == 0) {

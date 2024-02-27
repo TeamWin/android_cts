@@ -154,6 +154,7 @@ public class WifiNL80211ManagerImp extends IWificond.Stub {
 
     public boolean configureClientInterfaceMock(String ifaceName,
             IClientInterfaceImp.ClientInterfaceMock clientInterfaceMock) {
+        if (mMockIClientInterfaces ==  null) return false;
         IClientInterfaceImp clientInterface = mMockIClientInterfaces.get(ifaceName);
         if (clientInterface == null) return false;
         Set<String> configuredMethods = clientInterface.setClientInterfaceMock(clientInterfaceMock);
@@ -170,6 +171,9 @@ public class WifiNL80211ManagerImp extends IWificond.Stub {
      */
     public boolean configureWifiScannerInterfaceMock(String ifaceName,
             IWifiScannerImp.WifiScannerInterfaceMock wifiScannerInterfaceMock) {
+        if (mMockIWifiScanners == null) {
+            return false;
+        }
         IWifiScannerImp wifiscanner = mMockIWifiScanners.get(ifaceName);
         if (wifiscanner == null || wifiScannerInterfaceMock == null) {
             Log.e(TAG, "WifiScanner interface mock: Null!");
@@ -192,5 +196,22 @@ public class WifiNL80211ManagerImp extends IWificond.Stub {
                     + MockWifiModemService.METHOD_IDENTIFIER);
         }
         return sbuf.toString();
+    }
+
+    /**
+     * Trigger the scan ready event to force frameworks to get scan result again.
+     * Otherwise the mocked scan result may not work because the frameworks keep use cache data
+     * since there is no scan ready event.
+     */
+    public void mockScanResultReadyEvent(String ifaceName) {
+        if (mMockIWifiScanners == null || ifaceName == null) {
+            return;
+        }
+        IWifiScannerImp wifiscanner = mMockIWifiScanners.get(ifaceName);
+        if (wifiscanner == null) {
+            Log.e(TAG, "WifiScanner interface mock: Null!");
+            return;
+        }
+        wifiscanner.mockScanResultReadyEvent();
     }
 }
