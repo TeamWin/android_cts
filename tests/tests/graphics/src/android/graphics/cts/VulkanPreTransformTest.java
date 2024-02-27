@@ -16,6 +16,8 @@
 
 package android.graphics.cts;
 
+import static com.android.window.flags.Flags.FLAG_ENABLE_BUFFER_TRANSFORM_HINT_FROM_DISPLAY;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -23,6 +25,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.util.Log;
 import android.view.PixelCopy;
 import android.view.SurfaceView;
@@ -35,7 +38,6 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.SynchronousPixelCopy;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -107,8 +109,8 @@ public class VulkanPreTransformTest {
         mContext = InstrumentationRegistry.getContext();
     }
 
+    @RequiresFlagsEnabled(FLAG_ENABLE_BUFFER_TRANSFORM_HINT_FROM_DISPLAY)
     @Test
-    @Ignore
     public void testVulkanPreTransformSetToMatchCurrentTransform() throws Throwable {
         Log.d(TAG, "testVulkanPreTransformSetToMatchCurrentTransform start");
         if (!hasDeviceFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)
@@ -122,8 +124,8 @@ public class VulkanPreTransformTest {
         sActivity = null;
     }
 
+    @RequiresFlagsEnabled(FLAG_ENABLE_BUFFER_TRANSFORM_HINT_FROM_DISPLAY)
     @Test
-    @Ignore
     public void testVulkanPreTransformNotSetToMatchCurrentTransform() throws Throwable {
         Log.d(TAG, "testVulkanPreTransformNotSetToMatchCurrentTransform start");
         if (!hasDeviceFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)

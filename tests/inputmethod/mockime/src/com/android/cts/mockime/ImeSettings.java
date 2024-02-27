@@ -74,6 +74,8 @@ public class ImeSettings {
      */
     private static final String ON_BACK_CALLBACK_ENABLED = "onBackCallbackEnabled";
 
+    private static final String USE_CUSTOM_EXTRACT_TEXT_VIEW = "useCustomExtractTextView";
+
     @NonNull
     private final PersistableBundle mBundle;
     private final SessionChannel mChannel;
@@ -216,6 +218,11 @@ public class ImeSettings {
         if (mChannel != null) {
             mChannel.close();
         }
+    }
+
+    /** Whether or not custom extract view hierarchy should be used. */
+    public boolean isCustomExtractTextViewEnabled() {
+        return mBundle.getBoolean(USE_CUSTOM_EXTRACT_TEXT_VIEW, false);
     }
 
     static Bundle serializeToBundle(@NonNull String eventCallbackActionName,
@@ -478,6 +485,12 @@ public class ImeSettings {
          */
         public Builder setOnBackCallbackEnabled(boolean enabled) {
             mBundle.putBoolean(ON_BACK_CALLBACK_ENABLED, enabled);
+            return this;
+        }
+
+        /** Sets whether or not custom extract view hierarchy should be used. */
+        public Builder setCustomExtractTextViewEnabled(boolean enabled) {
+            mBundle.putBoolean(USE_CUSTOM_EXTRACT_TEXT_VIEW, enabled);
             return this;
         }
     }

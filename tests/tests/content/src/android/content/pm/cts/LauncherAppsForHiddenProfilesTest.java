@@ -33,6 +33,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static junit.framework.Assert.fail;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assume.assumeFalse;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -96,6 +97,11 @@ public class LauncherAppsForHiddenProfilesTest {
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+        // Private profile is not supported on wear devices
+        // TODO(b/290333800): filter out with PS specific annotation once ready
+        assumeFalse(mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH));
+
         mLauncherApps = mContext.getSystemService(LauncherApps.class);
         mDefaultHome = getDefaultLauncher(InstrumentationRegistry.getInstrumentation());
     }

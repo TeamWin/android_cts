@@ -41,6 +41,7 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -1280,6 +1281,40 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
             // Wait for the async call into WearableSensingService.
             SystemClock.sleep(2000);
             verifyWearableSensingServiceHotwordValidatedCalled();
+        } finally {
+            cleanupForWearableTests(alwaysOnHotwordDetector);
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(android.app.wearable.Flags.FLAG_ENABLE_HOTWORD_WEARABLE_SENSING_API)
+    public void testHotwordDetectionService_onDetectFromWearable_doesNotNoteRecordAudioOp()
+            throws Throwable {
+        assumeFalse(isWatch());
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector =
+                createAlwaysOnHotwordDetectorWithSoundTriggerInjection();
+        try {
+            setupForWearableTests(alwaysOnHotwordDetector);
+            CountDownLatch statusLatch = new CountDownLatch(1);
+            sWearableSensingManager.startHotwordRecognition(
+                    VIS_COMPONENT_NAME,
+                    mExecutor,
+                    (status) -> {
+                        statusLatch.countDown();
+                    });
+            assertThat(statusLatch.await(3, SECONDS)).isTrue();
+            mService.initDetectRejectLatch();
+
+            sendAudioStreamFromWearable();
+
+            // wait for onDetected() to be called
+            mService.waitOnDetectOrRejectCalled();
+            AlwaysOnHotwordDetector.EventPayload detectResult =
+                    mService.getHotwordServiceOnDetectedResult();
+            // make sure this is onDetected and not onRejected
+            assertThat(detectResult).isNotNull();
+
+            verifyRecordAudioNote(/* shouldNote= */ false);
         } finally {
             cleanupForWearableTests(alwaysOnHotwordDetector);
         }
@@ -2588,5 +2623,9 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
                 });
         assertThat(latch.await(3, SECONDS)).isTrue();
         return statusRef.get();
+    }
+
+    private boolean isWatch() {
+        return sPkgMgr.hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 }
