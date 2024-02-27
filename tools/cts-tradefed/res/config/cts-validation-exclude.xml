@@ -518,4 +518,8 @@
     <option name="compatibility:exclude-filter" value="CtsDomainVerificationDeviceMultiUserTestCases com.android.cts.packagemanager.verify.domain.device.multiuser.DomainVerificationWorkProfileAllowParentLinkingTests#inPersonal_verifiedInBothProfiles" />
     <option name="compatibility:exclude-filter" value="CtsDomainVerificationDeviceMultiUserTestCases com.android.cts.packagemanager.verify.domain.device.multiuser.DomainVerificationWorkProfileAllowParentLinkingTests#inPersonal_verifiedInCurrentProfile" />
 
+    <!-- b/323332123 -->
+    <option name="compatibility:exclude-filter" value="CtsAppCloningHostTest com.android.cts.appcloning.contacts.ManagedProfileContactsAccessTest#testClonedAppsAccessManagedProfileContacts_contactReadsBlocked" />
+    <option name="compatibility:exclude-filter" value="CtsAppCloningHostTest com.android.cts.appcloning.contacts.ManagedProfileContactsAccessTest#testClonedAppsAccessManagedProfileContacts_contactReadSuccessfully" />
+
 </configuration>
