@@ -186,7 +186,8 @@ public class TestListActivity extends AbstractTestListActivity implements View.O
         item = (MenuItem) menu.findItem(R.id.system_switch_item);
         if (item != null) {
             item.setActionView(R.layout.system_switch);
-            final Switch systemSwitch = item.getActionView().findViewById(R.id.switch_button);
+            final Switch systemSwitch = item.getActionView().findViewById(
+                    R.id.system_switch_button);
 
             systemSwitch.setChecked(sIsSystemEnabled);
             systemSwitch.setOnCheckedChangeListener(
