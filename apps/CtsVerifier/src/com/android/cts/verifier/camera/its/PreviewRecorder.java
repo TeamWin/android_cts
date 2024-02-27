@@ -17,6 +17,7 @@
 package com.android.cts.verifier.camera.its;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.media.CamcorderProfile;
 import android.media.EncoderProfiles;
@@ -37,6 +38,7 @@ import android.util.Size;
 import android.view.Surface;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -54,6 +56,9 @@ class PreviewRecorder implements AutoCloseable {
 
     // Default bitrate to use for recordings when querying CamcorderProfile fails.
     private static final int DEFAULT_RECORDING_BITRATE = 25_000_000; // 25 Mbps
+
+    // Frame capture timeout duration in milliseconds.
+    private static final int FRAME_CAPTURE_TIMEOUT_MS = 2000; // 2 seconds
 
     // Simple Vertex Shader that rotates the texture before passing it to Fragment shader.
     private static final String VERTEX_SHADER = String.join(
@@ -548,6 +553,62 @@ class PreviewRecorder implements AutoCloseable {
     int getNumFrames() {
         synchronized(mRecorderLock) {
             return mNumFrames;
+        }
+    }
+
+    /**
+     * Copies a frame encoded as a texture by {@code mCameraTexture} to a Bitmap by running our
+     * simple shader program for one frame and then convert the frame to a JPEG and write to
+     * the JPEG bytes to the {@code outputStream}.
+     *
+     * This method should not be called while recording.
+     *
+     * @param outputStream The stream to which the captured JPEG image bytes are written to
+     */
+    void getFrame(OutputStream outputStream) throws ItsException {
+        synchronized (mRecorderLock) {
+            if (mIsRecording) {
+                throw new ItsException("Attempting to get frame while recording is active is an "
+                        + "invalid combination.");
+            }
+
+            ConditionVariable cv = new ConditionVariable();
+            cv.close();
+            // GL copy texture to JPEG should happen on the thread EGL Context was bound to
+            mHandler.post(() -> {
+                try {
+                    copyFrameToRecorder();
+
+                    ByteBuffer frameBuffer = ByteBuffer.allocateDirect(
+                            mPreviewSize.getWidth() * mPreviewSize.getHeight() * 4);
+                    frameBuffer.order(ByteOrder.nativeOrder());
+
+                    GLES20.glReadPixels(
+                            0,
+                            0,
+                            mPreviewSize.getWidth(),
+                            mPreviewSize.getHeight(),
+                            GLES20.GL_RGBA,
+                            GLES20.GL_UNSIGNED_BYTE,
+                            frameBuffer);
+                    Bitmap frame = Bitmap.createBitmap(
+                            mPreviewSize.getWidth(),
+                            mPreviewSize.getHeight(),
+                            Bitmap.Config.ARGB_8888);
+                    frame.copyPixelsFromBuffer(frameBuffer);
+                    frame.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+                } catch (ItsException e) {
+                    Logt.e(TAG, "Could not get frame from texture", e);
+                    throw new ItsRuntimeException("Failed to get frame from texture", e);
+                } finally {
+                    cv.open();
+                }
+            });
+
+            // Wait for up to two seconds for jpeg frame capture.
+            if (!cv.block(FRAME_CAPTURE_TIMEOUT_MS)) {
+                throw new ItsException("Frame capture timed out");
+            }
         }
     }
 
