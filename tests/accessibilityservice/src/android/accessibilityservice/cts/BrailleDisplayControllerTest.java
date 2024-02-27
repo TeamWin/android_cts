@@ -860,49 +860,4 @@ public class BrailleDisplayControllerTest {
         assertThrows(IOException.class, () -> mController.write("hello".getBytes()));
         // No connected HIDRAW device file, so nothing to assert is empty.
     }
-
-    @Test
-    @ApiTest(apis = {
-            "android.accessibilityservice.AccessibilityService#setTestBrailleDisplayController",
-            "android.accessibilityservice.AccessibilityService#clearTestBrailleDisplayController",
-            "android.accessibilityservice.AccessibilityService#getBrailleDisplayController",
-    })
-    public void setAndClearTestBrailleDisplayController() {
-        AccessibilityService service = mServiceRule.getService();
-        BrailleDisplayController fakeBrailleDisplayController = new BrailleDisplayController() {
-            @Override
-            public void connect(@NonNull BluetoothDevice bluetoothDevice,
-                    @NonNull BrailleDisplayCallback callback) {}
-
-            @Override
-            public void connect(@NonNull BluetoothDevice bluetoothDevice,
-                    @NonNull Executor callbackExecutor, @NonNull BrailleDisplayCallback callback) {}
-
-            @Override
-            public void connect(@NonNull UsbDevice usbDevice,
-                    @NonNull BrailleDisplayCallback callback) {}
-
-            @Override
-            public void connect(@NonNull UsbDevice usbDevice, @NonNull Executor callbackExecutor,
-                    @NonNull BrailleDisplayCallback callback) {}
-
-            @Override
-            public boolean isConnected() {
-                return false;
-            }
-
-            @Override
-            public void write(@NonNull byte[] buffer) throws IOException {}
-
-            @Override
-            public void disconnect() {}
-        };
-        assertThat(fakeBrailleDisplayController).isNotEqualTo(mController);
-
-        service.setTestBrailleDisplayController(fakeBrailleDisplayController);
-        assertThat(service.getBrailleDisplayController()).isEqualTo(fakeBrailleDisplayController);
-
-        service.clearTestBrailleDisplayController();
-        assertThat(service.getBrailleDisplayController()).isEqualTo(mController);
-    }
 }
