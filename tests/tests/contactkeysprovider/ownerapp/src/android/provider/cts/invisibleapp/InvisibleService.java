@@ -20,7 +20,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
-import android.provider.ContactKeysManager;
+import android.provider.E2eeContactKeysManager;
 
 /**
  * Helper app to test the cases where apps read keys that are owned by other apps. This service
@@ -34,7 +34,7 @@ public class InvisibleService extends Service {
     private static final String ACCOUNT_ID = "someAccountId";
     private static final byte[] KEY_VALUE = new byte[] {(byte) 10};
 
-    private ContactKeysManager mContactKeysManager;
+    private E2eeContactKeysManager mContactKeysManager;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -44,16 +44,17 @@ public class InvisibleService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Context context = this.getApplicationContext();
-        mContactKeysManager = context.getSystemService(ContactKeysManager.class);
-        mContactKeysManager.updateOrInsertContactKey(LOOKUP_KEY, DEVICE_ID, ACCOUNT_ID, KEY_VALUE);
-        mContactKeysManager.updateOrInsertSelfKey(DEVICE_ID, ACCOUNT_ID, KEY_VALUE);
+        mContactKeysManager = context.getSystemService(E2eeContactKeysManager.class);
+        mContactKeysManager.updateOrInsertE2eeContactKey(LOOKUP_KEY, DEVICE_ID, ACCOUNT_ID,
+                KEY_VALUE);
+        mContactKeysManager.updateOrInsertE2eeSelfKey(DEVICE_ID, ACCOUNT_ID, KEY_VALUE);
         return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
-        mContactKeysManager.removeContactKey(LOOKUP_KEY, DEVICE_ID, ACCOUNT_ID);
-        mContactKeysManager.removeSelfKey(DEVICE_ID, ACCOUNT_ID);
+        mContactKeysManager.removeE2eeContactKey(LOOKUP_KEY, DEVICE_ID, ACCOUNT_ID);
+        mContactKeysManager.removeE2eeSelfKey(DEVICE_ID, ACCOUNT_ID);
         super.onDestroy();
     }
 }
