@@ -607,21 +607,34 @@ class AutoRevokeTest {
                     .res(Pattern.compile(".*id/car_ui_first_action_container"))
                     .hasDescendant(rowSelector)
             waitFindObject(rowItemSelector).parent
+        } else if (hasFeatureWatch()) {
+            waitFindObject(rowSelector)
         } else {
             waitFindObject(rowSelector).parent.parent
         }
 
-        val uninstallSelector = if (isAutomotiveDevice()) {
-            By.res(Pattern.compile(".*id/car_ui_secondary_action"))
-        } else {
-            By.desc("Uninstall or disable")
-        }
+        if (!hasFeatureWatch()) {
+            val uninstallSelector = if (isAutomotiveDevice()) {
+                By.res(Pattern.compile(".*id/car_ui_secondary_action"))
+            } else {
+                By.desc("Uninstall or disable")
+            }
 
-        rowItem.findObject(uninstallSelector).click()
+            rowItem.findObject(uninstallSelector).click()
+        } else {
+            rowItem.click()
+            waitFindObject(By.text("Uninstall")).click()
+        }
     }
 
     private fun clickUninstallOk() {
-        waitFindObject(By.text("OK")).click()
+        val uninstallSelector = if (hasFeatureWatch()) {
+                By.desc("OK")
+            } else {
+                By.text("OK")
+            }
+
+        waitFindObject(uninstallSelector).click()
     }
 
     private inline fun withDummyApp(
