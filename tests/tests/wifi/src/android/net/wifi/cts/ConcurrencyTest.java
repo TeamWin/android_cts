@@ -1057,15 +1057,15 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
 
     /**
      * Test that we can trigger a P2P scan using
-     * {@link WifiP2pManager#discoverPeers(
+     * {@link WifiP2pManager#startPeerDiscovery(
      * WifiP2pManager.Channel, WifiP2pDiscoveryConfig, WifiP2pManager.ActionListener)}
      */
-    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#discoverPeersWithConfigParams"})
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#startPeerDiscovery"})
     @RequiresFlagsEnabled(Flags.FLAG_ANDROID_V_WIFI_API)
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
             codeName = "VanillaIceCream")
     @Test
-    public void testDiscoverPeers() {
+    public void testStartPeerDiscovery() {
         if (!sWifiP2pManager.isChannelConstrainedDiscoverySupported()) return;
 
         resetResponse(MY_RESPONSE);
@@ -1094,7 +1094,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         int retryCount = 3;
         while (retryCount > 0) {
             resetResponse(MY_RESPONSE);
-            sWifiP2pManager.discoverPeers(sWifiP2pChannel,
+            sWifiP2pManager.startPeerDiscovery(sWifiP2pChannel,
                     discoveryConfig, sActionListener);
             assertTrue(waitForServiceResponse(MY_RESPONSE));
             if (MY_RESPONSE.success
