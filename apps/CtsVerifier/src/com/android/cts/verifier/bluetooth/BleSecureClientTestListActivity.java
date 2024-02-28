@@ -52,10 +52,11 @@ public class BleSecureClientTestListActivity extends PassFailButtons.TestListAct
                     "com.android.cts.verifier.bluetooth.BleAdvertiserHardwareScanFilterActivity.");
         }
 
-        // RPA is optional on TVs already released before Android 11
+        // RPA is optional on TVs and Cars already released before Android 11
         boolean isTv = getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+        boolean isCar = getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
         int firstSdk = SystemProperties.getInt("ro.product.first_api_level", 0);
-        if (isTv && (firstSdk <= Build.VERSION_CODES.Q)) {
+        if ((isTv || isCar) && (firstSdk <= Build.VERSION_CODES.Q)) {
             disabledTest.add(
                     "com.android.cts.verifier.bluetooth.BleSecureConnectionPriorityClientTestActivity");
             disabledTest.add(
