@@ -26,11 +26,13 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 import android.app.ActivityOptions;
 import android.app.ActivityOptions.LaunchCookie;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.media.projection.MediaProjection;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
@@ -293,6 +295,8 @@ public class ScreenRecordingCallbackTests extends WindowManagerTestBase {
             "android.view.WindowManager#removeScreenRecordingCallback"})
     @Test
     public void testPartialScreenSharingNotRecorded() throws InterruptedException {
+        assumeFalse(mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH));
+
         // The LaunchCookie is used to test partial screen sharing. In the typical Media
         // Projection flow, when a user selects partial screen sharing, their selected app is
         // launched into a new task with a specific launch cookie. Media Projection then records
