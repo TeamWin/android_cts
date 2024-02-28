@@ -70,6 +70,8 @@ FOV_THRESH_TELE40 = 40
 FOV_THRESH_TELE = 60
 FOV_THRESH_UW = 90
 
+IMAGE_ROTATION_THRESHOLD = 2
+
 LOW_RES_IMG_THRESH = 320 * 240
 
 RGB_GRAY_WEIGHTS = (0.299, 0.587, 0.114)  # RGB to Gray conversion matrix
@@ -976,3 +978,39 @@ def find_aruco_markers(input_img, output_img_path):
   cv2.aruco.drawDetectedMarkers(input_img, corners, ids)
   image_processing_utils.write_image(input_img/255, output_img_path)
   return corners, ids
+
+
+def get_patch_from_aruco_markers(
+    input_img, aruco_marker_corners, aruco_marker_ids):
+  """Returns the rectangle patch from the aruco marker corners.
+
+  Note: Refer to image used in scene7 for ArUco markers location.
+
+  Args:
+    input_img: input img in numpy array with ArUco markers
+      to be detected
+    aruco_marker_corners: array of aruco marker corner coordinates detected by
+      opencv_processing_utils.find_aruco_markers
+    aruco_marker_ids: array of ids of aruco markers detected by
+      opencv_processing_utils.find_aruco_markers
+  Returns:
+    Numpy float image array of the rectangle patch
+  """
+  outer_rect_coordinates = {}
+  for corner, marker_id in zip(aruco_marker_corners, aruco_marker_ids):
+    corner = corner.reshape(4, 2)  # opencv returns 3D array
+    index = marker_id[0]
+    corner = numpy.roll(corner, 4)
+    outer_rect_coordinates[index] = tuple(corner[index])
+
+  # Ensure that the image is not rotated
+  assert((outer_rect_coordinates[1][1] - outer_rect_coordinates[0][1])
+         <= IMAGE_ROTATION_THRESHOLD)
+  assert((outer_rect_coordinates[3][1] - outer_rect_coordinates[2][1])
+         <= IMAGE_ROTATION_THRESHOLD)
+  top_left = tuple(map(int, outer_rect_coordinates[0]))
+  bottom_right = tuple(map(int, outer_rect_coordinates[2]))
+  cv2.rectangle(input_img, top_left, bottom_right,
+                tuple(numpy.array(CV2_RED)/255), CV2_LINE_THICKNESS)
+  return input_img[top_left[1]:bottom_right[1],
+                   top_left[0]:bottom_right[0]].copy()
