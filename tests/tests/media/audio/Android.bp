@@ -77,7 +77,6 @@ android_test {
         "android.media.audio-aconfig-java",
         "com.android.media.audioserver-aconfig-java",
         "CtsVirtualDeviceCommonLib",
-        "android.os.vibrator.flags-aconfig-java",
         "androidx.test.ext.junit",
         "compatibility-device-util-axt",
         "cts-media-common",
