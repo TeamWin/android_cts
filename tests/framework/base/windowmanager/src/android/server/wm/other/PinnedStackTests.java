@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm.activity;
+package android.server.wm.other;
 
 import static android.app.ActivityManager.LOCK_TASK_MODE_NONE;
 import static android.app.Flags.FLAG_ENABLE_PIP_UI_STATE_CALLBACK_ON_ENTERING;

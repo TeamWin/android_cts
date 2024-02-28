@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm.activity;
+package android.server.wm.other;
 
 import static android.server.wm.app.Components.RECURSIVE_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;

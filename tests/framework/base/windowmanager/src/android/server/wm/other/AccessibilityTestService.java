@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.activity;
+package android.server.wm.other;
 
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.graphics.Color;

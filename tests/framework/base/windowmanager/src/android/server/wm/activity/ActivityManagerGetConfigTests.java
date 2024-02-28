@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.am;
+package android.server.wm.activity;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 

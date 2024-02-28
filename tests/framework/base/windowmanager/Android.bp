@@ -23,7 +23,7 @@ filegroup {
 
 filegroup {
     name: "cts-wm-aspect-ratio-test-base",
-    srcs: ["src/android/server/wm/window/AspectRatioTestsBase.java"],
+    srcs: ["src/android/server/wm/activity/AspectRatioTestsBase.java"],
 }
 
 filegroup {
@@ -33,7 +33,7 @@ filegroup {
 
 filegroup {
     name: "cts-wm-force-relayout-test-base",
-    srcs: ["src/android/server/wm/activity/ForceRelayoutTestBase.java"],
+    srcs: ["src/android/server/wm/insets/ForceRelayoutTestBase.java"],
 }
 
 java_defaults {
