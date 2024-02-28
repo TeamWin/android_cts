@@ -115,7 +115,6 @@ import com.google.common.base.Preconditions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
@@ -226,6 +225,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     private static final int MESSAGE_BROADCAST_NOTIFICATION = 1;
     private static final int MESSAGE_SERVICE_NOTIFICATION = 2;
     private static final int MESSAGE_CLICK_NOTIFICATION = 3;
+    private static final int MESSAGE_CANCEL_ALL_NOTIFICATIONS = 4;
 
     private String mId;
     private INotificationUriAccessService mNotificationUriAccessService;
@@ -1002,6 +1002,16 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     /**
+     * Sends a cancellation message for the specified notificationId to the serviceConnection.
+     */
+    public void sendCancelAll(FutureServiceConnection serviceConnection,
+                           Handler callback) throws Exception {
+        Messenger service = new Messenger(serviceConnection.get(40000));
+        service.send(Message.obtain(null, MESSAGE_CANCEL_ALL_NOTIFICATIONS, -1, -1,
+                new Messenger(callback)));
+    }
+
+    /**
      *  Function to identify if the device is a cuttlefish instance.
      *  The testRankingUpdateSentWithPressure CTS test verifies device behavior that requires large
      *  numbers of notifications sent in a short period of time, which non-production devices like
@@ -1033,7 +1043,6 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
      * 50 seconds. Tests will time out after approximately 60 seconds, so binding needs to happen
      * in under 10 seconds.
      */
-    @Ignore("b/322645812, b/322839106: test causing OOMs on lower-memory devices")
     @LargeTest
     @RequiresDevice
     @Test
@@ -1110,27 +1119,15 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             fail("Interrupted before notifications received or ranking updates received.");
         }
 
-        mNotificationManager.cancelAll();
-
-        // Clean up. We add sleep to give low ram devices a chance to unbind the service
-        // successfully without overwhelming the device.
-        mContext.unbindService(pressureService00);
-        Thread.sleep(900);
-        mContext.unbindService(pressureService01);
-        Thread.sleep(900);
-        mContext.unbindService(pressureService02);
-        Thread.sleep(900);
-        mContext.unbindService(pressureService03);
-        Thread.sleep(900);
-        mContext.unbindService(pressureService04);
-        Thread.sleep(900);
-        mContext.unbindService(pressureService05);
-        Thread.sleep(900);
-        mContext.unbindService(pressureService06);
-        Thread.sleep(900);
-        mContext.unbindService(pressureService07);
-        Thread.sleep(900);
-
+        // For each app, send a message to cancel all the current notifications.
+        sendCancelAll(pressureService00, callback);
+        sendCancelAll(pressureService01, callback);
+        sendCancelAll(pressureService02, callback);
+        sendCancelAll(pressureService03, callback);
+        sendCancelAll(pressureService04, callback);
+        sendCancelAll(pressureService05, callback);
+        sendCancelAll(pressureService06, callback);
+        sendCancelAll(pressureService07, callback);
 
         // Ensure all notifications get removed.
         try {
@@ -1144,14 +1141,52 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertTrue(notificationRankingUpdates);
         assertTrue(notificationsRemoved);
 
-        mListener.removeTestPackage(PRESSURE_APP_00);
-        mListener.removeTestPackage(PRESSURE_APP_01);
-        mListener.removeTestPackage(PRESSURE_APP_02);
-        mListener.removeTestPackage(PRESSURE_APP_03);
-        mListener.removeTestPackage(PRESSURE_APP_04);
-        mListener.removeTestPackage(PRESSURE_APP_05);
-        mListener.removeTestPackage(PRESSURE_APP_06);
-        mListener.removeTestPackage(PRESSURE_APP_07);
+        // Clean up. We add sleep to give low ram devices a chance to unbind the service
+        // successfully without overwhelming the device.
+        if (pressureService00 != null) {
+            mContext.unbindService(pressureService00);
+            pressureService00 = null;
+            Thread.sleep(900);
+        }
+        if (pressureService01 != null) {
+            mContext.unbindService(pressureService01);
+            Thread.sleep(900);
+        }
+        if (pressureService02 != null) {
+            mContext.unbindService(pressureService02);
+            Thread.sleep(900);
+        }
+        if (pressureService03 != null) {
+            mContext.unbindService(pressureService03);
+            Thread.sleep(900);
+        }
+        if (pressureService04 != null) {
+            mContext.unbindService(pressureService04);
+            Thread.sleep(900);
+        }
+        if (pressureService05 != null) {
+            mContext.unbindService(pressureService05);
+            Thread.sleep(900);
+        }
+        if (pressureService06 != null) {
+            mContext.unbindService(pressureService06);
+            Thread.sleep(900);
+        }
+        if (pressureService07 != null) {
+            mContext.unbindService(pressureService07);
+            Thread.sleep(900);
+        }
+
+        if (mListener != null) {
+            mListener.removeTestPackage(PRESSURE_APP_00);
+            mListener.removeTestPackage(PRESSURE_APP_01);
+            mListener.removeTestPackage(PRESSURE_APP_02);
+            mListener.removeTestPackage(PRESSURE_APP_03);
+            mListener.removeTestPackage(PRESSURE_APP_04);
+            mListener.removeTestPackage(PRESSURE_APP_05);
+            mListener.removeTestPackage(PRESSURE_APP_06);
+            mListener.removeTestPackage(PRESSURE_APP_07);
+        }
     }
 
     @Test

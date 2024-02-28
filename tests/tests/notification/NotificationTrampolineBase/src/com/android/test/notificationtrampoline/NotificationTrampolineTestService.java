@@ -54,12 +54,15 @@ public class NotificationTrampolineTestService extends Service {
     private static final int MESSAGE_BROADCAST_NOTIFICATION = 1;
     private static final int MESSAGE_SERVICE_NOTIFICATION = 2;
     private static final int MESSAGE_CLICK_NOTIFICATION = 3;
+    private static final int MESSAGE_CANCEL_ALL_NOTIFICATIONS = 4;
     private static final int TEST_MESSAGE_BROADCAST_RECEIVED = 1;
     private static final int TEST_MESSAGE_SERVICE_STARTED = 2;
     private static final int TEST_MESSAGE_ACTIVITY_STARTED = 3;
     private static final int TEST_MESSAGE_NOTIFICATION_CLICKED = 4;
     private static final int PI_FLAGS =
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
+    private static final String GROUP_KEY = "com.android.test.notificationtrampoline.GROUP_KEY";
+    private static final int GROUP_ID = 0;
 
     private final Handler mHandler = new ServiceHandler();
     private final ActivityReference mActivityRef = new ActivityReference();
@@ -69,6 +72,7 @@ public class NotificationTrampolineTestService extends Service {
     private BroadcastReceiver mReceiver;
     private Messenger mCallback;
     private String mReceiverAction;
+    private Notification mGroupSummary = null;
 
     @Override
     public void onCreate() {
@@ -147,6 +151,10 @@ public class NotificationTrampolineTestService extends Service {
                     sendMessageToTest(mCallback, TEST_MESSAGE_NOTIFICATION_CLICKED, count == 2);
                     break;
                 }
+                case MESSAGE_CANCEL_ALL_NOTIFICATIONS: {
+                    cancelAllNotifications();
+                    break;
+                }
                 default:
                     throw new AssertionError("Unknown message " + message.what);
             }
@@ -162,22 +170,44 @@ public class NotificationTrampolineTestService extends Service {
     }
 
     private void postNotification(int notificationId, PendingIntent intent) {
+        NotificationChannel notificationChannel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
+                NOTIFICATION_CHANNEL_ID, NotificationManager.IMPORTANCE_DEFAULT);
+        mNotificationManager.createNotificationChannel(notificationChannel);
+        // If group summary hasn't been initialized, create one. All posted notifications will be
+        // added to this group.
+        if (mGroupSummary == null) {
+            mGroupSummary = new Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
+                            .setSmallIcon(android.R.drawable.ic_info)
+                            .setContentTitle("Summary Title")
+                            .setContentText("Summary Text")
+                            .setGroup(GROUP_KEY)
+                            .setGroupSummary(true)
+                            .build();
+            mNotificationManager.notify(GROUP_ID, mGroupSummary);
+            mPostedNotifications.add(GROUP_ID);
+        }
+
         Notification publicNotification =
                 new Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
                         .setSmallIcon(android.R.drawable.ic_info)
                         .setContentIntent(intent)
                         .build();
+
         Notification notification =
                 new Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
                         .setSmallIcon(android.R.drawable.ic_info)
                         .setContentIntent(intent)
                         .setPublicVersion(publicNotification)
+                        .setGroup(GROUP_KEY)
                         .build();
-        NotificationChannel notificationChannel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
-                NOTIFICATION_CHANNEL_ID, NotificationManager.IMPORTANCE_DEFAULT);
-        mNotificationManager.createNotificationChannel(notificationChannel);
+
         mNotificationManager.notify(notificationId, notification);
         mPostedNotifications.add(notificationId);
+    }
+
+    private void cancelAllNotifications() {
+        mNotificationManager.cancelAll();
+        mPostedNotifications.clear();
     }
 
     private void startTargetActivity() {
