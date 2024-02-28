@@ -233,7 +233,7 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
         boolean meetsPreconditions = (isFirstSecure || isSecondSecure) ?
                 meetsSecureDecodePreconditions() : true;
         // secure test should not reach this point if secure codec doesn't support PP
-        if (meetsPreconditions && maxInstances >= requiredMinInstances) {
+        if (meetsPreconditions && (maxInstances >= requiredMinInstances || secureWithUnsecure)) {
             int secondPairInstances = maxInstances / 2;
             int firstPairInstances = maxInstances - secondPairInstances;
             if (secureWithUnsecure) {
