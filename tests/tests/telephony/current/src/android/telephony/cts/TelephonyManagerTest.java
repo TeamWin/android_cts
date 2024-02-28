@@ -7023,7 +7023,7 @@ public class TelephonyManagerTest {
     @ApiTest(apis = {
             "android.telephony.TelephonyManager#getLastKnownCellIdentity"})
     @RequiresFlagsEnabled(
-            com.android.server.telecom.flags.Flags.FLAG_TELECOM_RESOLVE_HIDDEN_DEPENDENCIES)
+            com.android.server.telecom.flags.Flags.FLAG_GET_LAST_KNOWN_CELL_IDENTITY)
     public void testGetLastKnownCellIdentity() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
         // Revoking ACCESS_FINE_LOCATION will cause test to crash. Verify that security exception
