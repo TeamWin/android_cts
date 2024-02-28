@@ -7297,17 +7297,17 @@ public class TelephonyManagerTest {
 
     @Test
     @RequiresFlagsEnabled(android.permission.flags.Flags.FLAG_GET_EMERGENCY_ROLE_HOLDER_API_ENABLED)
-    @ApiTest(apis = {"android.telephony.TelephonyManager#getEmergencyAssistancePackage"})
-    public void testGetEmergencyAssistancePackage() {
+    @ApiTest(apis = {"android.telephony.TelephonyManager#getEmergencyAssistancePackageName"})
+    public void testGetEmergencyAssistancePackageName() {
         if (mTelephonyManager.isVoiceCapable()
             && ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.isEmergencyAssistanceEnabled())) {
             assertNotNull(ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                            (tm) -> tm.getEmergencyAssistancePackage()));
+                            (tm) -> tm.getEmergencyAssistancePackageName()));
         } else {
             assertThrows(IllegalStateException.class, () ->
                     ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                            (tm) -> tm.getEmergencyAssistancePackage()));
+                            (tm) -> tm.getEmergencyAssistancePackageName()));
         }
     }
 
