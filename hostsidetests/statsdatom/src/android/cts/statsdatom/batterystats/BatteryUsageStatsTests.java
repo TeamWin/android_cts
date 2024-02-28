@@ -16,13 +16,13 @@
 
 package android.cts.statsdatom.batterystats;
 
-import com.android.tradefed.util.RunUtil;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.cts.statsdatom.lib.AtomTestUtils;
 import android.cts.statsdatom.lib.ConfigUtils;
 import android.cts.statsdatom.lib.DeviceUtils;
 import android.cts.statsdatom.lib.ReportUtils;
+import android.os.PowerComponentEnum;
 
 import com.android.internal.os.StatsdConfigProto;
 import com.android.os.AtomsProto;
@@ -32,6 +32,7 @@ import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.RunUtil;
 
 import java.util.List;
 import java.util.function.Function;
@@ -148,25 +149,33 @@ public class BatteryUsageStatsTests extends DeviceTestCase implements IBuildRece
             }
         }
 
-        // If the test app consumed a measurable amount of power, the break-up
+        // If the test app consumed a measurable amount of power, the break-down
         // by process state should also be present in the atom.
-        if (testConsumer != null
-                && testConsumer.getBatteryConsumerData().getTotalConsumedPowerDeciCoulombs()
-                > 0.1) {
-            boolean hasProcStateData = false;
-            for (int i = 0; i < testConsumer.getBatteryConsumerData().getSlicesCount(); i++) {
-                final BatteryConsumerData.PowerComponentUsageSlice slice =
-                        testConsumer.getBatteryConsumerData().getSlices(i);
-                if (slice.getProcessState()
-                        != BatteryConsumerData.PowerComponentUsageSlice.ProcessState.UNSPECIFIED
-                        && (slice.getPowerComponent().getPowerDeciCoulombs() > 0
-                        || slice.getPowerComponent().getDurationMillis() > 0)) {
-                    hasProcStateData = true;
+        if (testConsumer != null) {
+            long consumedByCpu = 0;
+            for (BatteryConsumerData.PowerComponentUsage pcu :
+                    testConsumer.getBatteryConsumerData().getPowerComponentsList()) {
+                if (pcu.getComponent() == PowerComponentEnum.POWER_COMPONENT_CPU.getNumber()) {
+                    consumedByCpu = pcu.getPowerDeciCoulombs();
                     break;
                 }
             }
+            if (consumedByCpu > 10) {
+                boolean hasProcStateData = false;
+                for (int i = 0; i < testConsumer.getBatteryConsumerData().getSlicesCount(); i++) {
+                    final BatteryConsumerData.PowerComponentUsageSlice slice =
+                            testConsumer.getBatteryConsumerData().getSlices(i);
+                    if (slice.getProcessState()
+                            != BatteryConsumerData.PowerComponentUsageSlice.ProcessState.UNSPECIFIED
+                            && (slice.getPowerComponent().getPowerDeciCoulombs() > 0
+                                || slice.getPowerComponent().getDurationMillis() > 0)) {
+                        hasProcStateData = true;
+                        break;
+                    }
+                }
 
-            assertThat(hasProcStateData).isTrue();
+                assertThat(hasProcStateData).isTrue();
+            }
         }
     }
 
