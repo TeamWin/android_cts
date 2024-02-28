@@ -43,4 +43,9 @@ public final class Ime1Constants {
      * IME ID of test IME 1.
      */
     public static final String IME_ID = new ComponentName(PACKAGE, CLASS).flattenToShortString();
+
+    /**
+     * Authority name of command {@link android.content.ContentProvider} in IME1.
+     */
+    public static final String AUTHORITY = "android.inputmethodservice.cts.ime1.provider";
 }
