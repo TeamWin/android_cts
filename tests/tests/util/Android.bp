@@ -43,8 +43,6 @@ android_test {
     test_suites: [
         "cts",
         "general-tests",
-        "mts-statsd",
-        "mcts-statsd",
     ],
     srcs: [
         "src/**/*.java",
