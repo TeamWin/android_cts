@@ -18,11 +18,22 @@ package android.keystore.cts;
 
 import static org.junit.Assert.assertEquals;
 
+import android.keystore.cts.util.ImportedKey;
+import android.keystore.cts.util.TestUtils;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyInfo;
 import android.security.keystore.KeyProperties;
+import android.security.keystore.KeyProtection;
 
 import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.After;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -32,14 +43,16 @@ import java.security.PrivateKey;
 import java.util.Arrays;
 import java.util.Date;
 
-import org.junit.After;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 
 @RunWith(AndroidJUnit4.class)
 public class KeyInfoTest {
 
     private static final String KEY_ALIAS = KeyInfoTest.class.getSimpleName();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Test
     public void testImmutabilityViaGetterReturnValues() throws Exception {
@@ -142,6 +155,32 @@ public class KeyInfoTest {
 
         int remainingUsageCount = info.getRemainingUsageCount();
         assertEquals(maxUsageCount, remainingUsageCount);
+    }
+
+    @RequiresFlagsEnabled(android.security.Flags.FLAG_KEYINFO_UNLOCKED_DEVICE_REQUIRED)
+    @Test
+    public void testUnlockedDeviceRequiredKey() throws Exception {
+        for (boolean required : new boolean[]{false, true}) {
+            // Test KeyInfo#isUnlockedDeviceRequired() for a generated key.
+            KeyGenerator keyGenerator = KeyGenerator.getInstance("AES", "AndroidKeyStore");
+            keyGenerator.init(new KeyGenParameterSpec.Builder(
+                        KEY_ALIAS,
+                        KeyProperties.PURPOSE_ENCRYPT)
+                    .setUnlockedDeviceRequired(required)
+                    .build());
+            SecretKey key = keyGenerator.generateKey();
+            assertEquals(required, TestUtils.getKeyInfo(key).isUnlockedDeviceRequired());
+
+            // Test KeyInfo#isUnlockedDeviceRequired() for an imported key.
+            ImportedKey importedKey = TestUtils.importIntoAndroidKeyStore(KEY_ALIAS,
+                    KeyGenerator.getInstance("AES").generateKey(),
+                    new KeyProtection.Builder(KeyProperties.PURPOSE_ENCRYPT)
+                            .setUnlockedDeviceRequired(required)
+                            .build());
+            assertEquals(required,
+                    TestUtils.getKeyInfo(importedKey.getKeystoreBackedEncryptionKey())
+                            .isUnlockedDeviceRequired());
+        }
     }
 
     @After
