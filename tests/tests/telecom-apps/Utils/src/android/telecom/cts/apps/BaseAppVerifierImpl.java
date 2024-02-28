@@ -32,16 +32,14 @@ import static android.telecom.cts.apps.WaitForInCallService.waitUntilExpectCallC
 import static android.telecom.cts.apps.WaitUntil.DEFAULT_TIMEOUT_MS;
 import static android.telecom.cts.apps.WaitUntil.waitUntilConditionIsTrueOrTimeout;
 
+import static junit.framework.Assert.assertEquals;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import android.app.ActivityManager;
 import android.app.AppOpsManager;
 import android.app.Instrumentation;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
@@ -49,8 +47,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Process;
 import android.os.RemoteException;
-import android.service.notification.NotificationListenerService;
-import android.service.notification.StatusBarNotification;
 import android.telecom.Call;
 import android.telecom.CallAttributes;
 import android.telecom.CallEndpoint;
@@ -77,20 +73,19 @@ public class BaseAppVerifierImpl {
     public Context mContext;
     public TelecomManager mTelecomManager;
     private final BindUtils mBindUtils = new BindUtils();
-    private final PhoneAccountHandle mManagedHandle;
-    private final PhoneAccount mManagedAccount;
+    private final List<PhoneAccount> mManagedAccounts;
     private final Instrumentation mInstrumentation;
     private final InCallServiceMethods mVerifierMethods;
     private final String mCallingPackageName;
     private final AudioManager mAudioManager;
     public String mPreviousDefaultDialer = "";
+    public PhoneAccountHandle mPreviousDefaultPhoneAccount = null;
 
-    public BaseAppVerifierImpl(Instrumentation i, PhoneAccount pa, InCallServiceMethods vm) {
+    public BaseAppVerifierImpl(Instrumentation i, List<PhoneAccount> pAs, InCallServiceMethods vm) {
         mInstrumentation = i;
         mContext = i.getContext();
         mTelecomManager = mContext.getSystemService(TelecomManager.class);
-        mManagedAccount = pa;
-        mManagedHandle = pa.getAccountHandle();
+        mManagedAccounts = pAs;
         mVerifierMethods = vm;
         mCallingPackageName = mContext.getPackageName();
         mAudioManager = mContext.getSystemService(AudioManager.class);
@@ -111,6 +106,7 @@ public class BaseAppVerifierImpl {
         if (!mPreviousDefaultDialer.equals("")) {
             ShellCommandExecutor.setDefaultDialer(mInstrumentation, mPreviousDefaultDialer);
         }
+        clearUserDefaultPhoneAccountOverride();
         ShellIdentityUtils.dropShellPermissionIdentity();
     }
 
@@ -125,17 +121,11 @@ public class BaseAppVerifierImpl {
     public AppControlWrapper bindToApp(TelecomTestApp applicationName) throws Exception {
         AppControlWrapper control = mBindUtils.bindToApplication(mContext, applicationName);
         if (isManagedConnectionService(applicationName)) {
-            registerManagedPhoneAccount();
+            for (PhoneAccount pA : mManagedAccounts) {
+                registerManagedPhoneAccount(pA);
+            }
         }
         return control;
-    }
-
-    private void registerManagedPhoneAccount() throws Exception {
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelecomManager,
-                tm -> tm.registerPhoneAccount(mManagedAccount),
-                MODIFY_PHONE_STATE_PERMISSION,
-                REGISTER_SIM_SUBSCRIPTION_PERMISSION);
-        ShellCommandExecutor.enablePhoneAccount(mInstrumentation, mManagedHandle);
     }
 
     private boolean isManagedConnectionService(TelecomTestApp applicationName) {
@@ -172,7 +162,18 @@ public class BaseAppVerifierImpl {
             boolean isOutgoing)
             throws Exception {
         if (name.equals(ManagedConnectionServiceApp)) {
-            return getDefaultAttributesForManaged(mManagedHandle, isOutgoing);
+            // Treat the first element in mManagedAccounts as the "default"
+            return getDefaultAttributesForManaged(mManagedAccounts.get(0).getAccountHandle(),
+                    isOutgoing);
+        }
+        return getDefaultAttributesForApp(name, isOutgoing);
+    }
+
+    public CallAttributes getDefaultAttributes(TelecomTestApp name, PhoneAccountHandle pAH,
+            boolean isOutgoing)
+            throws Exception {
+        if (name.equals(ManagedConnectionServiceApp)) {
+            return getDefaultAttributesForManaged(pAH, isOutgoing);
         }
         return getDefaultAttributesForApp(name, isOutgoing);
     }
@@ -182,7 +183,9 @@ public class BaseAppVerifierImpl {
             boolean isHoldable)
             throws Exception {
         if (name.equals(ManagedConnectionServiceApp)) {
-            return getRandomAttributesForManaged(mManagedHandle, isOutgoing, isHoldable);
+            // Treat the first element in mManagedAccounts as the "default"
+            return getRandomAttributesForManaged(mManagedAccounts.get(0).getAccountHandle(),
+                    isOutgoing, isHoldable);
         }
         return getRandomAttributesForApp(name, isOutgoing, isHoldable);
     }
@@ -326,7 +329,10 @@ public class BaseAppVerifierImpl {
     public void registerDefaultPhoneAccount(AppControlWrapper appControl) throws RemoteException {
         appControl.registerDefaultPhoneAccount();
         if (appControl.isManagedAppControl()) {
-            assertTrue(isPhoneAccountRegistered(mManagedHandle));
+            for (PhoneAccount pa : mManagedAccounts) {
+                assertTrue("Managed PhoneAccount [ +" + pa.getAccountHandle() + " ] is not"
+                        + "registered.", isPhoneAccountRegistered(pa.getAccountHandle()));
+            }
         } else {
             PhoneAccount account = appControl.getDefaultPhoneAccount();
             assertTrue(isPhoneAccountRegistered(account.getAccountHandle()));
@@ -339,6 +345,26 @@ public class BaseAppVerifierImpl {
         assertTrue(isPhoneAccountRegistered(account.getAccountHandle()));
     }
 
+    public void registerManagedPhoneAccount(PhoneAccount pa) throws Exception {
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelecomManager,
+                tm -> tm.registerPhoneAccount(pa),
+                MODIFY_PHONE_STATE_PERMISSION,
+                REGISTER_SIM_SUBSCRIPTION_PERMISSION);
+        ShellCommandExecutor.enablePhoneAccount(mInstrumentation, pa.getAccountHandle());
+    }
+
+    public void setUserDefaultPhoneAccountOverride(PhoneAccountHandle handle) throws Exception {
+        mPreviousDefaultPhoneAccount = mTelecomManager.getUserSelectedOutgoingPhoneAccount();
+        ShellCommandExecutor.setUserDefaultPhoneAccount(mInstrumentation, handle);
+        assertEquals("Could not set " + handle + "as the user default" , handle,
+                mTelecomManager.getUserSelectedOutgoingPhoneAccount());
+    }
+
+    private void clearUserDefaultPhoneAccountOverride() throws Exception {
+        ShellCommandExecutor.setUserDefaultPhoneAccount(mInstrumentation,
+                mPreviousDefaultPhoneAccount);
+    }
+
     public void unregisterPhoneAccountWithHandle(AppControlWrapper appControl,
             PhoneAccountHandle handle) throws RemoteException {
         appControl.unregisterPhoneAccountWithHandle(handle);
@@ -348,6 +374,26 @@ public class BaseAppVerifierImpl {
     public List<PhoneAccountHandle> getAccountHandlesForApp(AppControlWrapper appControl)
             throws RemoteException {
         return appControl.getAccountHandlesForApp();
+    }
+
+    public void verifyCallPhoneAccount(String id, PhoneAccountHandle handle) {
+        waitForInCallServiceBinding(mVerifierMethods);
+        List<Call> calls = mVerifierMethods.getOngoingCalls();
+        Call targetCall = null;
+        for (Call call : calls) {
+            if (call.getDetails().getId().equals(id)) {
+                targetCall = call;
+                break;
+            }
+        }
+        if (targetCall == null) {
+            fail("verifyCallPhoneAccount: failed to find target call id=" + id);
+        }
+        if (targetCall.getDetails() == null) {
+            fail("verifyCallPhoneAccount: failed to find target call details, id=" + id);
+        }
+        assertEquals("Call PhoneAccount did not match expected", handle,
+                targetCall.getDetails().getAccountHandle());
     }
 
     public boolean isPhoneAccountRegistered(PhoneAccountHandle handle) {
