@@ -40,7 +40,6 @@ import android.telephony.satellite.SatelliteDatagram;
 import android.telephony.satellite.SatelliteDatagramCallback;
 import android.telephony.satellite.SatelliteManager;
 import android.telephony.satellite.SatelliteProvisionStateCallback;
-import android.telephony.satellite.SatelliteStateCallback;
 import android.telephony.satellite.SatelliteTransmissionUpdateCallback;
 import android.text.TextUtils;
 import android.util.Log;
@@ -382,92 +381,6 @@ public class SatelliteManagerTestBase {
             }
             loge("getProvisionedState: invalid index=" + index);
             return false;
-        }
-    }
-
-    protected static class SatelliteStateCallbackTest implements SatelliteStateCallback {
-        public int modemState = SatelliteManager.SATELLITE_MODEM_STATE_OFF;
-        private List<Integer> mModemStates = new ArrayList<>();
-        private final Object mModemStatesLock = new Object();
-        private final Semaphore mSemaphore = new Semaphore(0);
-        private final Semaphore mModemOffSemaphore = new Semaphore(0);
-
-        @Override
-        public void onSatelliteModemStateChanged(int state) {
-            Log.d(TAG, "onSatelliteModemStateChanged: state=" + state);
-            modemState = state;
-            synchronized (mModemStatesLock) {
-                mModemStates.add(state);
-            }
-            try {
-                mSemaphore.release();
-            } catch (Exception ex) {
-                Log.e(TAG, "onSatelliteModemStateChanged: Got exception, ex=" + ex);
-            }
-
-            if (state == SatelliteManager.SATELLITE_MODEM_STATE_OFF) {
-                try {
-                    mModemOffSemaphore.release();
-                } catch (Exception ex) {
-                    Log.e(TAG, "onSatelliteModemStateChanged: Got exception in "
-                            + "releasing mModemOffSemaphore, ex=" + ex);
-                }
-            }
-        }
-
-        public boolean waitUntilResult(int expectedNumberOfEvents) {
-            for (int i = 0; i < expectedNumberOfEvents; i++) {
-                try {
-                    if (!mSemaphore.tryAcquire(TIMEOUT, TimeUnit.MILLISECONDS)) {
-                        Log.e(TAG, "Timeout to receive onSatelliteModemStateChanged");
-                        return false;
-                    }
-                } catch (Exception ex) {
-                    Log.e(TAG, "onSatelliteModemStateChanged: Got exception=" + ex);
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        public boolean waitUntilModemOff() {
-            try {
-                if (!mModemOffSemaphore.tryAcquire(TIMEOUT, TimeUnit.MILLISECONDS)) {
-                    Log.e(TAG, "Timeout to receive satellite modem off event");
-                    return false;
-                }
-            } catch (Exception ex) {
-                Log.e(TAG, "Waiting for satellite modem off event: Got exception=" + ex);
-                return false;
-            }
-            return true;
-        }
-
-        public void clearModemStates() {
-            synchronized (mModemStatesLock) {
-                Log.d(TAG, "onSatelliteModemStateChanged: clearModemStates");
-                mModemStates.clear();
-                mSemaphore.drainPermits();
-                mModemOffSemaphore.drainPermits();
-            }
-        }
-
-        public int getModemState(int index) {
-            synchronized (mModemStatesLock) {
-                if (index < mModemStates.size()) {
-                    return mModemStates.get(index);
-                } else {
-                    Log.e(TAG, "getModemState: invalid index=" + index
-                            + ", mModemStates.size=" + mModemStates.size());
-                    return -1;
-                }
-            }
-        }
-
-        public int getTotalCountOfModemStates() {
-            synchronized (mModemStatesLock) {
-                return mModemStates.size();
-            }
         }
     }
 
