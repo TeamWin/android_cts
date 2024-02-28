@@ -26,6 +26,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.test.uiautomator.UiDevice;
+import android.sysprop.SurfaceFlingerProperties;
 import android.util.Log;
 import android.view.Choreographer;
 import android.view.Surface;
@@ -51,6 +52,12 @@ public class GameFrameRateCtsActivity extends Activity {
     private static final float FPS_TOLERANCE_FOR_FRAME_RATE_OVERRIDE = 5;
     private static final long FRAME_RATE_MIN_WAIT_TIME_NANOSECONDS = 1 * 1_000_000_000L;
     private static final long FRAME_RATE_MAX_WAIT_TIME_NANOSECONDS = 10 * 1_000_000_000L;
+
+    // Default game frame rate sets the frame rate to 60 by default, even if the system properties
+    // "ro.surface_flinger.game_default_frame_rate_override" is not set. Ref: GameManagerService
+    // {@link com.android.server.app.GameManagerService#onBootCompleted()}
+    private static final Integer GAME_DEFAULT_FRAMERATE_INT =
+            SurfaceFlingerProperties.game_default_frame_rate_override().orElse(60);
 
     private DisplayManager mDisplayManager;
     private SurfaceView mSurfaceView;
@@ -501,14 +508,14 @@ public class GameFrameRateCtsActivity extends Activity {
                 Log.i(TAG, String.format("Setting Frame Rate to %d using Game Mode",
                         frameRateOverride));
 
-                mUiDevice.executeShellCommand(String.format("cmd game set --mode 2 --fps %d %s",
-                        frameRateOverride, getPackageName()));
-
                 // Given that the frame rate we attempt to override is not always the divisor of
                 // the current refresh rate, get the expected frame rate, which is the closest
                 // divisor of the refresh rate here.
                 FrameRateRange expectedFrameRate =
                         getExpectedFrameRate(initialRefreshRate, frameRateOverride);
+
+                mUiDevice.executeShellCommand(String.format("cmd game set --mode 2 --fps %d %s",
+                        frameRateOverride, getPackageName()));
 
                 waitForRefreshRateChange(expectedFrameRate);
                 frameRateObserver.observe(initialRefreshRate, expectedFrameRate,
@@ -517,8 +524,17 @@ public class GameFrameRateCtsActivity extends Activity {
             }
 
 
-            mUiDevice.executeShellCommand(String.format("cmd game reset %s", getPackageName()));
+            Log.i(TAG, String.format("Resetting game mode."));
 
+            FrameRateRange expectedFrameRate =
+                    getExpectedFrameRate(initialRefreshRate, GAME_DEFAULT_FRAMERATE_INT);
+            mUiDevice.executeShellCommand(String.format("cmd game reset %s", getPackageName()));
+            waitForRefreshRateChange(expectedFrameRate);
+            frameRateObserver.observe(initialRefreshRate, expectedFrameRate,
+                    String.format("Game Default Frame Rate(%d), expectedFrameRate(%.2f %.2f)",
+                            GAME_DEFAULT_FRAMERATE_INT,
+                            expectedFrameRate.min,
+                            expectedFrameRate.max));
         }
     }
 
