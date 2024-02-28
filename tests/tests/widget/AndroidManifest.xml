@@ -48,6 +48,7 @@
 
         <activity android:name="android.widget.cts.EditTextCursorCtsActivity"
                   android:label="Empty test activity"
+                  android:theme="@style/OptOutEdgeToEdgeEnforcement"
                   android:launchMode="singleTop"
                   android:exported="true">
             <intent-filter>
@@ -193,6 +194,7 @@
 
         <activity android:name="android.widget.cts.SeekBarCtsActivity"
              android:label="SeekBarCtsActivity"
+             android:theme="@style/OptOutEdgeToEdgeEnforcement"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -377,6 +379,7 @@
 
         <activity android:name="android.widget.cts.ListViewCtsActivity"
              android:label="ListViewCtsActivity"
+             android:theme="@style/OptOutEdgeToEdgeEnforcement"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -439,6 +442,7 @@
 
         <activity android:name="android.widget.cts.EditTextCtsActivity"
              android:label="EditTextCtsActivity"
+             android:theme="@style/OptOutEdgeToEdgeEnforcement"
              android:screenOrientation="nosensor"
              android:windowSoftInputMode="stateAlwaysHidden"
              android:exported="true">
@@ -618,6 +622,7 @@
 
         <activity android:name="android.widget.cts.CheckBoxCtsActivity"
              android:label="CheckBoxCtsActivity"
+             android:theme="@style/OptOutEdgeToEdgeEnforcement"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -717,6 +722,7 @@
 
         <activity android:name="android.widget.cts.MagnifierCtsActivity"
              android:label="MagnifierCtsActivity"
+             android:theme="@style/OptOutEdgeToEdgeEnforcement"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

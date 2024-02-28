@@ -18,8 +18,8 @@ package android.devicepolicy.cts
 
 import android.app.admin.DevicePolicyManager.CONTENT_PROTECTION_DISABLED
 import android.app.admin.DevicePolicyManager.CONTENT_PROTECTION_ENABLED
-import android.platform.test.annotations.RequiresFlagsEnabled
 import android.view.contentprotection.flags.Flags
+import com.android.bedstead.flags.annotations.RequireFlagsEnabled
 import com.android.bedstead.harrier.BedsteadJUnit4
 import com.android.bedstead.harrier.DeviceState
 import com.android.bedstead.harrier.annotations.Postsubmit
@@ -37,7 +37,7 @@ import org.testng.Assert.assertThrows
 
 /** CTS tests for content protection device policy management.  */
 @RunWith(BedsteadJUnit4::class)
-@RequiresFlagsEnabled(Flags.FLAG_MANAGE_DEVICE_POLICY_ENABLED)
+@RequireFlagsEnabled(Flags.FLAG_MANAGE_DEVICE_POLICY_ENABLED)
 class ContentProtectionPolicyTest {
 
     @Test

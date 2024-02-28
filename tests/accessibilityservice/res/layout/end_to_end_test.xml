@@ -105,4 +105,9 @@
                   android:layout_height="wrap_content"
                   android:gravity="center">
     </LinearLayout>
+    <android.accessibilityservice.cts.utils.ProviderCustomView
+        android:id="@+id/autoImportantProviderView"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
+    </android.accessibilityservice.cts.utils.ProviderCustomView>
 </LinearLayout>

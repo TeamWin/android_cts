@@ -71,5 +71,10 @@
     <style name="NoInsetsTheme" parent="@android:style/Theme.NoTitleBar">
         <item name="android:windowLayoutInDisplayCutoutMode">always</item>
         <item name="android:windowSoftInputMode">stateHidden</item>
+
+        <!--
+            TODO(b/309578419): Make activities handle insets properly and then remove this.
+        -->
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
 </resources>

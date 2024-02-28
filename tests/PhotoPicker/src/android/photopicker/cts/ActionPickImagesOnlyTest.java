@@ -211,7 +211,7 @@ public class ActionPickImagesOnlyTest extends PhotoPickerBaseTest {
 
     @Test
     public void testExtraPickerAccentColorValidColor() throws Exception {
-        String accentColor = "#FF5A5F";
+        long accentColor = 0xFFFF5A5F;
         final Intent intent = new Intent(ACTION_PICK_IMAGES);
         intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_ACCENT_COLOR, accentColor);
 
@@ -223,14 +223,15 @@ public class ActionPickImagesOnlyTest extends PhotoPickerBaseTest {
     }
 
     @Test
-    public void testExtraPickerAccentColorInvalidColor() throws Exception {
-        String accentColor = "brown";
+    public void testExtraPickerAccentColorInvalidColorInput() throws Exception {
+        String accentColor = "red";
         final Intent intent = new Intent(ACTION_PICK_IMAGES);
         intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_ACCENT_COLOR, accentColor);
 
         mActivity.startActivityForResult(intent, REQUEST_CODE);
 
-        final GetResultActivity.Result res = mActivity.getResult();
-        assertThat(res.resultCode).isEqualTo(Activity.RESULT_CANCELED);
+        // Assert that the photopicker UI still shows up
+        UiAssertionUtils.assertThatShowsPickerUi(intent.getType());
+        sDevice.pressBack();
     }
 }

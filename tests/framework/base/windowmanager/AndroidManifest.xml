@@ -278,6 +278,7 @@
                   android:theme="@style/no_starting_window"/>
         <activity android:name="android.server.wm.window.DialogFrameTestActivity" />
         <activity android:name="android.server.wm.display.DisplayCutoutTests$TestActivity"
+                  android:theme="@style/OptOutEdgeToEdge"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                   android:screenOrientation="nosensor"
                   android:turnScreenOn="true"
@@ -385,11 +386,12 @@
         </activity>
 
         <activity android:name="android.server.wm.insets.DecorInsetTestsBase$TestActivity"
+             android:theme="@style/OptOutEdgeToEdge"
              android:label="DecorInsetTestsBase.TestActivity"
              android:exported="true"/>
 
         <activity android:name="android.server.wm.window.WindowCtsActivity"
-             android:theme="@android:style/Theme.Material.NoActionBar"
+             android:theme="@style/OptOutEdgeToEdge.NoActionBar"
              android:screenOrientation="locked"
              android:turnScreenOn="true"
              android:showWhenLocked="true"
@@ -424,7 +426,7 @@
 
         <activity android:name="android.server.wm.insets.WindowInsetsAnimationTestBase$TestActivity"
             android:screenOrientation="locked"
-            android:theme="@android:style/Theme.Material.NoActionBar"/>
+            android:theme="@style/OptOutEdgeToEdge.NoActionBar"/>
         <activity android:name="android.server.wm.insets.WindowInsetsAnimationControllerTests$ControllerTestActivity"
             android:theme="@android:style/Theme.Material.NoActionBar" />
 

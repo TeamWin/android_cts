@@ -32,7 +32,7 @@
         <!-- Have LightBarActivity always be in portrait orientation, since the test's screenshots
              rely on portrait orientation. See b/260069585. -->
         <activity android:name=".LightBarActivity"
-             android:theme="@android:style/Theme.Material.NoActionBar"
+             android:theme="@style/LightBarThemeBase"
              android:screenOrientation="portrait"/>
         <activity android:name=".LightBarThemeActivity"
              android:theme="@style/LightBarTheme"

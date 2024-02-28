@@ -54,6 +54,7 @@ import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
@@ -520,43 +521,29 @@ class AppOpsTest {
         }
 
         try {
-            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
+            runWithShellPermissionIdentity {
+                mAppOps.setMode(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName, MODE_ALLOWED)
+                mAppOps.startWatchingMode(OPSTR_WRITE_CALENDAR, mOpPackageName, onOpChangeWatcher)
 
-            mAppOps.startWatchingMode(OPSTR_WRITE_CALENDAR, mOpPackageName, onOpChangeWatcher)
+                // After start watching, change op mode should trigger callback
+                mAppOps.setMode(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName, MODE_ERRORED)
+                assertEquals("onOpChanged callback count unexpected",
+                    changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS), 0)
 
-            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ERRORED)
+                mAppOps.setMode(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName, MODE_ALLOWED)
+                assertEquals("onOpChanged callback count unexpected",
+                    changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS), 1)
 
-            assertEquals("onOpChanged callback count unexpected",
-                changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS),
-                0)
+                // If mode doesn't change, no callback expected
+                mAppOps.setMode(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName, MODE_ALLOWED)
+                assertNull(changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
 
-            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
+                mAppOps.stopWatchingMode(onOpChangeWatcher)
 
-            assertEquals("onOpChanged callback count unexpected",
-                changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS),
-                1)
-
-            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
-
-            var exception = try {
-                assertNotNull(changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
-                null
-            } catch (e: AssertionError) {
-                e
+                // After stop watching no callback expected when mode changes
+                mAppOps.setMode(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName, MODE_ERRORED)
+                assertNull(changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
             }
-            assertNotNull(exception)
-
-            mAppOps.stopWatchingMode(onOpChangeWatcher)
-
-            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ERRORED)
-
-            exception = try {
-                assertNotNull(changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
-                null
-            } catch (e: AssertionError) {
-                e
-            }
-            assertNotNull("Unexpected onOpChanged callback received", exception)
         } finally {
             mAppOps.stopWatchingMode(onOpChangeWatcher)
         }
@@ -586,43 +573,30 @@ class AppOpsTest {
             }
         }
         try {
-            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
+            runWithShellPermissionIdentity {
+                mAppOps.setMode(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName, MODE_ALLOWED)
+                mAppOps.startWatchingMode(OPSTR_WRITE_CALENDAR, mOpPackageName, onOpChangeWatcher)
 
-            mAppOps.startWatchingMode(OPSTR_WRITE_CALENDAR, mOpPackageName, onOpChangeWatcher)
+                // After start watching, change op mode should trigger callback
+                mAppOps.setMode(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName, MODE_ERRORED)
+                assertEquals("onOpChanged callback count unexpected",
+                    changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS),
+                    0)
 
-            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ERRORED)
+                mAppOps.setMode(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName, MODE_ALLOWED)
+                assertEquals("onOpChanged callback count unexpected",
+                    changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS), 1)
 
-            assertEquals("onOpChanged callback count unexpected",
-                changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS),
-                0)
+                // If mode doesn't change, no callback expected
+                mAppOps.setMode(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName, MODE_ALLOWED)
+                assertNull(changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
 
-            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
+                mAppOps.stopWatchingMode(onOpChangeWatcher)
 
-            assertEquals("onOpChanged callback count unexpected",
-                changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS),
-                1)
-
-            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ALLOWED)
-
-            var exception = try {
-                assertNotNull(changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
-                null
-            } catch (e: AssertionError) {
-                e
+                // After stop watching no callback expected when mode changes
+                mAppOps.setMode(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName, MODE_ERRORED)
+                assertNull(changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
             }
-            assertNotNull(exception)
-
-            mAppOps.stopWatchingMode(onOpChangeWatcher)
-
-            setOpMode(mOpPackageName, OPSTR_WRITE_CALENDAR, MODE_ERRORED)
-
-            exception = try {
-                assertNotNull(changedQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
-                null
-            } catch (e: AssertionError) {
-                e
-            }
-            assertNotNull("Unexpected onOpChanged callback received", exception)
         } finally {
             mAppOps.stopWatchingMode(onOpChangeWatcher)
         }

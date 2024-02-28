@@ -18,6 +18,7 @@ package android.server.wm.jetpack.embedding;
 
 import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.assumeExtensionSupportedDevice;
 import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.getWindowExtensions;
+
 import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
@@ -73,7 +74,7 @@ public class ActivityEmbeddingTestBase extends WindowManagerJetpackTestBase {
 
     @Override
     @After
-    public void tearDown() {
+    public void tearDown() throws Throwable {
         super.tearDown();
         mReportedDisplayMetrics.restoreDisplayMetrics();
         if (mActivityEmbeddingComponent != null) {

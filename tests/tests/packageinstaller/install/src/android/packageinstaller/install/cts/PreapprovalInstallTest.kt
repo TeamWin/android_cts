@@ -22,9 +22,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.Flags
 import android.content.pm.PackageInstaller
 import android.icu.util.ULocale
 import android.platform.test.annotations.AppModeFull
+import android.platform.test.annotations.RequiresFlagsEnabled
+import android.platform.test.flag.junit.CheckFlagsRule
+import android.platform.test.flag.junit.DeviceFlagsValueProvider
 import android.provider.DeviceConfig
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
@@ -49,6 +53,9 @@ import org.junit.runner.RunWith
 @AppModeFull(reason = "Instant apps cannot create installer sessions")
 @RunWith(AndroidJUnit4::class)
 class PreapprovalInstallTest : PackageInstallerTestBase() {
+    @JvmField
+    @Rule
+    val mCheckFlagsRule: CheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule()
 
     companion object {
         const val TEST_APK_NAME_PL = "CtsEmptyTestApp_pl.apk"
@@ -101,6 +108,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
      * Check that we can request a user pre-approval
      */
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun requestUserPreapproval_userAgree_statusSuccess() {
         val (sessionId, session) = createSession(0 /* flags */, false /* isMultiPackage */,
                 null /* packageSource */)
@@ -118,6 +126,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
      * the EXTRA_INTENT is PackageInstaller.ACTION_CONFIRM_PRE_APPROVAL.
      */
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun requestUserPreapprovalWithUpdateOwnership_userAgree_statusSuccess() {
         // Get the value of updateOwnership property to restore it finally
         var isUpdateOwnershipEnforcementAvailable: String? =
@@ -238,6 +247,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
      * Request a user pre-approval, but then cancel it when it prompts.
      */
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun requestUserPreapproval_userCancel_statusFailureAborted() {
         val (sessionId, session) = createSession(0 /* flags */, false /* isMultiPackage */,
                 null /* packageSource */)
@@ -254,6 +264,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
      * Check that we cannot request a user preapproval with an approved session again.
      */
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun requestUserPreapproval_alreadyApproved_throwException() {
         val (sessionId, session) = createSession(0 /* flags */, false /* isMultiPackage */,
                 null /* packageSource */)
@@ -275,6 +286,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
      * requesting user preapproval.
      */
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun requestUserPreapproval_userCancel_cannotCommitAgain() {
         val (sessionId, session) = createSession(0 /* flags */, false /* isMultiPackage */,
                 null /* packageSource */)
@@ -294,6 +306,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
      * Check that we can install via commit this session later.
      */
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun requestUserPreapproval_doNothingAndCommitLater_installSuccessfully() {
         val (sessionId, session) = createSession(0 /* flags */, false /* isMultiPackage */,
                 null /* packageSource */)
@@ -336,6 +349,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
      * Check that we can install an app without prompt after getting pre-approval from users.
      */
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun commitPreapprovalSession_success() {
         val (sessionId, session) = createSession(0 /* flags */, false /* isMultiPackage */,
                 null /* packageSource */)
@@ -358,6 +372,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
      * in the split APK file.
      */
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun commitPreapprovalSession_usingAnotherLocaleInSplitApk_success() {
         val (sessionId, session) = createSession(0 /* flags */, false /* isMultiPackage */,
                 null /* packageSource */)
@@ -380,6 +395,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
      * Check that we can update an app without prompt after getting pre-approval from users.
      */
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun commitPreapprovalSession_update_success() {
         installTestPackage()
         assertInstalled()
@@ -404,6 +420,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
      * different from the label from the APK file.
      */
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun commitPreapprovalSession_updateUsingCurrentLabel_success() {
         installTestPackage()
         assertInstalled()
@@ -428,6 +445,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
      * PreapprovalDetails doesn't match the APK files.
      */
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun commitPreapprovalSession_notMatchApk_fail() {
         // Using incorrect app label in PreapprovalDetails.
         val (sessionId, session) = createSession(0 /* flags */, false /* isMultiPackage */,
@@ -464,6 +482,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
      * Check that a child of multi-package session can be requested user pre-approval.
      */
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun requestUserPreapproval_childSession_statusSuccess() {
         val (sessionId, session) = createSession(0 /* flags */, true /* isMultiPackage */,
                 null /* packageSource */)
@@ -485,6 +504,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
      * pre-approval from users.
      */
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun commitPreapprovalSession_multiPackage_successWithoutUserAction() {
         val (sessionId, session) = createSession(0 /* flags */, true /* isMultiPackage */,
                 null /* packageSource */)
@@ -534,6 +554,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
      * Check that we can still install via commit this session.
      */
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun requestUserPreapproval_featureDisabled_couldUseCommitInstead() {
         val config = getDeviceProperty(PROPERTY_IS_PRE_APPROVAL_REQUEST_AVAILABLE)
         setDeviceProperty(PROPERTY_IS_PRE_APPROVAL_REQUEST_AVAILABLE, "false")

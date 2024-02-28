@@ -59,3 +59,15 @@ android_test_helper_app {
         "general-tests",
     ],
 }
+
+android_test_helper_app {
+    name: "CtsEmptyTestApp_AppMetadataInApk",
+    defaults: ["cts_defaults"],
+    assets: ["app.metadata"],
+    sdk_version: "current",
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+}

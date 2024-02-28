@@ -109,7 +109,8 @@
         <activity android:name=".activities.FragmentContainerActivity"/>
         <activity android:name=".activities.DuplicateIdActivity"
              android:theme="@android:style/Theme.NoTitleBar"/>
-        <activity android:name=".activities.SimpleSaveActivity"/>
+        <activity android:name=".activities.SimpleSaveActivity"
+             android:theme="@style/OptOutEdgeToEdge"/>
         <activity android:name=".activities.PreSimpleSaveActivity"
              android:exported="true">
             <intent-filter>
@@ -144,6 +145,7 @@
         <activity android:name=".activities.TrampolineForResultActivity"/>
         <activity android:name=".activities.OnCreateServiceStatusVerifierActivity"/>
         <activity android:name=".activities.UsernameOnlyActivity"
+             android:theme="@style/OptOutEdgeToEdge"
              android:exported="true">
             <intent-filter>
                 <!-- This intent filter is not really needed by CTS, but it makes easier to launch

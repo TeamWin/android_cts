@@ -16,7 +16,7 @@
 
 package android.systemui.cts;
 
-import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 
 import android.annotation.MainThread;
 import android.graphics.Insets;
@@ -81,8 +81,8 @@ public class WindowInsetsActivity extends LightBarBaseActivity implements View.O
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
-        getWindow().getAttributes().layoutInDisplayCutoutMode
-                = LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+        getWindow().getAttributes().layoutInDisplayCutoutMode =
+                LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
         getWindow().setStatusBarColor(0x22ff0000);
         getWindow().setNavigationBarColor(0x22ff0000);
         mContent.setOnClickListener(this);

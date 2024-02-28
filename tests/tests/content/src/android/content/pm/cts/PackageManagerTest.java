@@ -3502,6 +3502,9 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
         assertEquals(HELLO_WORLD_PACKAGE_NAME, archivedPackage.getPackageName());
         archivedPackage.setSigningInfo(signingInfo);
         assertEquals(signingInfo, archivedPackage.getSigningInfo());
+        assertEquals(3, archivedPackage.getSigningInfo().getSchemeVersion());
+        assertThat(archivedPackage.getSigningInfo().getPublicKeys()).containsExactlyElementsIn(
+                List.of(publicKey));
         archivedPackage.setLauncherActivities(activities);
         assertEquals(activities, archivedPackage.getLauncherActivities());
         archivedPackage.setVersionCode(1);

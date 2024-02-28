@@ -937,6 +937,17 @@ public class TvInteractiveAppServiceTest {
     }
 
     @Test
+    public void testNotifyVideoFreezeUpdated() throws Throwable {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        mTvIAppView.notifyVideoFreezeUpdated(true);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mVideoFreezeUpdatedCount > 0);
+        assertThat(mSession.mVideoFreezeUpdatedCount).isEqualTo(1);
+        assertThat(mSession.mVideoFrozen).isEqualTo(true);
+    }
+
+    @Test
     public void testNotifyError() {
         assertNotNull(mSession);
         mSession.resetValues();
@@ -1112,6 +1123,19 @@ public class TvInteractiveAppServiceTest {
 
         assertThat(mSession.mTunedCount).isEqualTo(1);
         assertThat(mSession.mTunedUri).isEqualTo(CHANNEL_0);
+    }
+
+    @Test
+    public void testNotifyTrackSelectedFromInput() {
+        linkTvView();
+        String testTrackId = "testTrackId";
+        mInputSession.notifyTrackSelected(0, testTrackId);
+        mInstrumentation.waitForIdleSync();
+
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mTrackSelectedCount > 0);
+
+        assertThat(mSession.mTrackSelectedCount).isEqualTo(1);
+        assertThat(mSession.mSelectedTrackId).isEqualTo(testTrackId);
     }
 
     @Test

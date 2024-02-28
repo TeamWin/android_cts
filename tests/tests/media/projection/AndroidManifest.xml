@@ -28,16 +28,11 @@
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/>
-    <uses-permission android:name="android.permission.LOG_COMPAT_CHANGE"/>
-    <uses-permission android:name="android.permission.READ_COMPAT_CHANGE_CONFIG"/>
 
     <application
          android:requestLegacyExternalStorage="true"
          android:largeHeap="true">
         <activity android:name="android.media.projection.cts.MediaProjectionCustomIntentActivity"
-                  android:label="MediaProjectionActivity"
-                  android:screenOrientation="locked"/>
-        <activity android:name="android.media.projection.cts.MediaProjectionPermissionDialogTestActivity"
                   android:label="MediaProjectionActivity"
                   android:screenOrientation="locked"/>
     </application>

@@ -16,7 +16,13 @@
   ~ limitations under the License
   -->
 <resources>
-    <style name="LightBarTheme" parent="@android:style/Theme.Material.Light.NoActionBar">
+    <!--
+        TODO(b/309578419): Move this test to a targetSdk level which is lower than V.
+    -->
+    <style name="LightBarThemeBase" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+    </style>
+    <style name="LightBarTheme" parent="@style/LightBarThemeBase">
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="android:navigationBarColor">@color/navigationBarColor</item>

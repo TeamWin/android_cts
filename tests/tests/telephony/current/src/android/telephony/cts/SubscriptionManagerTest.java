@@ -85,7 +85,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -1513,8 +1512,11 @@ public class SubscriptionManagerTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_SUBSCRIPTION_USER_ASSOCIATION_QUERY)
-    @Ignore("b/325654424")
     public void testIsSubscriptionAssociatedWithUser() throws Exception {
+
+        UserHandle oldAssociatedUser = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.getSubscriptionUserHandle(mSubId));
+
         // Testing with the current context user.
         UserHandle currentUserHandle = InstrumentationRegistry.getContext().getUser();
 
@@ -1532,6 +1534,10 @@ public class SubscriptionManagerTest {
 
         assertFalse(ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
                 (sm) -> sm.isSubscriptionAssociatedWithUser(mSubId)));
+
+        // Resetting it to the state before test.
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                (sm) -> sm.setSubscriptionUserHandle(mSubId, oldAssociatedUser));
 
     }
 
