@@ -161,6 +161,7 @@ public final class ClusterHomeManagerTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(FLAG_CLUSTER_HEALTH_MONITORING)
     @ApiTest(apis = {
             "android.car.cluster.ClusterHomeManager#registerClusterNavigationStateListener",
             "android.car.cluster.ClusterHomeManager#unregisterClusterNavigationStateListener"})
