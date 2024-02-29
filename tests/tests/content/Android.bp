@@ -284,6 +284,7 @@ android_ravenwood_test {
     ],
     srcs: [
         "src/android/content/cts/util/XmlUtils.java",
+        "src/android/content/cts/ClipboardManagerTest.java",
         "src/android/content/cts/ClipDataTest.java",
         "src/android/content/cts/ClipDescriptionTest.java",
         "src/android/content/cts/ComponentNameTest.java",

@@ -62,6 +62,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.os.SystemClock;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
@@ -70,6 +71,7 @@ import android.util.ArrayMap;
 import android.util.DisplayMetrics;
 import android.util.SizeF;
 import android.util.TypedValue;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsoluteLayout;
@@ -129,6 +131,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -492,22 +496,38 @@ public class RemoteViewsTest {
             return;
         }
         final RemoteViews.DrawInstructions drawInstructions = getDrawInstructions();
-        final Uri uri = Uri.parse("ctstest://RemoteView/test");
-        final PendingIntent pi = PendingIntent.getActivity(mContext, 0,
-                new Intent(Intent.ACTION_VIEW, uri), PendingIntent.FLAG_IMMUTABLE);
-        final Intent i = new Intent().putExtra("TEST", "Success");
+        final String key = "mykey";
+        final String action = "myaction";
+        final MockBroadcastReceiver receiver = new MockBroadcastReceiver();
+        mContext.registerReceiver(receiver, new IntentFilter(action), Context.RECEIVER_EXPORTED);
+
+        final Intent intent = new Intent(action).setPackage(mContext.getPackageName());
+        final PendingIntent pendingIntent =
+                PendingIntent.getBroadcast(
+                        mContext,
+                        0,
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+        final Intent[] intents = new Intent[]{
+                new Intent().putExtra(key, 1),
+                new Intent().putExtra(key, 2),
+                new Intent().putExtra(key, 3),
+                new Intent().putExtra(key, 4)
+        };
         final ActivityMonitor am = mInstrumentation.addMonitor(
                 MockURLSpanTestActivity.class.getName(), null, false);
         Activity newActivity = am.waitForActivityWithTimeout(TEST_TIMEOUT);
         assertNull(newActivity);
-        final int viewId = 1;
         final int width = 100;
         final int height = 100;
+        final int offset = 2;
         final Bitmap bitmap1 = Bitmap.createBitmap(width, height, ARGB_8888);
         final Bitmap bitmap2 = Bitmap.createBitmap(width, height, ARGB_8888);
         mRemoteViews = new RemoteViews(drawInstructions);
-        mRemoteViews.setPendingIntentTemplate(viewId, pi);
-        mRemoteViews.setOnClickFillInIntent(viewId, i);
+        for (int i = 0; i < 4; i++) {
+            mRemoteViews.setPendingIntentTemplate(i + 1, pendingIntent);
+            mRemoteViews.setOnClickFillInIntent(i + 1, intents[i]);
+        }
         applyNightModeThenApplyAndTest(false /* nightMode */, () -> {});
         mActivityRule.runOnUiThread(() -> {
             mResult.measure(makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
@@ -525,6 +545,18 @@ public class RemoteViewsTest {
         });
         verifyColorsOnFourCorners(Color.BLACK, bitmap2);
         bitmap2.recycle();
+
+        // Verify clicks
+        mActivityRule.runOnUiThread(() -> {
+            final ViewGroup root = (ViewGroup) mActivityRule.getActivity().findViewById(
+                    R.id.remoteView_host);
+            root.removeAllViews();
+            root.addView(mResult);
+        });
+        verifyClick(receiver, offset, offset, 1);
+        verifyClick(receiver, width - offset, offset, 2);
+        verifyClick(receiver, offset, height - offset, 3);
+        verifyClick(receiver, width - offset, height - offset, 4);
     }
 
     private RemoteViews.DrawInstructions getDrawInstructions() throws IOException {
@@ -537,7 +569,7 @@ public class RemoteViewsTest {
         }
     }
 
-    private static void verifyColorsOnFourCorners(int expectedColor, Bitmap bitmap) {
+    private static void verifyColorsOnFourCorners(final int expectedColor, final Bitmap bitmap) {
         final int w = bitmap.getWidth();
         final int h = bitmap.getHeight();
         final int offset = 2;
@@ -545,6 +577,28 @@ public class RemoteViewsTest {
         assertEquals(expectedColor, bitmap.getPixel(w - offset, offset));
         assertEquals(expectedColor, bitmap.getPixel(offset, h - offset));
         assertEquals(expectedColor, bitmap.getPixel(w - offset, h - offset));
+    }
+
+    private void verifyClick(final MockBroadcastReceiver receiver, final int x, final int y,
+            final int expectedValue) throws Throwable {
+        mActivityRule.runOnUiThread(() -> performClick(mResult, x, y));
+        final Intent intent = receiver.awaitIntent();
+        assertNotNull(intent);
+        assertEquals(expectedValue, intent.getIntExtra("mykey", 0));
+    }
+
+    private static void performClick(final View v, final int x, final int y) {
+        final long ts = SystemClock.uptimeMillis();
+        final MotionEvent down = MotionEvent.obtain(
+                ts,
+                ts + 100,
+                MotionEvent.ACTION_DOWN, x, y, 0);
+        final MotionEvent up = MotionEvent.obtain(
+                ts + 200,
+                ts + 300,
+                MotionEvent.ACTION_UP, x, y, 0);
+        v.dispatchTouchEvent(down);
+        v.dispatchTouchEvent(up);
     }
 
     @Test
@@ -2106,9 +2160,48 @@ public class RemoteViewsTest {
 
         Intent mIntent;
 
+        private CountDownLatch mCountDownLatch;
+
         @Override
-        public void onReceive(Context context, Intent intent) {
+        public synchronized void onReceive(Context context, Intent intent) {
             mIntent = intent;
+            if (mCountDownLatch != null) {
+                mCountDownLatch.countDown();
+                mCountDownLatch = null;
+            }
+        }
+
+        /** Waits for an intent to be received and returns it. */
+        public Intent awaitIntent() {
+            CountDownLatch countDownLatch;
+            synchronized (this) {
+                // If we already have an intent, don't wait and just return it now.
+                if (mIntent != null) return getIntentAndResetLocked();
+
+                countDownLatch = new CountDownLatch(1);
+                mCountDownLatch = countDownLatch;
+            }
+
+            try {
+                // Note: if the latch already counted down, this will return true immediately.
+                countDownLatch.await(20, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            synchronized (this) {
+                if (mIntent == null) {
+                    Assert.fail("Expected to receive a broadcast within 20 seconds");
+                }
+
+                return getIntentAndResetLocked();
+            }
+        }
+
+        private Intent getIntentAndResetLocked() {
+            final Intent intent = mIntent;
+            mIntent = null;
+            return intent;
         }
     }
 

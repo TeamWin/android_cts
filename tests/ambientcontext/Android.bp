@@ -37,8 +37,6 @@ android_test {
         "cts-wm-util",
         "android-common",
         "android-support-v4",
-        "android.app.flags-aconfig-java",
-        "flag-junit",
     ],
     libs: [
         "android.test.base",

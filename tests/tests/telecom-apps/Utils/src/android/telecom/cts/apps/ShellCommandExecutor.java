@@ -20,6 +20,7 @@ import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
+import android.os.UserHandle;
 import android.os.UserManager;
 import android.telecom.PhoneAccountHandle;
 import android.util.Log;
@@ -40,6 +41,9 @@ public class ShellCommandExecutor {
     public static final String COMMAND_SET_DEFAULT_DIALER = "telecom set-default-dialer ";
     public static final String COMMAND_ENABLE = "telecom set-phone-account-enabled ";
     public static final String COMMAND_CLEANUP_STUCK_CALLS = "telecom cleanup-stuck-calls";
+
+    private static final String COMMAND_SET_DEFAULT_PHONE_ACCOUNT =
+            "telecom set-user-selected-outgoing-phone-account ";
 
     /**
      * Executes the given shell command and returns the output in a string. Note that even
@@ -91,15 +95,30 @@ public class ShellCommandExecutor {
     public static void enablePhoneAccount(Instrumentation instrumentation,
             PhoneAccountHandle handle) throws Exception {
         final ComponentName component = handle.getComponentName();
-        final long currentUserSerial = getCurrentUserSerialNumber(instrumentation);
+        final long userSerial = getUserSerialNumber(instrumentation, handle.getUserHandle());
         executeShellCommand(instrumentation, COMMAND_ENABLE
                 + component.getPackageName() + "/" + component.getClassName() + " "
-                + handle.getId() + " " + currentUserSerial);
+                + handle.getId() + " " + userSerial);
     }
 
-    private static long getCurrentUserSerialNumber(Instrumentation instrumentation) {
+    public static void setUserDefaultPhoneAccount(Instrumentation instrumentation,
+            PhoneAccountHandle handle) throws Exception {
+        String result;
+        if (handle != null) {
+            final ComponentName component = handle.getComponentName();
+            final long userSerial = getUserSerialNumber(instrumentation, handle.getUserHandle());
+            result = executeShellCommand(instrumentation, COMMAND_SET_DEFAULT_PHONE_ACCOUNT
+                    + component.getPackageName() + "/" + component.getClassName() + " "
+                    + handle.getId() + " " + userSerial);
+        } else {
+            result = executeShellCommand(instrumentation, COMMAND_SET_DEFAULT_PHONE_ACCOUNT);
+        }
+        Log.d(sTAG, "setUserDefaultPhoneAccount to " + handle + ", result=" + result);
+    }
+
+    private static long getUserSerialNumber(Instrumentation instrumentation, UserHandle handle) {
         UserManager userManager =
                 instrumentation.getContext().getSystemService(UserManager.class);
-        return userManager.getSerialNumberForUser(Process.myUserHandle());
+        return userManager.getSerialNumberForUser(handle);
     }
 }

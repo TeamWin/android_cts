@@ -1,6 +1,6 @@
 <host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/CtsBackgroundPaymentService"
-    android:defaultToObserveMode="true">
+    android:shouldDefaultToObserveMode="true">
     <aid-group android:description="@string/CtsBackgroundPaymentService" android:category="payment">
         <aid-filter android:name="A000000004101018"/>
         <aid-filter android:name="A000000004101019"/>

@@ -1,5 +1,5 @@
 # Android > Android OS & Apps > Framework (Java + Native) > Window Manager > Animations/Transitions > Layout
-# Bug template url: https://b.corp.google.com/issues/new?component=1517318&template=1946513 = per-file *Layout*, Location*
+# Bug template url: https://b.corp.google.com/issues/new?component=1517318&template=1946513 = per-file *Layout*, Location*, DialogFrame*
 
 # Android > Android OS & Apps > Framework (Java + Native) > Activity Manager > Task and Activity lifecycle
 # Bug template url: https://b.corp.google.com/issues/new?component=316020&template=1018174 = per-file Activity*, AspectRatio*, ConfigChange*, ConfigurationCallbacks*, DialogFrame*, *WindowCtsActivity*

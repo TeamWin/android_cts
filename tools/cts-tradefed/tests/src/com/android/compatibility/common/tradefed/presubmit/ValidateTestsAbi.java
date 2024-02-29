@@ -118,6 +118,7 @@ public class ValidateTestsAbi {
         BINARY_EXCEPTIONS.add("simg2img");
         BINARY_EXCEPTIONS.add("dtdiff");
         BINARY_EXCEPTIONS.add("dtc");
+        BINARY_EXCEPTIONS.add("lz4");
 
         /**
          * These binaries are testing components with no 32-bit variant, which

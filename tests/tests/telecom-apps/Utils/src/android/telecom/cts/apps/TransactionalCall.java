@@ -18,16 +18,15 @@ package android.telecom.cts.apps;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.os.OutcomeReceiver;
 import android.telecom.CallAttributes;
 import android.telecom.CallControl;
 import android.telecom.CallControlCallback;
 import android.telecom.DisconnectCause;
+import android.telecom.PhoneAccountHandle;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 public class TransactionalCall {
@@ -36,6 +35,8 @@ public class TransactionalCall {
     private Context mContext;
     private boolean mIsOutgoingCall;
     private CallResources mCallResources;
+    private final PhoneAccountHandle mPhoneAccountHandle;
+    private CallControl mCallControl;
 
     public CallResources getCallResources() {
         return mCallResources;
@@ -50,6 +51,7 @@ public class TransactionalCall {
         mIsOutgoingCall = callResources.getCallAttributes().getDirection()
                 == CallAttributes.DIRECTION_OUTGOING;
         mCallResources = callResources;
+        mPhoneAccountHandle = callResources.getCallAttributes().getPhoneAccountHandle();
     }
 
     public String getId() {
@@ -64,14 +66,20 @@ public class TransactionalCall {
         return mCallControl;
     }
 
+    public PhoneAccountHandle getPhoneAccountHandle() {
+        return mPhoneAccountHandle;
+    }
+
+    public void setCallControl(CallControl callControl) {
+        mCallControl = callControl;
+    }
+
     public void setCallControlAndId(CallControl callControl) {
         mCallControl = callControl;
         mId = callControl.getCallId().toString();
         mCallResources.setCallId(mId);
         Log.i(TAG, String.format("setCallControlAndId: id=[%s], cc=[%s]", mId, callControl));
     }
-
-    private CallControl mCallControl;
 
     public void setActive(LatchedOutcomeReceiver outcome, Bundle extras ){
         if (mIsOutgoingCall) {

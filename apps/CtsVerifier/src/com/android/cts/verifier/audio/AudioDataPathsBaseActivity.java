@@ -461,12 +461,6 @@ public abstract class AudioDataPathsBaseActivity
                     return setTestState(api, TESTSTATUS_BAD_ANALYSIS_CHANNEL);
                 }
 
-                boolean enableMMAP = mTransferType != TRANSFER_LEGACY;
-                Globals.setMMapEnabled(enableMMAP);
-                if (Globals.isMMapEnabled() != enableMMAP) {
-                    Log.d(TAG, "  Invalid MMAP request - " + getDescription());
-                    return setTestState(api, TESTSTATUS_BAD_MMAP);
-                }
 
                 // Player
                 mDuplexAudioManager.setSources(mSourceProvider, mSinkProvider);
@@ -484,9 +478,20 @@ public abstract class AudioDataPathsBaseActivity
                 mDuplexAudioManager.setRecorderSharingMode(mTransferType == TRANSFER_MMAP_EXCLUSIVE
                         ? BuilderBase.SHARING_MODE_EXCLUSIVE : BuilderBase.SHARING_MODE_SHARED);
 
-                // Open the streams.
-                // Note AudioSources and AudioSinks get allocated at this point
-                mDuplexAudioManager.buildStreams(mAudioApi, mAudioApi);
+                boolean enableMMAP = mTransferType != TRANSFER_LEGACY;
+                Globals.setMMapEnabled(enableMMAP);
+                if (Globals.isMMapEnabled() != enableMMAP) {
+                    Log.d(TAG, "  Invalid MMAP request - " + getDescription());
+                    Globals.setMMapEnabled(Globals.isMMapSupported());
+                    return setTestState(api, TESTSTATUS_BAD_MMAP);
+                }
+                try {
+                    // Open the streams.
+                    // Note AudioSources and AudioSinks get allocated at this point
+                    mDuplexAudioManager.buildStreams(mAudioApi, mAudioApi);
+                } finally {
+                    Globals.setMMapEnabled(Globals.isMMapSupported());
+                }
 
                 // (potentially) Adjust AudioSource parameters
                 AudioSource audioSource = mSourceProvider.getActiveSource();

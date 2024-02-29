@@ -28,6 +28,7 @@ import android.platform.test.annotations.IgnoreUnderRavenwood;
 import android.platform.test.ravenwood.RavenwoodRule;
 import android.util.Log;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -109,5 +110,43 @@ public class ClipDataTest {
         String clipStr = clip.toString();
         Log.i(LOG_TAG, clipStr);
         assertThat(clipStr).doesNotContain("secret");
+    }
+
+    @Test
+    public void testCoerceToText_text() {
+        final ClipData.Item item = new ClipData.Item(
+                "text"
+        );
+        assertThat(item.coerceToText(InstrumentationRegistry.getTargetContext()))
+                .isEqualTo("text");
+    }
+
+    @Test
+    public void testCoerceToText_uri() {
+        final ClipData.Item item = new ClipData.Item(
+                new Intent("action")
+        );
+        assertThat(item.coerceToText(InstrumentationRegistry.getTargetContext()))
+                .isEqualTo("intent:#Intent;action=action;end");
+    }
+
+    @Test
+    public void testCoerceToText_intent() {
+        final ClipData.Item item = new ClipData.Item(
+                Uri.parse("example://authority/")
+        );
+        assertThat(item.coerceToText(InstrumentationRegistry.getTargetContext()))
+                .isEqualTo("example://authority/");
+    }
+
+    @Test
+    public void testCoerceToText_multiple() {
+        final ClipData.Item item = new ClipData.Item(
+                "text",
+                new Intent("action"),
+                Uri.parse("example://authority/")
+        );
+        assertThat(item.coerceToText(InstrumentationRegistry.getTargetContext()))
+                .isEqualTo("text");
     }
 }
