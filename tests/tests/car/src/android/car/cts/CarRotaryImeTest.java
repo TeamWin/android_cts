@@ -23,24 +23,19 @@ import static org.junit.Assume.assumeTrue;
 import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.Context;
-import android.os.ParcelFileDescriptor;
 import android.view.accessibility.AccessibilityManager;
 import android.view.inputmethod.InputMethodManager;
 
 import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.car.rotary.RotaryProtos;
+import com.android.compatibility.common.util.SystemUtil;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 
 public final class CarRotaryImeTest extends AbstractCarTestCase {
-
-    private static final String TAG = CarRotaryImeTest.class.getSimpleName();
 
     private static final ComponentName ROTARY_SERVICE_COMPONENT_NAME =
             ComponentName.unflattenFromString("com.android.car.rotary/.RotaryService");
@@ -59,8 +54,7 @@ public final class CarRotaryImeTest extends AbstractCarTestCase {
     public void rotaryInputMethodValidIfSpecified() throws Exception {
         assumeHasRotaryService();
 
-        String rotaryInputMethod = dumpsysRotaryServiceProto().getRotaryInputMethod();
-
+        String rotaryInputMethod = getStringValueFromDumpsys("rotaryInputMethod");
         assumeTrue("Rotary input method not specified, skipping test",
                 !rotaryInputMethod.isEmpty());
         assertWithMessage("isValidIme(" + rotaryInputMethod + ")")
@@ -71,41 +65,36 @@ public final class CarRotaryImeTest extends AbstractCarTestCase {
      * The default touch input method must be specified via the {@code default_touch_input_method}
      * string resource, and it must be the component name of an existing IME.
      */
-    @Ignore("TODO(b/184390443)")
     @Test
     public void defaultTouchInputMethodSpecifiedAndValid() throws Exception {
         assumeHasRotaryService();
 
-        String defaultTouchInputMethod = dumpsysRotaryServiceProto().getDefaultTouchInputMethod();
+        String defaultTouchInputMethod = getStringValueFromDumpsys("defaultTouchInputMethod");
 
         assertWithMessage("defaultTouchInputMethod").that(defaultTouchInputMethod).isNotEmpty();
         assertWithMessage("isValidIme(" + defaultTouchInputMethod + ")")
                 .that(isValidIme(defaultTouchInputMethod)).isTrue();
     }
 
-    private RotaryProtos.RotaryService dumpsysRotaryServiceProto() throws IOException {
+    // TODO(b/327507413): switch to proto-based dumpsys.
+    private static String getStringValueFromDumpsys(String key) throws IOException {
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation(
                 UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
-        ParcelFileDescriptor pfd = uiAutomation.executeShellCommand(
-                "dumpsys activity service " + ROTARY_SERVICE_COMPONENT_NAME.flattenToString()
-                        + " proto");
-        try (FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(pfd)) {
-            // TODO(b/184973707): Remove this code once ActivityManager supports dumping a service
-            //                    in proto format.
-            // Skip over:
-            //   SERVICE com.android.car.rotary/.RotaryService ... pid=... user=10
-            //   __Client:
-            //   ____
-            // where underscores represent spaces.
-            byte[] buffer = new byte[1];
-            while (fis.read(buffer) > 0 && buffer[0] != ':') {
-                // Do nothing.
-            }
-            // Skip carriage return and four space indent.
-            fis.skip(5);
-
-            return RotaryProtos.RotaryService.parseFrom(fis);
+        String dumpsysOutput = SystemUtil.runShellCommand(uiAutomation,
+                "dumpsys activity service " + ROTARY_SERVICE_COMPONENT_NAME.flattenToShortString());
+        // dumpsys output contains string like:
+        // lastTouchedNode=null
+        // rotaryInputMethod=com.android.car.rotaryime/.RotaryIme
+        // defaultTouchInputMethod=com.google.android.apps.automotive.inputmethod/
+        // .InputMethodService"
+        // hunNudgeDirection=FOCUS_UP
+        int startIndex = dumpsysOutput.indexOf(key) + key.length() + 1;
+        int endIndex = dumpsysOutput.indexOf('\n', startIndex);
+        String value = dumpsysOutput.substring(startIndex, endIndex);
+        if (!"null".equals(value)) {
+            return value;
         }
+        return "";
     }
 
     private void assumeHasRotaryService() {
