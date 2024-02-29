@@ -76,6 +76,7 @@ import android.os.Looper;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeNonSdkSandbox;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
@@ -104,6 +105,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 @AppModeFull
+@AppModeNonSdkSandbox
 @RunWith(AndroidJUnit4.class)
 public class PackageInstallerArchiveTest {
     private static final String SAMPLE_APK_BASE = "/data/local/tmp/cts/content/";

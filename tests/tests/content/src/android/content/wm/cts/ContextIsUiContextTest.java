@@ -23,6 +23,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeSdkSandbox;
 import android.platform.test.annotations.Presubmit;
 import android.view.Display;
 import android.view.WindowManager;
@@ -55,6 +56,7 @@ import org.junit.Test;
  */
 @Presubmit
 @SmallTest
+@AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class ContextIsUiContextTest extends ContextTestBase {
     @Test
     public void testIsUiContextOnApplication() {

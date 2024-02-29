@@ -30,6 +30,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PackageManager.Property;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeNonSdkSandbox;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -48,6 +49,7 @@ import java.util.Objects;
 
 @RunWith(JUnit4.class)
 @AppModeFull(reason = "Instant applications cannot install other packages")
+@AppModeNonSdkSandbox(reason = "Sandboxed SDKs cannot install other packages")
 public class PackageManagerGetPropertyTest {
     private static PackageManager sPackageManager;
     private static final String PROPERTY_APP1_PACKAGE_NAME = "com.android.cts.packagepropertyapp1";

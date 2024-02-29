@@ -23,10 +23,12 @@ import android.content.pm.IPackageDeleteObserver2;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.UninstallCompleteCallback;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeNonSdkSandbox;
 
 import org.junit.Test;
 
 @AppModeFull
+@AppModeNonSdkSandbox
 public class UninstallCallbackTest {
 
     private static final String DUMMY_PACKAGE_NAME = "com.example.app";
