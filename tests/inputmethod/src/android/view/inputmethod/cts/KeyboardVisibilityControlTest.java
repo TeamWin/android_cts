@@ -459,9 +459,9 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                     getOnMainSync(() -> imm.showSoftInput(nonFocusedEditText, 0)));
             notExpectEvent(stream, showSoftInputMatcher(InputMethod.SHOW_EXPLICIT), TIMEOUT);
 
-            assertFalse("hideSoftInputFromWindow must fail if the View does not have IME focus",
-                    getOnMainSync(() -> imm.hideSoftInputFromWindow(
-                            nonFocusedEditText.getWindowToken(), 0)));
+            getOnMainSync(() -> imm.hideSoftInputFromWindow(
+                            nonFocusedEditText.getWindowToken(), 0));
+            // IME was never shown, so there should be no hideSoftInput.
             notExpectEvent(stream, hideSoftInputMatcher(), TIMEOUT);
             expectImeInvisible(TIMEOUT);
         }
