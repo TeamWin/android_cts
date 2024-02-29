@@ -1,8 +1,5 @@
 package android.nfc.cts;
 
-import static android.Manifest.permission.MANAGE_DEFAULT_APPLICATIONS;
-import static android.nfc.cts.WalletRoleTestUtils.setDefaultWalletRoleHolder;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeTrue;
@@ -46,7 +43,6 @@ import org.mockito.internal.util.reflection.FieldReader;
 import org.mockito.internal.util.reflection.FieldSetter;
 
 import java.util.ArrayList;
-import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -444,38 +440,25 @@ public class NfcAdapterTest {
     @Test
     @RequiresFlagsEnabled({android.nfc.Flags.FLAG_NFC_OBSERVE_MODE,
             android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED})
-    public void testAllowTransaction_walletRoleEnabled() throws InterruptedException {
-        try {
-            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-                    .getUiAutomation().adoptShellPermissionIdentity(MANAGE_DEFAULT_APPLICATIONS);
-            Assert.assertTrue(setDefaultWalletRoleHolder(mContext));
+    public void testAllowTransaction_walletRoleEnabled() {
+        WalletRoleTestUtils.runWithRole(mContext, WalletRoleTestUtils.CTS_PACKAGE_NAME, () -> {
             NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-
             assumeTrue(adapter.isObserveModeSupported());
             adapter.setObserveModeEnabled(false);
             Assert.assertFalse(adapter.isObserveModeEnabled());
-        } finally {
-            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-                    .getUiAutomation().dropShellPermissionIdentity();
-        }
+        });
     }
 
     @Test
     @RequiresFlagsEnabled({android.nfc.Flags.FLAG_NFC_OBSERVE_MODE,
             android.permission.flags.Flags.FLAG_WALLET_ROLE_ENABLED})
-    public void testDisallowTransaction_walletRoleEnabled() throws InterruptedException {
-        try {
-            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-                    .getUiAutomation().adoptShellPermissionIdentity(MANAGE_DEFAULT_APPLICATIONS);
-            Assert.assertTrue(setDefaultWalletRoleHolder(mContext));
+    public void testDisallowTransaction_walletRoleEnabled() {
+        WalletRoleTestUtils.runWithRole(mContext, WalletRoleTestUtils.CTS_PACKAGE_NAME, () -> {
             NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
             assumeTrue(adapter.isObserveModeSupported());
             adapter.setObserveModeEnabled(true);
             Assert.assertTrue(adapter.isObserveModeEnabled());
-        } finally {
-            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-                    .getUiAutomation().dropShellPermissionIdentity();
-        }
+        });
     }
 
     @Test
@@ -593,6 +576,6 @@ public class NfcAdapterTest {
     }
 
     private ComponentName setDefaultPaymentService(ComponentName serviceName) {
-        return CardEmulationTest.setDefaultPaymentService(serviceName, mContext);
+        return DefaultPaymentProviderTestUtils.setDefaultPaymentService(serviceName, mContext);
     }
 }

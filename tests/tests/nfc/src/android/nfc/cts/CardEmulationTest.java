@@ -25,7 +25,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.database.ContentObserver;
 import android.net.Uri;
-import android.nfc.Constants;
 import android.nfc.Flags;
 import android.nfc.INfcCardEmulation;
 import android.nfc.NfcAdapter;
@@ -35,10 +34,8 @@ import android.nfc.cardemulation.CardEmulation;
 import android.nfc.cardemulation.PollingFrame;
 import android.nfc.cardemulation.PollingFrame.PollingFrameType;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.PowerManager;
 import android.os.RemoteException;
-import android.os.UserHandle;
 import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
@@ -195,8 +192,9 @@ public class CardEmulationTest {
     public void testRegisterAidsForService() throws NoSuchFieldException, RemoteException {
         ArrayList<String> aids = new ArrayList<String>();
         aids.add("00000000000000");
-        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-        CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
+        CardEmulation cardEmulation = createMockedInstance();
+        when(mEmulation.registerAidGroupForService(anyInt(), any(ComponentName.class), any()))
+                .thenReturn(true);
         Assert.assertTrue(cardEmulation.registerAidsForService(mService,
                 CardEmulation.CATEGORY_PAYMENT, aids));
     }
@@ -476,21 +474,11 @@ public class CardEmulationTest {
                 : (serviceClass == CustomHostApduService.class
                         ? R.string.CtsCustomPaymentService : R.string.CtsBackgroundPaymentService));
         final String desc = context.getResources().getString(resId);
-        ensurePreferredService(desc, context);
+        DefaultPaymentProviderTestUtils.ensurePreferredService(desc, context);
     }
 
     void ensurePreferredService(String serviceDesc) {
-        ensurePreferredService(serviceDesc, mContext);
-    }
-
-    static void ensurePreferredService(String serviceDesc, Context context) {
-        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(context);
-        final CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
-        try {
-            CommonTestUtils.waitUntil("Default service hasn't updated", 6,
-                    () -> serviceDesc.equals(
-                            cardEmulation.getDescriptionForPreferredPaymentService()));
-        } catch (InterruptedException ie) { }
+        DefaultPaymentProviderTestUtils.ensurePreferredService(serviceDesc, mContext);
     }
 
     @Test
@@ -931,7 +919,7 @@ public class CardEmulationTest {
     }
 
     ComponentName setDefaultPaymentService(ComponentName serviceName) {
-        return setDefaultPaymentService(serviceName, mContext);
+        return DefaultPaymentProviderTestUtils.setDefaultPaymentService(serviceName, mContext);
     }
 
     static final class SettingsObserver extends ContentObserver {
@@ -946,47 +934,6 @@ public class CardEmulationTest {
             synchronized (this) {
                 this.notify();
             }
-        }
-    }
-
-    static ComponentName setDefaultPaymentService(ComponentName serviceName, Context context) {
-        try {
-            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-                    .getUiAutomation().adoptShellPermissionIdentity();
-
-            ComponentName originalValue = CardEmulation.getPreferredPaymentService(context);
-            NfcAdapter adapter = NfcAdapter.getDefaultAdapter(context);
-            CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
-            SettingsObserver settingsObserver =
-                    new SettingsObserver(new Handler(Looper.getMainLooper()));
-            context.getContentResolver().registerContentObserverAsUser(
-                    Settings.Secure.getUriFor(
-                            Constants.SETTINGS_SECURE_NFC_PAYMENT_DEFAULT_COMPONENT),
-                    true, settingsObserver, UserHandle.ALL);
-            Settings.Secure.putString(context.getContentResolver(),
-                    Constants.SETTINGS_SECURE_NFC_PAYMENT_DEFAULT_COMPONENT,
-                    serviceName == null ? null
-                    : serviceName.flattenToString());
-            int count = 0;
-            while (!settingsObserver.mSeenChange
-                    && !cardEmulation.isDefaultServiceForCategory(serviceName,
-                    CardEmulation.CATEGORY_PAYMENT) && count < 10) {
-                synchronized (settingsObserver) {
-                    try {
-                        settingsObserver.wait(200);
-                    } catch (InterruptedException ie) {
-                    }
-                    count++;
-                }
-            }
-            Assert.assertTrue(count < 10);
-            Assert.assertTrue(serviceName == null
-                    ? null == CardEmulation.getPreferredPaymentService(context)
-                    : serviceName.equals(cardEmulation.getPreferredPaymentService(context)));
-            return originalValue;
-        } finally {
-            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-                    .getUiAutomation().dropShellPermissionIdentity();
         }
     }
 

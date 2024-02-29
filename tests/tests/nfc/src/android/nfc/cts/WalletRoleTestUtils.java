@@ -37,6 +37,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public final class WalletRoleTestUtils {
 
+    private WalletRoleTestUtils() {}
+
     static final String CTS_PACKAGE_NAME = "android.nfc.cts";
     static final String WALLET_HOLDER_PACKAGE_NAME = "com.android.test.walletroleholder";
     static final String WALLET_HOLDER_SERVICE_DESC = "Wallet Role CTS Nfc Test Service";
