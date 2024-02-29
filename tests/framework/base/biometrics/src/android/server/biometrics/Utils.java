@@ -21,6 +21,7 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 import android.content.ComponentName;
 import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricPrompt;
+import android.hardware.biometrics.Flags;
 import android.hardware.biometrics.SensorProperties;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
@@ -349,5 +350,15 @@ public class Utils {
         }
 
         return ids;
+    }
+
+    /**
+     * @param isContentViewNull  Whether the content view is null.
+     * @param isBiometricAllowed Whether there is any biometric authenticator allowed.
+     * @return Whether biometric prompt without icon should show prior to credential view.
+     */
+    public static boolean shouldShowBpWithoutIconForCredential(boolean isContentViewNull,
+            boolean isBiometricAllowed) {
+        return Flags.customBiometricPrompt() && !isContentViewNull && !isBiometricAllowed;
     }
 }
