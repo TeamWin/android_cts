@@ -35,6 +35,7 @@ android_test {
         "ctstestrunner-axt",
         "cts-wm-util",
         "junit",
+        "android.app.flags-aconfig-java",
     ],
 
     srcs: [
