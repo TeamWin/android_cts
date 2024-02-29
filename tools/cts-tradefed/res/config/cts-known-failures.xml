@@ -289,4 +289,7 @@
     <!-- b/284406623 -->
     <option name="compatibility:exclude-filter" value="CtsUwbMultiDeviceTestCase_FiraRangingTests" />
     <option name="compatibility:exclude-filter" value="CtsUwbMultiDeviceTestCase_RangingMeasurementTests" />
+
+    <!-- b/326655855 -->
+    <option name="compatibility:exclude-filter" value="CtsShortcutManagerTestCases android.content.pm.cts.shortcutmanager.ShortcutManagerUsageTest#testReportShortcutUsed" />
 </configuration>
