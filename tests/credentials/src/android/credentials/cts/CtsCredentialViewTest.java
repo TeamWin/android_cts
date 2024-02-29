@@ -20,6 +20,7 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
@@ -29,6 +30,7 @@ import android.credentials.CredentialOption;
 import android.credentials.GetCredentialException;
 import android.credentials.GetCredentialRequest;
 import android.credentials.GetCredentialResponse;
+import android.credentials.cts.testcore.CtsCredentialManagerUtils;
 import android.credentials.cts.testcore.DeviceConfigStateRequiredRule;
 import android.os.Build;
 import android.os.Bundle;
@@ -93,6 +95,8 @@ public class CtsCredentialViewTest {
     public void setUp() {
         Log.i(LOG_TAG, "Setting up CtsCredentialViewTest");
         assumeTrue("VERSION.SDK_INT=" + Build.VERSION.SDK_INT, BuildCompat.isAtLeastV());
+        assumeFalse("Skipping test: Auto does not support CredentialManager yet",
+                CtsCredentialManagerUtils.isAuto(mContext));
         mActivity = mActivityRule.getActivity();
     }
     @Test
