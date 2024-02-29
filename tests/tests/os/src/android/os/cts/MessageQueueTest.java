@@ -57,6 +57,8 @@ public class MessageQueueTest {
             .setProvideMainThread(true).build();
 
     private static final long TIMEOUT = 1000;
+    private static final long TEST_TIMEOUT = 1000;
+    private static final long TEST_INTERVAL = 50;
 
     @Test
     public void testAddIdleHandler() throws InterruptedException {
@@ -205,7 +207,7 @@ public class MessageQueueTest {
             }
 
         };
-        tester.doTest(1000, 50);
+        tester.doTest(TEST_TIMEOUT, TEST_INTERVAL);
     }
 
     /**
@@ -235,7 +237,7 @@ public class MessageQueueTest {
             }
         };
 
-        tester.doTest(1000, 50);
+        tester.doTest(TEST_TIMEOUT, TEST_INTERVAL);
     }
 
     /**
@@ -267,7 +269,7 @@ public class MessageQueueTest {
                 mHandler.sendMessageAtTime(mHandler.obtainMessage(3), now + 3);
             }
         };
-        tester.doTest(1000, 50);
+        tester.doTest(TEST_TIMEOUT, TEST_INTERVAL);
     }
 
 
@@ -830,7 +832,35 @@ public class MessageQueueTest {
             }
         };
 
-        tester.doTest(1000, 50);
+        tester.doTest(TEST_TIMEOUT, TEST_INTERVAL);
+    }
+
+    /**
+     * Test that async messages are delivered, in order, even when submitted out of order.
+     * Also ensures that we don't miss wake-ups in next() when we enqueue async messages
+     * and a barrier is present.
+     */
+    @Test
+    public void testLateSyncBarriers() throws Exception {
+        OrderTestHelper tester = new OrderTestHelper() {
+            @Override
+            public void init() {
+                super.init();
+                mLastMessage = 1;
+                long now = SystemClock.uptimeMillis() + 100;
+
+                sendAsyncMessageAtTime(1, now + 4);
+                sendAsyncMessageAtTime(0, now + 2);
+            }
+
+            private void sendAsyncMessageAtTime(int what, long when) {
+                Message msg = mHandler.obtainMessage(what);
+                msg.setAsynchronous(true);
+                mHandler.sendMessageAtTime(msg, when);
+            }
+        };
+
+        tester.doTest(TEST_TIMEOUT, TEST_INTERVAL);
     }
 
     @Test
