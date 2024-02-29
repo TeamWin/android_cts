@@ -45,6 +45,7 @@ android_test_helper_app {
         "cts",
         "general-tests",
         "mts-permission",
+        "mcts-permission",
     ],
     platform_apis: true,
 }

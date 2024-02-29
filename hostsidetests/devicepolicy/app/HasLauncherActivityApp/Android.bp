@@ -33,6 +33,7 @@ android_test_helper_app {
         "cts",
         "general-tests",
         "mts-permission",
+        "mcts-permission",
     ],
     sdk_version: "current",
 }
@@ -53,6 +54,7 @@ android_test_helper_app {
         "cts",
         "general-tests",
         "mts-permission",
+        "mcts-permission",
     ],
     manifest: "no_launcher_activity_AndroidManifest.xml",
     sdk_version: "current",
@@ -74,6 +76,7 @@ android_test_helper_app {
         "cts",
         "general-tests",
         "mts-permission",
+        "mcts-permission",
     ],
     manifest: "no_permission_AndroidManifest.xml",
     sdk_version: "current",
