@@ -24,6 +24,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
@@ -140,6 +141,7 @@ public class CtsCredentialProviderServiceDeviceTest {
 
     @Before
     public void setUp() {
+        assumeFalse("Skipping test: Wear does not support CredentialManager yet", isWatch());
         Log.i(TAG, "Enabling service from scratch for " + CTS_SERVICE_NAME);
         Log.i(TAG, "Enabling CredentialManager flags as well...");
         enableCredentialManagerDeviceFeature(mContext);
@@ -759,5 +761,10 @@ public class CtsCredentialProviderServiceDeviceTest {
         assertThat(resolveInfoList).isNotNull();
         // one or more activity can handle this intent.
         assertTrue(resolveInfoList.size() > 0);
+    }
+
+    private boolean isWatch() {
+        PackageManager pm = mContext.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 }
