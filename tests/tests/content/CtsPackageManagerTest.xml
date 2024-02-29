@@ -114,6 +114,8 @@
         <option name="push-file" key="HelloWorldSharedUid.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldSharedUid.apk.idsig" />
         <option name="push-file" key="HelloWorldSettings.apk" value="/data/local/tmp/cts/content/HelloWorldSettings.apk" />
         <option name="push-file" key="HelloWorldSettings.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldSettings.apk.idsig" />
+        <option name="push-file" key="HelloWorldSettings2.apk" value="/data/local/tmp/cts/content/HelloWorldSettings2.apk" />
+        <option name="push-file" key="HelloWorldSettings2.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldSettings2.apk.idsig" />
         <option name="push-file" key="CtsPkgInstallTinyAppV1.apk" value="/data/local/tmp/cts/content/CtsPkgInstallTinyAppV1.apk" />
         <option name="push-file" key="CtsPkgInstallTinyAppV2V3V4.apk" value="/data/local/tmp/cts/content/CtsPkgInstallTinyAppV2V3V4.apk" />
         <option name="push-file" key="CtsPkgInstallTinyAppV2V3V4.apk.idsig" value="/data/local/tmp/cts/content/CtsPkgInstallTinyAppV2V3V4.apk.idsig" />
