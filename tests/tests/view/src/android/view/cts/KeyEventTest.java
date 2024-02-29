@@ -812,10 +812,10 @@ public class KeyEventTest {
         assertEquals(KeyEvent.KEYCODE_UNKNOWN, KeyEvent.keyCodeFromString("KEYCODE"));
         assertEquals(KeyEvent.KEYCODE_UNKNOWN, KeyEvent.keyCodeFromString("KEYCODE_"));
         assertEquals(KeyEvent.KEYCODE_UNKNOWN, KeyEvent.keyCodeFromString(""));
-        assertEquals(KeyEvent.LAST_KEYCODE,
-                KeyEvent.keyCodeFromString(Integer.toString(KeyEvent.LAST_KEYCODE)));
+        assertEquals(KeyEvent.getMaxKeyCode(),
+                KeyEvent.keyCodeFromString(Integer.toString(KeyEvent.getMaxKeyCode())));
         assertEquals(KeyEvent.KEYCODE_UNKNOWN,
-                KeyEvent.keyCodeFromString(Integer.toString(KeyEvent.LAST_KEYCODE + 1)));
+                KeyEvent.keyCodeFromString(Integer.toString(KeyEvent.getMaxKeyCode() + 1)));
     }
 
     @Test
