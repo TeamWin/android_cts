@@ -43,6 +43,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresFlagsEnabled;
@@ -171,6 +172,7 @@ public class BrailleDisplayControllerTest {
 
     @Before
     public void setup() throws Exception {
+        assumeTrue(SystemProperties.getBoolean("ro.accessibility.support_hidraw", true));
         mService = mServiceRule.getService();
         assertThat(mService).isNotNull();
         mController = mService.getBrailleDisplayController();
