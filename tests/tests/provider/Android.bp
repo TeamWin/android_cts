@@ -13,8 +13,6 @@ android_test {
         "cts",
         "general-tests",
         "sts",
-        "mts-documentsui",
-        "mcts-documentsui",
     ],
 
     libs: [
