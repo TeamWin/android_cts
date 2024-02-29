@@ -112,6 +112,7 @@ public class WindowInsetsTest {
                                 RoundedCorner.POSITION_BOTTOM_LEFT, ROUNDED_CORNER_BOTTOM_LEFT)
                         .setDisplayShape(DISPLAY_SHAPE)
                         .setBoundingRects(captionBar(), BOUNDING_RECTS)
+                        .setBoundingRectsIgnoringVisibility(captionBar(), BOUNDING_RECTS)
                         .setFrame(FRAME_SIZE, FRAME_SIZE)
                         .build();
 
@@ -135,6 +136,7 @@ public class WindowInsetsTest {
                 insets.getRoundedCorner(RoundedCorner.POSITION_BOTTOM_LEFT));
         assertEquals(DISPLAY_SHAPE, insets.getDisplayShape());
         assertEquals(BOUNDING_RECTS, insets.getBoundingRects(captionBar()));
+        assertEquals(BOUNDING_RECTS, insets.getBoundingRectsIgnoringVisibility(captionBar()));
         assertEquals(new Size(FRAME_SIZE, FRAME_SIZE), insets.getFrame());
     }
 
@@ -157,6 +159,7 @@ public class WindowInsetsTest {
                                 RoundedCorner.POSITION_BOTTOM_LEFT, ROUNDED_CORNER_BOTTOM_LEFT)
                         .setDisplayShape(DISPLAY_SHAPE)
                         .setBoundingRects(captionBar(), BOUNDING_RECTS)
+                        .setBoundingRectsIgnoringVisibility(captionBar(), BOUNDING_RECTS)
                         .setFrame(FRAME_SIZE, FRAME_SIZE)
                         .build();
         final WindowInsets copy = new WindowInsets.Builder(insets).build();
@@ -204,6 +207,7 @@ public class WindowInsetsTest {
                         .setTappableElementInsets(Insets.of(17, 18, 19, 20))
                         .setDisplayCutout(CUTOUT)
                         .setBoundingRects(captionBar(), BOUNDING_RECTS)
+                        .setBoundingRectsIgnoringVisibility(captionBar(), BOUNDING_RECTS)
                         .setFrame(FRAME_SIZE, FRAME_SIZE);
         final WindowInsets insets = builder.build();
 
@@ -214,6 +218,7 @@ public class WindowInsetsTest {
         builder.setMandatorySystemGestureInsets(Insets.NONE);
         builder.setTappableElementInsets(Insets.NONE);
         builder.setBoundingRects(captionBar(), Collections.emptyList());
+        builder.setBoundingRectsIgnoringVisibility(captionBar(), Collections.emptyList());
         builder.setFrame(FRAME_SIZE + 1, FRAME_SIZE + 1);
 
         assertEquals(Insets.of(1, 2, 3, 4), insets.getSystemWindowInsets());
@@ -223,6 +228,9 @@ public class WindowInsetsTest {
         assertEquals(
                 BOUNDING_RECTS,
                 insets.getBoundingRects(captionBar()));
+        assertEquals(
+                BOUNDING_RECTS,
+                insets.getBoundingRectsIgnoringVisibility(captionBar()));
         assertEquals(new Size(FRAME_SIZE, FRAME_SIZE), insets.getFrame());
     }
 
@@ -347,6 +355,78 @@ public class WindowInsetsTest {
         assertEquals(
                 Collections.singletonList(new Rect(30, 30, 40, 40)),
                 insets.getBoundingRects(systemOverlays()));
+    }
+
+    @Test
+    public void testBuilder_boundingRectsTypeMapIgnoringVisibility() {
+        final WindowInsets insets =
+                new WindowInsets.Builder()
+                        .setInsetsIgnoringVisibility(statusBars(), Insets.of(0, 0, 10, 10))
+                        .setBoundingRectsIgnoringVisibility(
+                                statusBars(), List.of(new Rect(0, 0, 10, 10)))
+                        .setBoundingRectsIgnoringVisibility(
+                                navigationBars(), List.of(new Rect(0, 100, 10, 10)))
+                        .setBoundingRectsIgnoringVisibility(
+                                tappableElement(), List.of(new Rect(0, 0, 5, 5)))
+                        .setBoundingRectsIgnoringVisibility(
+                                mandatorySystemGestures(), List.of(new Rect(0, 0, 20, 20)))
+                        .setBoundingRectsIgnoringVisibility(
+                                systemGestures(), List.of(new Rect(0, 0, 30, 30)))
+                        .setBoundingRectsIgnoringVisibility(
+                                displayCutout(), List.of(new Rect(50, 0, 60, 10)))
+                        .setBoundingRectsIgnoringVisibility(
+                                captionBar(), List.of(new Rect(0, 0, 50, 50)))
+                        .setBoundingRectsIgnoringVisibility(
+                                systemOverlays(), List.of(new Rect(30, 30, 40, 40)))
+                        .build();
+        assertEquals(
+                Collections.singletonList(new Rect(0, 0, 10, 10)),
+                insets.getBoundingRectsIgnoringVisibility(statusBars()));
+        assertEquals(
+                Collections.singletonList(new Rect(0, 100, 10, 10)),
+                insets.getBoundingRectsIgnoringVisibility(navigationBars()));
+        assertEquals(
+                Collections.singletonList(new Rect(0, 0, 5, 5)),
+                insets.getBoundingRectsIgnoringVisibility(tappableElement()));
+        assertEquals(
+                Collections.singletonList(new Rect(0, 0, 20, 20)),
+                insets.getBoundingRectsIgnoringVisibility(mandatorySystemGestures()));
+        assertEquals(
+                Collections.singletonList(new Rect(0, 0, 30, 30)),
+                insets.getBoundingRectsIgnoringVisibility(systemGestures()));
+        assertEquals(
+                Collections.singletonList(new Rect(50, 0, 60, 10)),
+                insets.getBoundingRectsIgnoringVisibility(displayCutout()));
+        assertEquals(
+                Collections.singletonList(new Rect(0, 0, 50, 50)),
+                insets.getBoundingRectsIgnoringVisibility(captionBar()));
+        assertEquals(
+                Arrays.asList(
+                        new Rect(0, 0, 10, 10),
+                        new Rect(0, 100, 10, 10),
+                        new Rect(0, 0, 50, 50),
+                        new Rect(30, 30, 40, 40)),
+                insets.getBoundingRectsIgnoringVisibility(systemBars()));
+        assertEquals(
+                Collections.singletonList(new Rect(30, 30, 40, 40)),
+                insets.getBoundingRectsIgnoringVisibility(systemOverlays()));
+
+        Exception exception = null;
+        try {
+            new WindowInsets.Builder()
+                    .setBoundingRectsIgnoringVisibility(ime(), List.of(new Rect(0, 90, 100, 100)));
+        } catch (Exception e) {
+            exception = e;
+        }
+        assertNotNull(exception);
+
+        exception = null;
+        try {
+            insets.getBoundingRectsIgnoringVisibility(ime());
+        } catch (Exception e) {
+            exception = e;
+        }
+        assertNotNull(exception);
     }
 
     @Test
