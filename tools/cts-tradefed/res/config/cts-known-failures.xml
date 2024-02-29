@@ -354,4 +354,7 @@
     <option name="compatibility:exclude-filter" value="CtsPermission5TestCases android.permission5.cts.RuntimePermissionsAppOpTrackingTest#testTrustedAccessContactsAttributeToAnother" />
     <option name="compatibility:exclude-filter" value="CtsPermission5TestCases android.permission5.cts.RuntimePermissionsAppOpTrackingTest#testTrustedAccessCalendarAttributeToAnother" />
 
+    <!-- b/326655855 -->
+    <option name="compatibility:exclude-filter" value="CtsShortcutManagerTestCases android.content.pm.cts.shortcutmanager.ShortcutManagerUsageTest#testReportShortcutUsed" />
+
 </configuration>
