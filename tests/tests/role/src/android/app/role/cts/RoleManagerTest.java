@@ -19,8 +19,8 @@ package android.app.role.cts;
 import static com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
-import static com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject;
-import static com.android.compatibility.common.util.UiAutomatorUtils.waitFindObjectOrNull;
+import static com.android.compatibility.common.util.UiAutomatorUtils2.waitFindObject;
+import static com.android.compatibility.common.util.UiAutomatorUtils2.waitFindObjectOrNull;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -42,10 +42,6 @@ import android.os.Process;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.provider.Telephony;
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.BySelector;
-import android.support.test.uiautomator.UiObject2;
-import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
@@ -54,6 +50,10 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.BySelector;
+import androidx.test.uiautomator.UiObject2;
+import androidx.test.uiautomator.UiObjectNotFoundException;
 
 import com.android.compatibility.common.util.DisableAnimationRule;
 import com.android.compatibility.common.util.FreezeRotationRule;
@@ -124,6 +124,17 @@ public class RoleManagerTest {
     private static final Context sContext = InstrumentationRegistry.getTargetContext();
     private static final PackageManager sPackageManager = sContext.getPackageManager();
     private static final RoleManager sRoleManager = sContext.getSystemService(RoleManager.class);
+    private static final boolean sIsWatch = sPackageManager.hasSystemFeature(
+            PackageManager.FEATURE_WATCH);
+
+    private static final BySelector NEGATIVE_BUTTON_SELECTOR =
+            sIsWatch ? By.text("Cancel") : By.res("android:id/button2");
+    private static final BySelector POSITIVE_BUTTON_SELECTOR =
+            sIsWatch ? By.text("Set as default") : By.res("android:id/button1");
+    private static final BySelector DONT_ASK_AGAIN_TOGGLE_SELECTOR =
+            sIsWatch
+                    ? By.text("Don\u2019t ask again")
+                    : By.res("com.android.permissioncontroller:id/dont_ask_again");
 
     @Rule
     public DisableAnimationRule mDisableAnimationRule = new DisableAnimationRule();
@@ -284,7 +295,7 @@ public class RoleManagerTest {
 
         TestUtils.waitUntil("Find and respond to request role UI", () -> {
             requestRole(ROLE_NAME);
-            UiObject2 cancelButton = waitFindObjectOrNull(By.res("android:id/button2"));
+            UiObject2 cancelButton = waitFindObjectOrNull(NEGATIVE_BUTTON_SELECTOR);
             if (cancelButton == null) {
                 // Dialog not found, try again later.
                 return false;
@@ -319,7 +330,7 @@ public class RoleManagerTest {
 
         TestUtils.waitUntil("Find and respond to request role UI", () -> {
             requestRole(ROLE_NAME);
-            UiObject2 cancelButton = waitFindObjectOrNull(By.res("android:id/button2"));
+            UiObject2 cancelButton = waitFindObjectOrNull(NEGATIVE_BUTTON_SELECTOR);
             if (cancelButton == null) {
                 // Dialog not found, try again later.
                 return false;
@@ -388,10 +399,9 @@ public class RoleManagerTest {
 
     @Nullable
     private UiObject2 findDontAskAgainCheck(boolean expected) throws UiObjectNotFoundException {
-        BySelector selector = By.res("com.android.permissioncontroller:id/dont_ask_again");
         return expected
-                ? waitFindObject(selector)
-                : waitFindObjectOrNull(selector, UNEXPECTED_TIMEOUT_MILLIS);
+                ? waitFindObject(DONT_ASK_AGAIN_TOGGLE_SELECTOR)
+                : waitFindObjectOrNull(DONT_ASK_AGAIN_TOGGLE_SELECTOR, UNEXPECTED_TIMEOUT_MILLIS);
     }
 
     @Nullable
@@ -402,7 +412,7 @@ public class RoleManagerTest {
     @NonNull
     private Pair<Integer, Intent> clickButtonAndWaitForResult(boolean positive)
             throws InterruptedException, UiObjectNotFoundException {
-        waitFindObject(By.res(positive ? "android:id/button1" : "android:id/button2")).click();
+        waitFindObject(positive ? POSITIVE_BUTTON_SELECTOR : NEGATIVE_BUTTON_SELECTOR).click();
         return waitForResult();
     }
 
@@ -464,7 +474,7 @@ public class RoleManagerTest {
                 .putExtra(Intent.EXTRA_PACKAGE_NAME, APP_28_PACKAGE_NAME)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         waitFindObject(By.text(APP_28_LABEL)).click();
-        waitFindObject(By.res("android:id/button1")).click();
+        waitFindObject(POSITIVE_BUTTON_SELECTOR).click();
 
         // TODO(b/149037075): Use TelecomManager.getDefaultDialerPackage() once the bug is fixed.
         //TelecomManager telecomManager = sContext.getSystemService(TelecomManager.class);
@@ -484,7 +494,7 @@ public class RoleManagerTest {
                 .putExtra(Intent.EXTRA_PACKAGE_NAME, APP_28_PACKAGE_NAME)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         waitFindObject(By.text(APP_28_LABEL)).click();
-        waitFindObject(By.res("android:id/button1")).click();
+       waitFindObject(POSITIVE_BUTTON_SELECTOR).click();
 
         TestUtils.waitUntil("App is not set as default sms app", () -> Objects.equals(
                 Telephony.Sms.getDefaultSmsPackage(sContext), APP_28_PACKAGE_NAME));
@@ -533,7 +543,7 @@ public class RoleManagerTest {
                 .putExtra(Intent.EXTRA_PACKAGE_NAME, APP_PACKAGE_NAME)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         waitFindObject(By.text(APP_LABEL)).click();
-        waitFindObject(By.res("android:id/button1")).click();
+        waitFindObject(POSITIVE_BUTTON_SELECTOR).click();
 
         // TODO(b/149037075): Use TelecomManager.getDefaultDialerPackage() once the bug is fixed.
         //TelecomManager telecomManager = sContext.getSystemService(TelecomManager.class);
@@ -578,7 +588,7 @@ public class RoleManagerTest {
                 .putExtra(Intent.EXTRA_PACKAGE_NAME, APP_PACKAGE_NAME)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         waitFindObject(By.text(APP_LABEL)).click();
-        waitFindObject(By.res("android:id/button1")).click();
+        waitFindObject(POSITIVE_BUTTON_SELECTOR).click();
 
         TestUtils.waitUntil("App is not set as default sms app", () -> Objects.equals(
                 Telephony.Sms.getDefaultSmsPackage(sContext), APP_PACKAGE_NAME));
@@ -593,8 +603,12 @@ public class RoleManagerTest {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                         | Intent.FLAG_ACTIVITY_CLEAR_TASK)));
 
-        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(false))
-                .hasDescendant(By.text(APP_LABEL)));
+        if (sIsWatch) {
+            waitFindObject(By.clickable(true).checked(false).hasDescendant(By.text(APP_LABEL)));
+        } else {
+            waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(false))
+                    .hasDescendant(By.text(APP_LABEL)));
+        }
 
         pressBack();
     }
@@ -608,11 +622,20 @@ public class RoleManagerTest {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                         | Intent.FLAG_ACTIVITY_CLEAR_TASK)));
         waitForIdle();
-        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(false))
-                .hasDescendant(By.text(APP_LABEL))).click();
+        if (sIsWatch) {
+            waitFindObject(By.clickable(true).checked(false).hasDescendant(
+                    By.text(APP_LABEL))).click();
+        } else {
+            waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(false))
+                    .hasDescendant(By.text(APP_LABEL))).click();
+        }
 
-        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(true))
-                .hasDescendant(By.text(APP_LABEL)));
+        if (sIsWatch) {
+            waitFindObject(By.clickable(true).checked(true).hasDescendant(By.text(APP_LABEL)));
+        } else {
+            waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(true))
+                    .hasDescendant(By.text(APP_LABEL)));
+        }
         assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, true);
 
         pressBack();
@@ -628,15 +651,30 @@ public class RoleManagerTest {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                         | Intent.FLAG_ACTIVITY_CLEAR_TASK)));
         waitForIdle();
-        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(false))
-                .hasDescendant(By.text(APP_LABEL))).click();
-        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(true))
-                .hasDescendant(By.text(APP_LABEL)));
+        if (sIsWatch) {
+            waitFindObject(By.clickable(true).checked(false).hasDescendant(
+                    By.text(APP_LABEL))).click();
+            waitFindObject(By.clickable(true).checked(true).hasDescendant(By.text(APP_LABEL)));
+        } else {
+            waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(false))
+                    .hasDescendant(By.text(APP_LABEL))).click();
+            waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(true))
+                    .hasDescendant(By.text(APP_LABEL)));
+        }
         waitForIdle();
-        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(false))).click();
+        if (sIsWatch) {
+            waitFindObject(By.clickable(true).checked(false)).click();
+        } else {
+            waitFindObject(
+                    By.clickable(true).hasDescendant(By.checkable(true).checked(false))).click();
+        }
 
-        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(false))
-                .hasDescendant(By.text(APP_LABEL)));
+        if (sIsWatch) {
+            waitFindObject(By.clickable(true).checked(false).hasDescendant(By.text(APP_LABEL)));
+        } else {
+            waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(false))
+                    .hasDescendant(By.text(APP_LABEL)));
+        }
         assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, false);
 
         pressBack();
@@ -673,11 +711,20 @@ public class RoleManagerTest {
         waitForIdle();
         waitFindObject(By.text(ROLE_SHORT_LABEL)).click();
         waitForIdle();
-        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(false))
-                .hasDescendant(By.text(APP_LABEL))).click();
+        if (sIsWatch) {
+            waitFindObject(By.clickable(true).checked(false).hasDescendant(
+                    By.text(APP_LABEL))).click();
+        } else {
+            waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(false))
+                    .hasDescendant(By.text(APP_LABEL))).click();
+        }
 
-        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(true))
-                .hasDescendant(By.text(APP_LABEL)));
+        if (sIsWatch) {
+            waitFindObject(By.clickable(true).checked(true).hasDescendant(By.text(APP_LABEL)));
+        } else {
+            waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(true))
+                    .hasDescendant(By.text(APP_LABEL)));
+        }
         assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, true);
 
         pressBack();
@@ -692,10 +739,16 @@ public class RoleManagerTest {
         waitForIdle();
         waitFindObject(By.text(ROLE_SHORT_LABEL)).click();
         waitForIdle();
-        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(false))
-                .hasDescendant(By.text(APP_LABEL))).click();
-        waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(true))
-                .hasDescendant(By.text(APP_LABEL)));
+        if (sIsWatch) {
+            waitFindObject(By.clickable(true).checked(false).hasDescendant(
+                    By.text(APP_LABEL))).click();
+            waitFindObject(By.clickable(true).checked(true).hasDescendant(By.text(APP_LABEL)));
+        } else {
+            waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(false))
+                    .hasDescendant(By.text(APP_LABEL))).click();
+            waitFindObject(By.clickable(true).hasDescendant(By.checkable(true).checked(true))
+                    .hasDescendant(By.text(APP_LABEL)));
+        }
         pressBack();
 
         waitFindObject(By.text(APP_LABEL));
