@@ -48,7 +48,11 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
     @Rule
     val mCheckFlagsRule: CheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule()
 
-    @RequiresFlagsEnabled(Flags.FLAG_ASL_IN_APK_APP_METADATA_SOURCE)
+    @RequiresFlagsEnabled(
+        Flags.FLAG_ASL_IN_APK_APP_METADATA_SOURCE,
+        Flags.FLAG_READ_INSTALL_INFO,
+        Flags.FLAG_GET_RESOLVED_APK_PATH
+    )
     @Test(expected = SecurityException::class)
     fun getAppMetadataSourceWithNoPermission() {
         installTestApp(createAppMetadata())
@@ -85,7 +89,11 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
         }
     }
 
-    @RequiresFlagsEnabled(Flags.FLAG_ASL_IN_APK_APP_METADATA_SOURCE)
+    @RequiresFlagsEnabled(
+        Flags.FLAG_ASL_IN_APK_APP_METADATA_SOURCE,
+        Flags.FLAG_READ_INSTALL_INFO,
+        Flags.FLAG_GET_RESOLVED_APK_PATH
+    )
     @Test
     fun getAppMetadataSourceViaSessionWithAppMetadata() {
         val data = createAppMetadata()
@@ -103,6 +111,7 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun installViaSession() {
         installTestApp(null)
 
@@ -114,6 +123,7 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun installViaSessionWithAppMetadata() {
         val data = createAppMetadata()
         installTestApp(data)
@@ -124,6 +134,7 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
     }
 
     @Test(expected = SecurityException::class)
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun getAppMetadataWithNoPermission() {
         installTestApp(createAppMetadata())
 
@@ -131,6 +142,7 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
     }
 
     @Test(expected = IllegalArgumentException::class)
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun installViaSessionWithBadAppMetadata() {
         installTestApp(createAppMetadataExceedSizeLimit())
     }
@@ -148,6 +160,7 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun installViaSessionWithOnlyAppMetadata() {
         val data = createAppMetadata()
         val (sessionId, session) = createSession(0, false, null)
@@ -159,6 +172,7 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun resetAppMetadataInSession() {
         val data = createAppMetadata()
         val (sessionId, session) = createSession(0, false, null)
@@ -178,6 +192,7 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun installWithNoAppMetadataDropExisting() {
         val data = createAppMetadata()
         installTestApp(data)
@@ -194,6 +209,7 @@ class InstallAppMetadataTest : PackageInstallerTestBase() {
     }
 
     @Test(expected = FileNotFoundException::class)
+    @RequiresFlagsEnabled(Flags.FLAG_READ_INSTALL_INFO, Flags.FLAG_GET_RESOLVED_APK_PATH)
     fun readAppMetadataFileShouldFail() {
         val data = createAppMetadata()
         installTestApp(data)
