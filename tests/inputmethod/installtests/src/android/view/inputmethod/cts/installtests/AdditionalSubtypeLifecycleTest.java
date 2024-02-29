@@ -207,8 +207,7 @@ public final class AdditionalSubtypeLifecycleTest {
 
             Truth.assertThat(subtypeHashCodes).asList().doesNotContain(TEST_SUBTYPE1.hashCode());
             Truth.assertThat(subtypeHashCodes).asList().doesNotContain(TEST_SUBTYPE2.hashCode());
-            // TODO(b/27859687): This needs to be "doesNotContain" to fix b/27859687.
-            Truth.assertThat(subtypeHashCodes).asList().contains(TEST_SUBTYPE3.hashCode());
+            Truth.assertThat(subtypeHashCodes).asList().doesNotContain(TEST_SUBTYPE3.hashCode());
         }
     }
 
