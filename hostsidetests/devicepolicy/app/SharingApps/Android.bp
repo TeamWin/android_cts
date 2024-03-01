@@ -38,6 +38,7 @@ android_test_helper_app {
         "cts",
         "general-tests",
         "mts-permission",
+        "mcts-permission",
     ],
     manifest: "sharingapp1/AndroidManifest.xml",
 }
@@ -64,6 +65,7 @@ android_test_helper_app {
         "cts",
         "general-tests",
         "mts-permission",
+        "mcts-permission",
     ],
     manifest: "sharingapp2/AndroidManifest.xml",
 }
