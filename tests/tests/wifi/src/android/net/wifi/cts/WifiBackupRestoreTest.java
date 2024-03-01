@@ -105,7 +105,7 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
     public static void setUpClass() throws Exception {
         sContext = InstrumentationRegistry.getInstrumentation().getContext();
         // skip the test if WiFi is not supported
-        if (WifiFeature.isWifiSupported(sContext)) {
+        if (!WifiFeature.isWifiSupported(sContext)) {
             return;
         }
         sShouldRunTest = true;
