@@ -221,6 +221,7 @@ public final class ActivityManagerTest {
     private boolean mAppStandbyEnabled;
     private boolean mAutomotiveDevice;
     private boolean mLeanbackOnly;
+    private boolean mWatchDevice;
 
     private final UserHelper mUserHelper = new UserHelper();
 
@@ -252,6 +253,8 @@ public final class ActivityManagerTest {
         mAppStandbyEnabled = AppStandbyUtils.isAppStandbyEnabled();
         mAutomotiveDevice = mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
         mLeanbackOnly = mPackageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY);
+        mWatchDevice = mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH);
+
         startSubActivity(ScreenOnActivity.class);
         AmUtils.waitForBroadcastBarrier();
     }
@@ -560,6 +563,9 @@ public final class ActivityManagerTest {
     @Test
     @RequiresFlagsEnabled(FLAG_APP_RESTRICTIONS_API)
     public void testBackgroundRestrictionsIntent() throws IOException {
+        assumeFalse("This intent is not required for leanback devices", mLeanbackOnly);
+        assumeFalse("This intent is not required for watch devices", mWatchDevice);
+
         // This instrumentation runs in the target package's uid.
         final String targetPackage = mTargetContext.getPackageName();
         final Intent intent = new Intent(Settings.ACTION_BACKGROUND_RESTRICTIONS_SETTINGS)
