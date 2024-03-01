@@ -18,11 +18,11 @@
     <option name="config-descriptor:metadata" key="component" value="webview" />
     <!-- Note: about half of webkit CTS tests are skipped in instant_app mode since it requires HTTPS -->
     <option name="config-descriptor:metadata" key="parameter" value="instant_app" />
-    <option name="config-descriptor:metadata" key="parameter" value="run_on_sdk_sandbox" />
+    <!-- WebView based tests for the SDK sandbox are already separately tested -->
+    <option name="config-descriptor:metadata" key="parameter" value="not_run_on_sdk_sandbox" />
 
     <option name="config-descriptor:metadata" key="parameter" value="multi_abi" />
     <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
-    <option name="config-descriptor:metadata" key="parameter" value="run_on_sdk_sandbox" />
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.LocationCheck" />
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />

@@ -32,6 +32,12 @@
             <meta-data android:name="android.view.im"
                  android:resource="@xml/ime2"/>
         </service>
+
+        <provider android:authorities="android.inputmethodservice.cts.ime2.provider"
+                  android:name="android.inputmethodservice.cts.ime.CommandContentProvider"
+                  android:exported="true"
+                  android:visibleToInstantApps="true">
+        </provider>
     </application>
 
 </manifest>

@@ -23,12 +23,14 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PermissionInfo;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeNonSdkSandbox;
 
 import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.Test;
 
 @AppModeFull(reason = "Instant apps only support a limited number of permissions")
+@AppModeNonSdkSandbox(reason = "Sandboxed SDKs cannot declare permissions")
 public class PermissionMaxSdkVersionCreateTest {
     private static final String MAX_SDK_IGNORE = "android.content.cts.permission.MAX_SDK_IGNORE";
     private static final String MAX_SDK_CREATE = "android.content.cts.permission.MAX_SDK_CREATE";

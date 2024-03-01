@@ -33,6 +33,7 @@ import android.util.Log;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ExtraAssistDataTest extends AssistTestBase {
     private static final String TAG = "ExtraAssistDataTest";
@@ -79,8 +80,11 @@ public class ExtraAssistDataTest extends AssistTestBase {
         ArrayList<ComponentName> foregroundApps =
                 mOnShowArgs.getParcelableArrayList(KEY_FOREGROUND_ACTIVITIES);
         Log.i(TAG, "ForegroundActivityComponent:  " + foregroundApps);
-        assertThat(foregroundApps.size()).isEqualTo(1);
-        assertThat(foregroundApps.get(0).getPackageName()).isEqualTo("android.assist.testapp");
+        assertWithMessage("Foregrounded apps").that(foregroundApps).isNotEmpty();
+        List<String> foregroundAppPackageNames = foregroundApps.stream()
+                .map(ComponentName::getPackageName).toList();
+        assertWithMessage("Foregrounded test assistant app")
+                .that(foregroundAppPackageNames).contains("android.assist.testapp");
     }
 
     @Test

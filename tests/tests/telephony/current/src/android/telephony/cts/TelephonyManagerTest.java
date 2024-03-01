@@ -7023,7 +7023,7 @@ public class TelephonyManagerTest {
     @ApiTest(apis = {
             "android.telephony.TelephonyManager#getLastKnownCellIdentity"})
     @RequiresFlagsEnabled(
-            com.android.server.telecom.flags.Flags.FLAG_TELECOM_RESOLVE_HIDDEN_DEPENDENCIES)
+            com.android.server.telecom.flags.Flags.FLAG_GET_LAST_KNOWN_CELL_IDENTITY)
     public void testGetLastKnownCellIdentity() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
         // Revoking ACCESS_FINE_LOCATION will cause test to crash. Verify that security exception
@@ -7297,17 +7297,17 @@ public class TelephonyManagerTest {
 
     @Test
     @RequiresFlagsEnabled(android.permission.flags.Flags.FLAG_GET_EMERGENCY_ROLE_HOLDER_API_ENABLED)
-    @ApiTest(apis = {"android.telephony.TelephonyManager#getEmergencyAssistancePackage"})
-    public void testGetEmergencyAssistancePackage() {
+    @ApiTest(apis = {"android.telephony.TelephonyManager#getEmergencyAssistancePackageName"})
+    public void testGetEmergencyAssistancePackageName() {
         if (mTelephonyManager.isVoiceCapable()
             && ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.isEmergencyAssistanceEnabled())) {
             assertNotNull(ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                            (tm) -> tm.getEmergencyAssistancePackage()));
+                            (tm) -> tm.getEmergencyAssistancePackageName()));
         } else {
             assertThrows(IllegalStateException.class, () ->
                     ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                            (tm) -> tm.getEmergencyAssistancePackage()));
+                            (tm) -> tm.getEmergencyAssistancePackageName()));
         }
     }
 

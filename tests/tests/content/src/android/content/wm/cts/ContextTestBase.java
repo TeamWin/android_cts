@@ -23,6 +23,7 @@ import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 
 import static org.junit.Assert.fail;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Service;
 import android.content.Context;
@@ -42,6 +43,8 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.rule.ServiceTestRule;
 
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+
 import org.junit.Before;
 import org.junit.Rule;
 
@@ -56,7 +59,13 @@ public class ContextTestBase {
     private Display mDefaultDisplay;
     private VirtualDisplay mSecondaryDisplay;
 
-    @Rule
+    @Rule(order = 0)
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            androidx.test.platform.app.InstrumentationRegistry
+                    .getInstrumentation().getUiAutomation(),
+            Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
+
+    @Rule(order = 1)
     public final ActivityTestRule<MockActivity> mActivityRule =
             new ActivityTestRule<>(MockActivity.class);
 

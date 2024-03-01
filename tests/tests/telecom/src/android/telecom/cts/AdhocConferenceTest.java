@@ -31,6 +31,8 @@ import android.telecom.VideoProfile;
 import android.util.Log;
 import android.util.Pair;
 
+import com.android.server.telecom.flags.Flags;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -69,6 +71,11 @@ public class AdhocConferenceTest extends BaseTelecomTestWithMockServices {
                 TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
         mTelecomManager.startConference(PARTICIPANTS, extra);
         ConnectionRequest request = verifyAdhocConferenceCall().second;
+        // Verify that the conference is successfully created when a conference call is created.
+        if (Flags.telecomResolveHiddenDependencies()) {
+            assertTrue(connectionService.waitForEvent(
+                    MockConnectionService.EVENT_CONNECTION_SERVICE_CREATE_CONFERENCE_COMPLETE));
+        }
         assertTrue(request.isAdhocConferenceCall());
         assertEquals(2, request.getParticipants().size());
         assertTrue(request.getParticipants().containsAll(PARTICIPANTS));

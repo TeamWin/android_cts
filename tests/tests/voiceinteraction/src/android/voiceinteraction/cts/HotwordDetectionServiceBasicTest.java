@@ -43,7 +43,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
-import static org.junit.Assume.assumeFalse;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -69,6 +68,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
+import android.provider.DeviceConfig;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.HotwordDetectionService;
 import android.service.voice.HotwordDetectionServiceFailure;
@@ -131,6 +131,7 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     private static final ComponentName VIS_COMPONENT_NAME =
             new ComponentName("android.voiceinteraction.cts", SERVICE_COMPONENT);
     private static final int TEMPORARY_SERVICE_DURATION_MS = 10000;
+    private static final String KEY_WEARABLE_SENSING_SERVICE_ENABLED = "service_enabled";
 
     private final CountDownLatch mLatch = new CountDownLatch(1);
 
@@ -188,6 +189,7 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     private final SoundTriggerInstrumentationObserver mInstrumentationObserver =
             new SoundTriggerInstrumentationObserver();
     private final Executor mExecutor = Executors.newSingleThreadExecutor();
+    private String mOriginalWearableSensingServiceEnabledConfig;
 
     @BeforeClass
     public static void enableIndicators() {
@@ -2528,6 +2530,9 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
     private void setupForWearableTests(
             AlwaysOnHotwordDetector alwaysOnHotwordDetector, boolean closeStreamAfterRead)
             throws Exception {
+        mOriginalWearableSensingServiceEnabledConfig =
+                getWearableSensingServiceEnabledDeviceConfig();
+        setWearableSensingServiceEnabledDeviceConfig("true");
         // Update HotwordDetectionService options to enable Audio egress
         runWithShellPermissionIdentity(
                 () -> {
@@ -2554,6 +2559,11 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
 
     private void cleanupForWearableTests(AlwaysOnHotwordDetector alwaysOnHotwordDetector)
             throws Exception {
+        if (mOriginalWearableSensingServiceEnabledConfig != null) {
+            setWearableSensingServiceEnabledDeviceConfig(
+                    mOriginalWearableSensingServiceEnabledConfig);
+            mOriginalWearableSensingServiceEnabledConfig = null;
+        }
         // destroy detector
         alwaysOnHotwordDetector.destroy();
         // Drop identity adopted.
@@ -2561,6 +2571,26 @@ public class HotwordDetectionServiceBasicTest extends AbstractHdsTestCase {
                 .getUiAutomation()
                 .dropShellPermissionIdentity();
         clearTestableWearableSensingService();
+    }
+
+    private static String getWearableSensingServiceEnabledDeviceConfig() {
+        return runWithShellPermissionIdentity(
+                () -> {
+                    return DeviceConfig.getProperty(
+                            DeviceConfig.NAMESPACE_WEARABLE_SENSING,
+                            KEY_WEARABLE_SENSING_SERVICE_ENABLED);
+                });
+    }
+
+    private static void setWearableSensingServiceEnabledDeviceConfig(String newValue) {
+        runWithShellPermissionIdentity(
+                () -> {
+                    DeviceConfig.setProperty(
+                            DeviceConfig.NAMESPACE_WEARABLE_SENSING,
+                            KEY_WEARABLE_SENSING_SERVICE_ENABLED,
+                            newValue,
+                            /* makeDefault= */ false);
+                });
     }
 
     /** Temporarily sets the WearableSensingService to the test implementation. */

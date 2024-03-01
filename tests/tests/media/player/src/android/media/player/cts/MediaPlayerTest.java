@@ -102,9 +102,6 @@ import java.util.stream.Stream;
 /**
  * Tests for the MediaPlayer API and local video/audio playback.
  *
- * The files in res/raw used by testLocalVideo* are (c) copyright 2008,
- * Blender Foundation / www.bigbuckbunny.org, and are licensed under the Creative Commons
- * Attribution 3.0 License at http://creativecommons.org/licenses/by/3.0/us/.
  */
 @SmallTest
 @RequiresDevice
@@ -325,7 +322,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         final int tolerance = 70;
         final int seekDuration = 100;
 
-        // This is "R.raw.testmp3_2", base64-encoded.
+        // This is "testmp3_2.raw", base64-encoded.
         final String res = "testmp3_3.raw";
 
         Preconditions.assertTestFileExists(mInpPrefix + res);

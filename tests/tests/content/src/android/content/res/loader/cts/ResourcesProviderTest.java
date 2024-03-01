@@ -38,6 +38,7 @@ import android.content.res.loader.ResourcesLoader;
 import android.content.res.loader.ResourcesProvider;
 import android.graphics.Color;
 import android.os.UserHandle;
+import android.platform.test.annotations.AppModeNonSdkSandbox;
 import android.util.TypedValue;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -51,6 +52,7 @@ import org.junit.rules.TestName;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+@AppModeNonSdkSandbox(reason = "SDK sandbox does not have access to OverlayManager.")
 public class ResourcesProviderTest {
     private Context mContext;
     private OverlayManager mOverlayManager;

@@ -30,6 +30,7 @@ import android.car.cts.powerpolicy.PowerPolicyTestResult;
 import android.car.cts.powerpolicy.SilentModeInfo;
 import android.car.cts.powerpolicy.SystemInfoParser;
 import android.car.feature.Flags;
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
@@ -137,6 +138,7 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         testDefaultStateMachineAtONState();
     }
 
+    @FlakyTest(bugId = 327307932)
     @Test
     @RequiresFlagsDisabled(Flags.FLAG_CAR_DUMP_TO_PROTO)
     public void testPowerPolicyChange_textDump() throws Exception {

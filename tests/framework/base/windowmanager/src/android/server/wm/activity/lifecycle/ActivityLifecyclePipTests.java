@@ -193,21 +193,21 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testDestroyBelowPip() throws Exception {
         // Launch a regular activity
-        final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
+        final Activity regularActivity = launchActivityAndWait(SideActivity.class);
 
-        // Launch Pip-capable activity and enter Pip immediately
+        // Launch Pip-capable activity (which is on a separate Task) and enter Pip immediately
         new Launcher(PipActivity.class)
                 .setExpectedState(ON_PAUSE)
                 .setExtraFlags(EXTRA_ENTER_PIP)
                 .launch();
 
-        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
+        waitAndAssertActivityStates(state(regularActivity, ON_RESUME));
 
         // Destroy the activity below
         getTransitionLog().clear();
-        firstActivity.finish();
-        waitAndAssertActivityStates(state(firstActivity, ON_DESTROY));
-        assertResumeToDestroySequence(FirstActivity.class, getTransitionLog());
+        regularActivity.finish();
+        waitAndAssertActivityStates(state(regularActivity, ON_DESTROY));
+        assertResumeToDestroySequence(SideActivity.class, getTransitionLog());
         assertEmptySequence(PipActivity.class, getTransitionLog(),
                 "destroyBelowPip");
     }

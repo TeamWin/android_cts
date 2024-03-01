@@ -40,6 +40,7 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.UserManager;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeNonSdkSandbox;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
@@ -65,6 +66,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 @AppModeFull
+@AppModeNonSdkSandbox
 @EnsureHasSecondaryUser
 @RunWith(AndroidJUnit4.class)
 public class PackageInstallerArchiveMultiUserTest {
