@@ -19,7 +19,8 @@
           package="android.autofill.cts2"
           android:targetSandboxVersion="2">
 
-    <application android:label="TestAutofillServiceApp">
+    <application
+        android:label="TestAutofillServiceWithoutIntentFilter">
         <uses-library android:name="android.test.runner"/>
 
         <activity android:name=".QueryAutofillStatusActivity"
@@ -32,9 +33,12 @@
                  android:label="NoOpAutofillService"
                  android:permission="android.permission.BIND_AUTOFILL_SERVICE"
                  android:exported="true">
-            <intent-filter>
-                <action android:name="android.service.autofill.AutofillService"/>
-            </intent-filter>
+<!--            DO NOT REMOVE THIS COMMENT: This intent-filter is intentionally removed to -->
+<!--                    test autofill manager service checks for intent-filter after an -->
+<!--                    autofill service app updates -->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.service.autofill.AutofillService"/>-->
+<!--            </intent-filter>-->
         </service>
     </application>
 

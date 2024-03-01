@@ -47,6 +47,7 @@ android_test {
     sdk_version: "test_current",
     data: [
         ":TestAutofillServiceApp",
+        ":TestAutofillServiceWithoutIntentFilter",
         ":CtsMockInputMethod",
     ],
     per_testcase_directory: true,
