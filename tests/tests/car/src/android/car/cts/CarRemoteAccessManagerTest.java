@@ -101,6 +101,7 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
     @ApiTest(apis = {
             "android.car.remoteaccess.CarRemoteAccessManager#setRemoteTaskClient",
     })
+    @RequiresFlagsEnabled(Flags.FLAG_CAR_DUMP_TO_PROTO)
     public void testSetRemoteTaskClient_regularClient() throws Exception {
         assumeFalse("This test requires the test package to be a regular remote task client",
                 isTestPkgServerlessClient());
@@ -120,7 +121,7 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
             "android.car.remoteaccess.CarRemoteAccessManager#setRemoteTaskClient"
     })
     @EnsureHasPermission(PERMISSION_CONTROL_REMOTE_ACCESS)
-    @RequiresFlagsEnabled(Flags.FLAG_SERVERLESS_REMOTE_ACCESS)
+    @RequiresFlagsEnabled({Flags.FLAG_SERVERLESS_REMOTE_ACCESS, Flags.FLAG_CAR_DUMP_TO_PROTO})
     public void testSetRemoteTaskClient_serverlessClient() throws Exception {
         setSelfAsServerlessClient();
 
@@ -186,12 +187,12 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
             "android.car.remoteaccess.CarRemoteAccessManager#getInVehicleTaskScheduler",
     })
     @EnsureHasPermission(PERMISSION_CONTROL_REMOTE_ACCESS)
-    @RequiresFlagsEnabled(Flags.FLAG_SERVERLESS_REMOTE_ACCESS)
+    @RequiresFlagsEnabled({Flags.FLAG_SERVERLESS_REMOTE_ACCESS, Flags.FLAG_CAR_DUMP_TO_PROTO})
     public void testGetInVehicleTaskScheduler_notSupported() {
+        setSelfAsServerlessClient();
+
         assumeFalse("Task scheduling is supported, skipping the test",
                 mCarRemoteAccessManager.isTaskScheduleSupported());
-
-        setSelfAsServerlessClient();
 
         InVehicleTaskScheduler taskScheduler = mCarRemoteAccessManager.getInVehicleTaskScheduler();
         assertWithMessage("InVehicleTaskScheduler must be null when task schedule is not supported")
@@ -204,10 +205,10 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
             "android.car.remoteaccess.CarRemoteAccessManager#getInVehicleTaskScheduler",
     })
     @EnsureHasPermission(PERMISSION_CONTROL_REMOTE_ACCESS)
-    @RequiresFlagsEnabled(Flags.FLAG_SERVERLESS_REMOTE_ACCESS)
+    @RequiresFlagsEnabled({Flags.FLAG_SERVERLESS_REMOTE_ACCESS, Flags.FLAG_CAR_DUMP_TO_PROTO})
     public void testGetInVehicleTaskScheduler_isSupported() {
-        assumeTaskSchedulingSupported();
         setSelfAsServerlessClient();
+        assumeTaskSchedulingSupported();
 
         InVehicleTaskScheduler taskScheduler = mCarRemoteAccessManager.getInVehicleTaskScheduler();
         assertWithMessage("InVehicleTaskScheduler must not be null when task schedule is supported")
@@ -223,10 +224,10 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
                     + "unscheduleAllTasks",
     })
     @EnsureHasPermission(PERMISSION_CONTROL_REMOTE_ACCESS)
-    @RequiresFlagsEnabled(Flags.FLAG_SERVERLESS_REMOTE_ACCESS)
+    @RequiresFlagsEnabled({Flags.FLAG_SERVERLESS_REMOTE_ACCESS, Flags.FLAG_CAR_DUMP_TO_PROTO})
     public void testScheduleTask() throws Exception {
-        assumeTaskSchedulingSupported();
         setSelfAsServerlessClient();
+        assumeTaskSchedulingSupported();
 
         InVehicleTaskScheduler taskScheduler = mCarRemoteAccessManager.getInVehicleTaskScheduler();
         // Schedule the task to be executed 30s later.
@@ -252,10 +253,10 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
                     + "unscheduleAllTasks",
     })
     @EnsureHasPermission(PERMISSION_CONTROL_REMOTE_ACCESS)
-    @RequiresFlagsEnabled(Flags.FLAG_SERVERLESS_REMOTE_ACCESS)
+    @RequiresFlagsEnabled({Flags.FLAG_SERVERLESS_REMOTE_ACCESS, Flags.FLAG_CAR_DUMP_TO_PROTO})
     public void testScheduleTask_duplicateScheduleIdMustThrowException() throws Exception {
-        assumeTaskSchedulingSupported();
         setSelfAsServerlessClient();
+        assumeTaskSchedulingSupported();
 
         InVehicleTaskScheduler taskScheduler = mCarRemoteAccessManager.getInVehicleTaskScheduler();
         // Schedule the task to be executed 30s later.
@@ -289,10 +290,10 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
                     + "isTaskScheduled",
     })
     @EnsureHasPermission(PERMISSION_CONTROL_REMOTE_ACCESS)
-    @RequiresFlagsEnabled(Flags.FLAG_SERVERLESS_REMOTE_ACCESS)
+    @RequiresFlagsEnabled({Flags.FLAG_SERVERLESS_REMOTE_ACCESS, Flags.FLAG_CAR_DUMP_TO_PROTO})
     public void testIsTaskScheduled() throws Exception {
-        assumeTaskSchedulingSupported();
         setSelfAsServerlessClient();
+        assumeTaskSchedulingSupported();
 
         InVehicleTaskScheduler taskScheduler = mCarRemoteAccessManager.getInVehicleTaskScheduler();
         // Schedule the task to be executed 30s later.
@@ -327,10 +328,10 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
                     + "getAllPendingScheduledTasks",
     })
     @EnsureHasPermission(PERMISSION_CONTROL_REMOTE_ACCESS)
-    @RequiresFlagsEnabled(Flags.FLAG_SERVERLESS_REMOTE_ACCESS)
+    @RequiresFlagsEnabled({Flags.FLAG_SERVERLESS_REMOTE_ACCESS, Flags.FLAG_CAR_DUMP_TO_PROTO})
     public void testGetAllPendingScheduledTasks() throws Exception {
-        assumeTaskSchedulingSupported();
         setSelfAsServerlessClient();
+        assumeTaskSchedulingSupported();
 
         InVehicleTaskScheduler taskScheduler = mCarRemoteAccessManager.getInVehicleTaskScheduler();
         // Schedule the task to be executed 30s later.
@@ -393,10 +394,10 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
                     + "unscheduleTask",
     })
     @EnsureHasPermission(PERMISSION_CONTROL_REMOTE_ACCESS)
-    @RequiresFlagsEnabled(Flags.FLAG_SERVERLESS_REMOTE_ACCESS)
+    @RequiresFlagsEnabled({Flags.FLAG_SERVERLESS_REMOTE_ACCESS, Flags.FLAG_CAR_DUMP_TO_PROTO})
     public void testUnscheduleTask() throws Exception {
-        assumeTaskSchedulingSupported();
         setSelfAsServerlessClient();
+        assumeTaskSchedulingSupported();
 
         InVehicleTaskScheduler taskScheduler = mCarRemoteAccessManager.getInVehicleTaskScheduler();
         // Schedule the task to be executed 30s later.
