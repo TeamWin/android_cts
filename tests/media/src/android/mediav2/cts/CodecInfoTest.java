@@ -26,6 +26,7 @@ import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420S
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
 import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_HdrEditing;
 import static android.media.codec.Flags.FLAG_IN_PROCESS_SW_AUDIO_CODEC;
+import static android.mediav2.common.cts.CodecTestBase.BOARD_SDK_IS_AT_LEAST_202404;
 import static android.mediav2.common.cts.CodecTestBase.BOARD_SDK_IS_AT_LEAST_T;
 import static android.mediav2.common.cts.CodecTestBase.FIRST_SDK_IS_AT_LEAST_T;
 import static android.mediav2.common.cts.CodecTestBase.IS_AT_LEAST_T;
@@ -36,18 +37,22 @@ import static android.mediav2.common.cts.CodecTestBase.VNDK_IS_AT_LEAST_T;
 import static android.mediav2.common.cts.CodecTestBase.canDisplaySupportHDRContent;
 import static android.mediav2.common.cts.CodecTestBase.codecFilter;
 import static android.mediav2.common.cts.CodecTestBase.codecPrefix;
+import static android.mediav2.common.cts.CodecTestBase.isFeatureSupported;
 import static android.mediav2.common.cts.CodecTestBase.isVendorCodec;
 import static android.mediav2.common.cts.CodecTestBase.selectCodecs;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.media.MediaCodecList;
+import android.media.MediaFormat;
 import android.mediav2.common.cts.CodecTestBase;
 import android.os.Build;
 import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.util.Range;
 
 import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
@@ -56,6 +61,7 @@ import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.NonMainlineTest;
+import com.android.compatibility.common.util.VsrTest;
 
 import org.junit.Assume;
 import org.junit.Test;
@@ -260,5 +266,28 @@ public class CodecInfoTest {
                         MediaCodecInfo.SECURITY_MODEL_MEMORY_SAFE).contains(
                         mCodecInfo.getSecurityModel()));
     }
-}
 
+    /**
+     * Components advertising support for compression technologies that were introduced after 2002
+     * must support a given resolution in both portrait and landscape mode.
+     */
+    @VsrTest(requirements = {"VSR-4.2.004.002"})
+    @Test
+    public void testResolutionSupport() {
+        Assume.assumeTrue("Test is applicable for video codecs", mMediaType.startsWith("video/"));
+        Assume.assumeTrue("Skipping, Only intended for coding technologies introduced after 2002.",
+                !mMediaType.equals(MediaFormat.MIMETYPE_VIDEO_MPEG4)
+                && !mMediaType.equals(MediaFormat.MIMETYPE_VIDEO_H263)
+                && !mMediaType.equals(MediaFormat.MIMETYPE_VIDEO_MPEG2));
+        Assume.assumeTrue("Skipping, Only intended for devices with SDK >= 202404",
+                BOARD_SDK_IS_AT_LEAST_202404);
+        if (!isFeatureSupported(mCodecName, mMediaType, "can-swap-width-height")) {
+            MediaCodecInfo.VideoCapabilities vCaps =
+                    mCodecInfo.getCapabilitiesForType(mMediaType).getVideoCapabilities();
+            Range<Integer> widths = vCaps.getSupportedWidths();
+            Range<Integer> heights = vCaps.getSupportedHeights();
+            assertEquals(mCodecName + " does not support identical size ranges. Width range "
+                    + widths + " height range " + heights, widths, heights);
+        }
+    }
+}
