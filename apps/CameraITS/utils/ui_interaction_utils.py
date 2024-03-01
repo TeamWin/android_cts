@@ -105,9 +105,9 @@ def switch_jca_camera(dut, log_path, facing):
   Raises:
     AssertionError: If JCA does not report that camera has been switched.
   """
-  if facing == camera_properties_utils.LENS_FACING_BACK:
+  if facing == camera_properties_utils.LENS_FACING['BACK']:
     ui_facing_description = UI_DESCRIPTION_BACK_CAMERA
-  elif facing == camera_properties_utils.LENS_FACING_FRONT:
+  elif facing == camera_properties_utils.LENS_FACING['FRONT']:
     ui_facing_description = UI_DESCRIPTION_FRONT_CAMERA
   else:
     raise ValueError(f'Unknown facing: {facing}')
