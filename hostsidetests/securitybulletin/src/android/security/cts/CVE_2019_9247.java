@@ -16,8 +16,13 @@
 
 package android.security.cts;
 
+import static com.android.sts.common.NativePocStatusAsserter.assertNotVulnerableExitCode;
+
+import static org.junit.Assume.assumeNoException;
+
 import android.platform.test.annotations.AsbSecurityTest;
 
+import com.android.sts.common.NativePoc;
 import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
@@ -27,13 +32,17 @@ import org.junit.runner.RunWith;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class CVE_2019_9247 extends NonRootSecurityTestCase {
 
-   /**
-     * b/120426166
-     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
-     */
     @Test
     @AsbSecurityTest(cveBugId = 120426166)
     public void testPocCVE_2019_9247() throws Exception {
-        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-9247", null, getDevice());
+        try {
+            NativePoc.builder()
+                    .pocName("CVE-2019-9247")
+                    .asserter(assertNotVulnerableExitCode())
+                    .build()
+                    .run(this);
+        } catch (Exception e) {
+            assumeNoException(e);
+        }
     }
 }
