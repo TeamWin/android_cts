@@ -36,6 +36,7 @@ android_test {
         "androidx.annotation_annotation",
         "androidx.test.ext.junit",
         "compatibility-device-util-axt",
+        "com_android_systemui_flags_lib",
         "cts-input-lib",
         "cts-wm-util",
         "ctstestrunner-axt",
