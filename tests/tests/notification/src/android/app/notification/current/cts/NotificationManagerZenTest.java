@@ -66,6 +66,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.app.AutomaticZenRule;
@@ -2795,6 +2796,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_MODES_API)
     public void setAutomaticZenRuleState_ruleWithDimWallpaper_applied() throws Exception {
+        assumeTrue(mContext.getSystemService(WallpaperManager.class).isWallpaperSupported());
         assertThat(getWallpaperManagerDimAmount()).isZero();
 
         AutomaticZenRule rule = createRule("Dim wallpaper");
@@ -2902,31 +2904,31 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         String withDisableAmbientDisplayId = mNotificationManager.addAutomaticZenRule(
                 withDisableAmbientDisplay);
 
-        AutomaticZenRule withDimWallpaper = createRule("With dim wallpaper");
-        withDimWallpaper.setDeviceEffects(new ZenDeviceEffects.Builder()
-                .setShouldDimWallpaper(true)
+        AutomaticZenRule withGrayscale = createRule("With grayscale");
+        withGrayscale.setDeviceEffects(new ZenDeviceEffects.Builder()
+                .setShouldDisplayGrayscale(true)
                 .build());
-        String withDimWallpaperId = mNotificationManager.addAutomaticZenRule(withDimWallpaper);
+        String withGrayscaleId = mNotificationManager.addAutomaticZenRule(withGrayscale);
 
         mNotificationManager.setAutomaticZenRuleState(withDisableAmbientDisplayId,
                 new Condition(withDisableAmbientDisplay.getConditionId(), "ad",
                         Condition.STATE_TRUE));
         Thread.sleep(300); // Effects are applied asynchronously.
         assertThat(isPowerManagerAmbientDisplaySuppressed()).isTrue();
-        assertThat(getWallpaperManagerDimAmount()).isZero();
+        assertThat(isColorDisplayManagerSaturationActivated()).isFalse();
 
-        mNotificationManager.setAutomaticZenRuleState(withDimWallpaperId,
-                new Condition(withDimWallpaper.getConditionId(), "dw", Condition.STATE_TRUE));
+        mNotificationManager.setAutomaticZenRuleState(withGrayscaleId,
+                new Condition(withGrayscale.getConditionId(), "gs", Condition.STATE_TRUE));
         Thread.sleep(300); // Effects are applied asynchronously.
         assertThat(isPowerManagerAmbientDisplaySuppressed()).isTrue();
-        assertThat(getWallpaperManagerDimAmount()).isNonZero();
+        assertThat(isColorDisplayManagerSaturationActivated()).isTrue();
 
         mNotificationManager.setAutomaticZenRuleState(withDisableAmbientDisplayId,
                 new Condition(withDisableAmbientDisplay.getConditionId(), "ad",
                         Condition.STATE_FALSE));
         Thread.sleep(300); // Effects are applied asynchronously.
         assertThat(isPowerManagerAmbientDisplaySuppressed()).isFalse();
-        assertThat(getWallpaperManagerDimAmount()).isNonZero();
+        assertThat(isColorDisplayManagerSaturationActivated()).isTrue();
     }
 
     private float getWallpaperManagerDimAmount() {
