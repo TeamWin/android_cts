@@ -18,12 +18,15 @@ package android.input.cts.hostside.app
 import android.app.Activity
 import android.content.Context
 import android.graphics.Point
+import android.hardware.input.InputManager
 import android.util.DisplayMetrics
 import android.util.Size
 import android.view.InputDevice
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.compatibility.common.util.PollingCheck
+import com.android.cts.input.UinputDevice
 import com.android.cts.input.UinputTouchDevice
 import org.junit.After
 import org.junit.Before
@@ -228,11 +231,47 @@ class EmulateInputDevice {
         }
     }
 
+    @Test
+    fun createKeyboardDevice() {
+        UinputDevice.create(
+            instrumentation,
+            R.raw.test_keyboard_register,
+            InputDevice.SOURCE_KEYBOARD
+        ).use {
+            // do nothing: Adding a device should trigger the logging logic.
+        }
+    }
+
+    @Test
+    fun createKeyboardDeviceAndSendCapsLockKey() {
+        UinputDevice.create(
+                instrumentation,
+                R.raw.test_keyboard_register,
+                InputDevice.SOURCE_KEYBOARD
+        ).use { keyboard ->
+            // Wait for device to be added
+            injectEvents(keyboard, intArrayOf(EV_KEY, KEY_CAPSLOCK, KEY_PRESS, 0, 0, 0))
+            injectEvents(keyboard, intArrayOf(EV_KEY, KEY_CAPSLOCK, KEY_RELEASE, 0, 0, 0))
+            Thread.sleep(KEYBOARD_POST_EVENT_DELAY_MILLIS)
+        }
+    }
+
+    private fun injectEvents(device: UinputDevice, events: IntArray) {
+        device.injectEvents(events.joinToString(prefix = "[", postfix = "]", separator = ","))
+    }
+
     companion object {
         const val TOUCHPAD_SCAN_DELAY_MILLIS: Long = 5
+        const val KEY_CAPSLOCK: Int = 58
+        const val EV_KEY: Int = 1
+        const val KEY_PRESS: Int = 1
+        const val KEY_RELEASE: Int = 0
 
         // This delay seems to be necessary to let the gesture be properly processed and added to
         // metrics before the touchpad device is torn down.
         const val TOUCHPAD_POST_GESTURE_DELAY_MILLIS: Long = 500
+
+        // This delay is required for key events to be sent and handled correctly.
+        const val KEYBOARD_POST_EVENT_DELAY_MILLIS: Long = 500
     }
 }

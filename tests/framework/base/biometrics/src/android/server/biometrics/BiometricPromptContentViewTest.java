@@ -16,6 +16,8 @@
 
 package android.server.biometrics;
 
+import static com.android.systemui.Flags.constraintBp;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -467,9 +469,11 @@ public class BiometricPromptContentViewTest extends BiometricTestBase {
                     + "BiometricPrompt#authenticate",
             "android.hardware.biometrics."
                     + "BiometricPrompt.AuthenticationResult#getAuthenticationType"})
+    @RequiresFlagsEnabled(Flags.FLAG_CUSTOM_BIOMETRIC_PROMPT)
     @Test
     public void testSimpleCredentialAuth_withContentView_showsTwoStep() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
+        assumeTrue(!isWatch() || constraintBp());
         try (CredentialSession session = new CredentialSession()) {
             session.setCredential();
 

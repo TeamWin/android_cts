@@ -21,6 +21,7 @@ import static android.content.Context.RECEIVER_EXPORTED;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
@@ -113,6 +114,7 @@ public class MockWifiTest {
     private static NetworkInfo sNetworkInfo =
             new NetworkInfo(ConnectivityManager.TYPE_WIFI, TelephonyManager.NETWORK_TYPE_UNKNOWN,
                     "wifi", "unknown");
+    private static int sTestAccessPointFrequency = 0;
 
     private final Object mLock = new Object();
 
@@ -241,6 +243,12 @@ public class MockWifiTest {
 
         sWifiManager.startScan();
         waitForConnection(); // ensures that there is at-least 1 saved network on the device.
+        if (sTestAccessPointFrequency == 0) {
+            WifiInfo currentNetwork = ShellIdentityUtils.invokeWithShellPermissions(
+                    sWifiManager::getConnectionInfo);
+            sTestAccessPointFrequency = currentNetwork.getFrequency();
+            assertNotEquals("Invalid Access-point frequency", sTestAccessPointFrequency, 0);
+        }
     }
 
     private static void setWifiEnabled(boolean enable) throws Exception {
@@ -336,31 +344,30 @@ public class MockWifiTest {
     }
 
     private NativeScanResult[] getMockNativeResults() {
-        byte[] TestSsid =
+        byte[] testSsid =
                 new byte[] {'M', 'o', 'c', 'k', 'T', 'e', 's', 't', 'A', 'P'};
-        byte[] TestBssid =
+        byte[] testBssid =
                 new byte[] {(byte) 0x12, (byte) 0xef, (byte) 0xa1,
                     (byte) 0x2c, (byte) 0x97, (byte) 0x8b};
-        byte[] TestInfoElement =
+        byte[] testInfoElement =
                 new byte[] {(byte) 0x01, (byte) 0x03, (byte) 0x12, (byte) 0xbe, (byte) 0xff};
-        int TestFrequency = 5935;
-        int TestCapability = (0x1 << 2) | (0x1 << 5);
-        int[] RadioChainIds = {0, 1};
-        int[] RadioChainLevels = {-56, -65};
+        int testCapability = (0x1 << 2) | (0x1 << 5);
+        int[] radioChainIds = {0, 1};
+        int[] radioChainLevels = {-56, -65};
 
         NativeScanResult scanResult = new NativeScanResult();
-        scanResult.ssid = TestSsid;
-        scanResult.bssid = TestBssid;
-        scanResult.infoElement = TestInfoElement;
-        scanResult.frequency = TestFrequency;
+        scanResult.ssid = testSsid;
+        scanResult.bssid = testBssid;
+        scanResult.infoElement = testInfoElement;
+        scanResult.frequency = sTestAccessPointFrequency;
         // Add extra 4 seconds as the scan result timestamp to simulate the real behavior
         // like scan result will return after scan triggered 4 ~ 6 seconds.
         // It also avoid the timing issue cause scan result is filtered with old scan time.
         scanResult.tsf = (SystemClock.elapsedRealtime() + 4) * 1000;
-        scanResult.capability = TestCapability;
+        scanResult.capability = testCapability;
         scanResult.radioChainInfos = new ArrayList<>(Arrays.asList(
-                new RadioChainInfo(RadioChainIds[0], RadioChainLevels[0]),
-                new RadioChainInfo(RadioChainIds[1], RadioChainLevels[1])));
+                new RadioChainInfo(radioChainIds[0], radioChainLevels[0]),
+                new RadioChainInfo(radioChainIds[1], radioChainLevels[1])));
 
         NativeScanResult[] nativeScanResults = new NativeScanResult[1];
         nativeScanResults[0] = scanResult;
