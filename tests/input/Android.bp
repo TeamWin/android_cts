@@ -36,8 +36,10 @@ android_test {
         "InputInjectionApp/src/com/android/test/inputinjection/IInputInjectionTestCallbacks.aidl",
     ],
     resource_dirs: ["res"],
+    asset_dirs: ["assets"],
     static_libs: [
         "CtsVirtualDeviceCommonLib",
+        "android.view.flags-aconfig-java",
         "androidx.test.core",
         "androidx.test.ext.junit",
         "com.android.hardware.input-aconfig-java",

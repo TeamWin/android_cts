@@ -21,21 +21,21 @@ import android.app.Activity
 import android.app.ActivityOptions
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.PixelFormat
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
 import android.media.ImageReader
 import android.os.Handler
 import android.os.Looper
-import android.server.wm.CtsWindowInfoUtils
 import android.server.wm.WindowManagerStateHelper
 import android.view.Surface
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
+import java.nio.ByteBuffer
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
 import org.junit.Assume.assumeTrue
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestName
@@ -167,7 +167,43 @@ class VirtualDisplayActivityScenarioRule<A : Activity>(
         // If we requested an orientation change, just waiting for the window to be visible is not
         // sufficient. We should first wait for the transitions to stop, and the for app's UI thread
         // to process them before making sure the window is visible.
-        WindowManagerStateHelper().waitUntilActivityReadyForInputInjection(activity,
-            TAG, "test: ${testName.methodName}, virtualDisplayId=$displayId")
+        WindowManagerStateHelper().waitUntilActivityReadyForInputInjection(
+            activity,
+            TAG,
+            "test: ${testName.methodName}, virtualDisplayId=$displayId"
+        )
+    }
+
+    /**
+     * Retrieves a Bitmap screenshot from the internal ImageReader this virtual display writes to.
+     *
+     * <p>Currently only supports screenshots in the RGBA_8888.
+     */
+    fun getScreenshot(): Bitmap? {
+        val image = reader.acquireNextImage()
+        if (image == null || image.format != PixelFormat.RGBA_8888) {
+            return null
+        }
+        val buffer = image.planes[0].getBuffer()
+        val pixelStrideBytes: Int = image.planes[0].getPixelStride()
+        val rowStrideBytes: Int = image.planes[0].getRowStride()
+        val pixelBytesPerRow = pixelStrideBytes * image.width
+        val rowPaddingBytes = rowStrideBytes - pixelBytesPerRow
+
+        // Remove the row padding bytes from the buffer before converting to a Bitmap
+        val trimmedBuffer = ByteBuffer.allocate(buffer.remaining())
+        buffer.rewind()
+        while (buffer.hasRemaining()) {
+            for (i in 0 until pixelBytesPerRow) {
+                trimmedBuffer.put(buffer.get())
+            }
+            // Skip the padding bytes
+            buffer.position(buffer.position() + rowPaddingBytes)
+        }
+        trimmedBuffer.flip() // Prepare the trimmed buffer for reading
+
+        val bitmap = Bitmap.createBitmap(image.width, image.height, Bitmap.Config.ARGB_8888)
+        bitmap.copyPixelsFromBuffer(trimmedBuffer)
+        return bitmap
     }
 }
