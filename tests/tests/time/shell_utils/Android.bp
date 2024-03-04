@@ -41,6 +41,7 @@ java_library_host {
 java_library {
     name: "device-time-shell-utils",
     defaults: ["cts_defaults"],
+    sdk_version: "test_current",
     libs: [
         "androidx.annotation_annotation",
         "junit",
