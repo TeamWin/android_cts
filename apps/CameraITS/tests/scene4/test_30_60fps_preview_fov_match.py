@@ -161,10 +161,7 @@ class ThirtySixtyFpsPreviewFoVMatchTest(its_base_test.ItsBaseTest):
       video_processing_utils.log_ffmpeg_version()
 
       # Raise error if not FRONT or REAR facing camera
-      facing = props['android.lens.facing']
-      if (facing != camera_properties_utils.LENS_FACING_BACK
-          and facing != camera_properties_utils.LENS_FACING_FRONT):
-        raise AssertionError('Unknown lens facing: {facing}.')
+      camera_properties_utils.check_front_or_rear_camera(props)
 
       # List preview resolutions and find 720P or above to test
       supported_preview_sizes = cam.get_supported_preview_sizes(self.camera_id)

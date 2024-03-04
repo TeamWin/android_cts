@@ -16,14 +16,15 @@
 
 import logging
 import math
+import types
+
 from mobly import asserts
 import numpy as np
+
 import capture_request_utils
 
 FD_CAL_RTOL = 0.20
-LENS_FACING_FRONT = 0
-LENS_FACING_BACK = 1
-LENS_FACING_EXTERNAL = 2
+LENS_FACING = types.MappingProxyType({'FRONT': 0, 'BACK': 1, 'EXTERNAL': 2})
 MULTI_CAMERA_SYNC_CALIBRATED = 1
 NUM_DISTORTION_PARAMS = 5  # number of terms in lens.distortion
 NUM_INTRINSIC_CAL_PARAMS = 5  # number of terms in intrinsic calibration
@@ -45,6 +46,21 @@ SETTINGS_OVERRIDE_ZOOM = 1
 STABILIZATION_MODE_OFF = 0
 STABILIZATION_MODE_PREVIEW = 2
 LENS_OPTICAL_STABILIZATION_MODE_ON = 1
+
+
+def check_front_or_rear_camera(props):
+  """Raises an error if not LENS_FACING FRONT or BACK.
+
+  Args:
+    props: Camera properties object.
+
+  Raises:
+    assertionError if not front or rear camera.
+  """
+  facing = props['android.lens.facing']
+  if not (facing == camera_properties_utils.LENS_FACING['BACK']
+      or facing == camera_properties_utils.LENS_FACING['FRONT']):
+    raise AssertionError('Unknown lens facing: {facing}.')
 
 
 def legacy(props):
@@ -883,7 +899,7 @@ def sensor_fusion_capable(props):
   """Determine if test_sensor_fusion is run."""
   return all([sensor_fusion(props),
               manual_sensor(props),
-              props['android.lens.facing'] != LENS_FACING_EXTERNAL])
+              props['android.lens.facing'] != LENS_FACING['EXTERNAL']])
 
 
 def continuous_picture(props):

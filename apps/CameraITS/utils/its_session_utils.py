@@ -1291,7 +1291,7 @@ class ItsSession(object):
       flash: str; constant describing the desired flash mode.
         Acceptable values: 'OFF' and 'AUTO'.
       facing: str; constant describing the direction the camera lens faces.
-        Acceptable values: camera_properties_utils.LENS_FACING_{BACK, FRONT}
+        Acceptable values: camera_properties_utils.LENS_FACING[BACK, FRONT]
     Returns:
       The host-side path of the capture.
     """
@@ -2213,9 +2213,9 @@ class ItsSession(object):
     camera_ids = self.get_camera_ids()
     primary_rear_camera_id = camera_ids.get('primaryRearCameraId', '')
     primary_front_camera_id = camera_ids.get('primaryFrontCameraId', '')
-    if facing == camera_properties_utils.LENS_FACING_BACK:
+    if facing == camera_properties_utils.LENS_FACING['BACK']:
       primary_camera_id = primary_rear_camera_id
-    elif facing == camera_properties_utils.LENS_FACING_FRONT:
+    elif facing == camera_properties_utils.LENS_FACING['FRONT']:
       primary_camera_id = primary_front_camera_id
     else:
       raise NotImplementedError('Cameras not facing either front or back '

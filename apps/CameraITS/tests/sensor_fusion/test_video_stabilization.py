@@ -143,9 +143,7 @@ class VideoStabilizationTest(its_base_test.ItsBaseTest):
 
       # Raise error if not FRONT or REAR facing camera
       facing = props['android.lens.facing']
-      if (facing != camera_properties_utils.LENS_FACING_FRONT and
-          facing != camera_properties_utils.LENS_FACING_BACK):
-        raise AssertionError(f'Unknown lens facing: {facing}.')
+      camera_properties_utils.check_front_or_rear_camera(props)
 
       # Initialize rotation rig
       rot_rig['cntl'] = self.rotator_cntl

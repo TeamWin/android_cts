@@ -38,7 +38,6 @@ _CIRCLE_RTOL = 0.1  # 10%
 _CM_TO_M = 1E-2
 _FMT_CODE_RAW = 0x20
 _FMT_CODE_YUV = 0x23
-_LENS_FACING_BACK = 1  # 0: FRONT, 1: BACK, 2: EXTERNAL
 _M_TO_MM = 1E3
 _MM_TO_UM = 1E3
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
@@ -376,7 +375,9 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
           not should_run and
           cam.is_primary_camera() and
           has_multiple_same_facing_cameras and
-          props['android.lens.facing'] == _LENS_FACING_BACK):
+          (props['android.lens.facing'] ==
+           camera_properties_utils.LENS_FACING['BACK'])
+          ):
         logging.error('Found multiple camera IDs %s facing in the same '
                       'direction as primary camera %s.',
                       cameras_facing_same_direction, self.camera_id)
@@ -393,7 +394,8 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
       pose_reference = props['android.lens.poseReference']
 
       # Convert chart_distance for lens facing back
-      if props['android.lens.facing'] == _LENS_FACING_BACK:
+      if (props['android.lens.facing'] ==
+          camera_properties_utils.LENS_FACING['BACK']):
         # API spec defines +z is pointing out from screen
         logging.debug('lens facing BACK')
         chart_distance *= -1
