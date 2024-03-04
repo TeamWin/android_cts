@@ -37,6 +37,7 @@ java_library_host {
 
 android_library {
     name: "HarrierCommonAndroid",
+    sdk_version: "current",
     srcs: [
         "common/src/main/java/**/*.java",
     ],

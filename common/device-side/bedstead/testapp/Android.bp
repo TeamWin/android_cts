@@ -398,6 +398,7 @@ android_test_helper_app {
 
 java_library {
     name: "TestApp_Annotations",
+    sdk_version: "core_current",
     srcs: [
         "src/processor/main/java/com/android/bedstead/testapp/processor/annotations/*.java",
     ],
@@ -412,7 +413,7 @@ java_plugin {
         "auto_service_annotations",
         "TestApp_Annotations",
         "ConnectedAppsSDK_Annotations",
-        "RemoteFrameworkClasses_Processor_Src"
+        "RemoteFrameworkClasses_Processor_Src",
     ],
     srcs: [
         "src/processor/main/java/com/android/bedstead/testapp/processor/Processor.java",
