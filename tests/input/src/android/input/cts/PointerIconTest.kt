@@ -84,7 +84,10 @@ class PointerIconTest {
     fun setUp() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         activity = virtualDisplayRule.activity
-        activity.runOnUiThread { activity.actionBar?.hide() }
+        activity.runOnUiThread {
+            activity.actionBar?.hide()
+            activity.window.decorView.rootView.setBackgroundColor(Color.WHITE)
+        }
 
         val virtualDeviceManager =
             context.getSystemService(VirtualDeviceManager::class.java)!!
