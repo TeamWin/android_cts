@@ -98,6 +98,9 @@
     <!-- b/183653612: CtsTransitionTestCases -->
     <option name="compatibility:exclude-filter" value="CtsTransitionTestCases" />
 
+    <!-- b/272163895 mediapc tests are disabled in GSI builds -->
+    <option name="compatibility:exclude-filter" value="CtsMediaPerformanceClassTestCases" />
+
     <!-- b/198226244 -->
     <!-- b/259733096 Performance tests are disabled in GSI builds -->
     <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.CodecEncoderPerformanceTest" />
