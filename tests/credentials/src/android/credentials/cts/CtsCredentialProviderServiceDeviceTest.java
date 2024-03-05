@@ -46,6 +46,7 @@ import android.credentials.GetCredentialException;
 import android.credentials.GetCredentialRequest;
 import android.credentials.GetCredentialResponse;
 import android.credentials.PrepareGetCredentialResponse;
+import android.credentials.cts.testcore.CtsCredentialManagerUtils;
 import android.credentials.cts.testcore.DeviceConfigStateRequiredRule;
 import android.os.Build.VERSION;
 import android.os.Bundle;
@@ -166,6 +167,8 @@ public class CtsCredentialProviderServiceDeviceTest {
         mCredentialManager = mContext.getSystemService(CredentialManager.class);
         assertThat(mCredentialManager).isNotNull();
         assumeTrue("VERSION.SDK_INT=" + VERSION.SDK_INT, BuildCompat.isAtLeastU());
+        assumeFalse("Skipping test: Auto does not support CredentialManager yet",
+                CtsCredentialManagerUtils.isAuto(mContext));
         clearAllTestCredentialProviderServices();
         bindToTestService();
     }

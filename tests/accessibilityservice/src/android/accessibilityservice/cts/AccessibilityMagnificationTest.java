@@ -57,8 +57,6 @@ import android.graphics.Region;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
-import android.platform.test.annotations.RequiresFlagsDisabled;
-import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.DisplayMetrics;
@@ -79,7 +77,6 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
-import com.android.window.flags.Flags;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -1200,53 +1197,6 @@ public class AccessibilityMagnificationTest {
     }
 
     @Test
-    @RequiresFlagsDisabled(
-            Flags.FLAG_DO_NOT_CHECK_INTERSECTION_WHEN_NON_MAGNIFIABLE_WINDOW_TRANSITIONS)
-    public void testShowNonMagnifiableWindow_outOfTheMagnifiedRegion_moveMagnification()
-            throws Exception {
-        final MagnificationController controller = mService.getMagnificationController();
-        final Rect magnifyBounds = controller.getMagnificationRegion().getBounds();
-        final float scale = 4.0f;
-        // Get right-bottom center position
-        final float centerX = magnifyBounds.left + (((float) magnifyBounds.width() / (2.0f * scale))
-                * ((2.0f * scale) - 1.0f));
-        final float centerY = magnifyBounds.top + (((float) magnifyBounds.height() / (2.0f * scale))
-                * ((2.0f * scale) - 1.0f));
-
-        Button createdButton = null;
-
-        try {
-            waitOnMagnificationChanged(controller, scale, centerX, centerY);
-
-            // Add window at left-top position
-            Button button = addNonMagnifiableWindow(R.string.button1, "button1", params -> {
-                params.width = magnifyBounds.width() / 4;
-                params.height = magnifyBounds.height() / 4;
-                params.gravity = Gravity.TOP | Gravity.LEFT;
-            });
-            createdButton = button;
-
-            TestUtils.waitUntil("bounds are not intersected:", TIMEOUT_CONFIG_SECONDS,
-                    () -> {
-                        Rect magnifiedArea = getMagnifiedArea(controller);
-                        Rect buttonBounds = new Rect();
-                        button.getBoundsOnScreen(buttonBounds, false);
-                        // magnification should be moved though the button is already visible
-                        // on screen
-                        return magnifiedArea.intersect(buttonBounds);
-                    });
-        } finally {
-            if (createdButton != null) {
-                mInstrumentation.getContext().getSystemService(WindowManager.class).removeView(
-                        createdButton);
-            }
-            mService.runOnServiceSync(() -> controller.reset(false));
-        }
-    }
-
-    @Test
-    @RequiresFlagsEnabled(
-            Flags.FLAG_DO_NOT_CHECK_INTERSECTION_WHEN_NON_MAGNIFIABLE_WINDOW_TRANSITIONS)
     public void testShowNonMagnifiableWindow_outOfTheMagnifiedRegion_shouldNotMoveMagnification()
             throws Exception {
         final MagnificationController controller = mService.getMagnificationController();

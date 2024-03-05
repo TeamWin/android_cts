@@ -543,9 +543,9 @@ def get_cam_rotations(frames, facing, h, file_name_stem,
       p1, st, _ = cv2.calcOpticalFlowPyrLK(gframe0, gframe1, p0_filtered, None,
                                            **_CV2_LK_PARAMS)
       tform = procrustes_rotation(p0_filtered[st == 1], p1[st == 1])
-      if facing == camera_properties_utils.LENS_FACING_BACK:
+      if facing == camera_properties_utils.LENS_FACING['BACK']:
         rotation = -math.atan2(tform[0, 1], tform[0, 0])
-      elif facing == camera_properties_utils.LENS_FACING_FRONT:
+      elif facing == camera_properties_utils.LENS_FACING['FRONT']:
         rotation = math.atan2(tform[0, 1], tform[0, 0])
       else:
         raise AssertionError(f'Unknown lens facing: {facing}.')

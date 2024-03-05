@@ -56,7 +56,7 @@ class AutoFlashTest(its_base_test.UiAutomatorItsBaseTest):
       # check SKIP conditions
       first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
       facing_front = (props['android.lens.facing'] ==
-                      camera_properties_utils.LENS_FACING_FRONT)
+                      camera_properties_utils.LENS_FACING['FRONT'])
       should_run = camera_properties_utils.flash(props) or facing_front
       camera_properties_utils.skip_unless(
           should_run and

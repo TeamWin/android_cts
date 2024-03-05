@@ -52,6 +52,7 @@ import android.platform.test.annotations.IgnoreUnderRavenwood;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
+import android.platform.test.flag.junit.RavenwoodFlagsValueProvider;
 import android.platform.test.ravenwood.RavenwoodRule;
 import android.test.mock.MockContext;
 import android.util.AttributeSet;
@@ -77,11 +78,13 @@ import java.util.Set;
 @RunWith(AndroidJUnit4.class)
 @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 public class IntentTest {
-    @Rule public final RavenwoodRule mRavenwood = new RavenwoodRule();
+    @Rule
+    public final RavenwoodRule mRavenwood = new RavenwoodRule();
 
     @Rule
-    public final CheckFlagsRule mCheckFlagsRule = RavenwoodRule.isOnRavenwood() ? null :
-            DeviceFlagsValueProvider.createCheckFlagsRule();
+    public final CheckFlagsRule mCheckFlagsRule = RavenwoodRule.isOnRavenwood()
+            ? RavenwoodFlagsValueProvider.createAllOnCheckFlagsRule()
+            : DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private Intent mIntent;
     private static final String TEST_ACTION = "android.content.IntentTest_test";
@@ -1561,9 +1564,14 @@ public class IntentTest {
         IntentSender sender = PendingIntent.getActivity(
                 mContext, 0, mIntent, PendingIntent.FLAG_IMMUTABLE).getIntentSender();
         target = Intent.createChooser(mIntent, null, sender);
-        assertEquals(sender, target.getParcelableExtra(
-                Intent.EXTRA_CHOOSER_RESULT_INTENT_SENDER, IntentSender.class));
 
+        if (android.service.chooser.Flags.enableChooserResult()) {
+            assertEquals(sender, target.getParcelableExtra(
+                    Intent.EXTRA_CHOOSER_RESULT_INTENT_SENDER, IntentSender.class));
+        } else {
+            assertEquals(sender, target.getParcelableExtra(
+                    Intent.EXTRA_CHOSEN_COMPONENT_INTENT_SENDER, IntentSender.class));
+        }
         // Asser that setting the data URI *without* a permission granting flag *doesn't* copy
         // anything to ClipData.
         Uri data = Uri.parse("some://uri");

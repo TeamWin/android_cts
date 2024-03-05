@@ -124,12 +124,11 @@ def _collect_data(cam, fps, w, h, test_length, rot_rig, chart_dist,
   if rot_rig['cntl'].lower() == 'arduino':
     time.sleep(_ARDUINO_INIT_WAIT_TIME)
 
-  # Capture frames.
+  # Raise error if not FRONT or REAR facing camera.
   facing = props['android.lens.facing']
-  if (facing != camera_properties_utils.LENS_FACING_FRONT and
-      facing != camera_properties_utils.LENS_FACING_BACK):
-    raise AssertionError(f'Unknown lens facing: {facing}.')
+  camera_properties_utils.check_front_or_rear_camera(props)
 
+  # Capture frames.
   fmt = {'format': 'yuv', 'width': w, 'height': h}
   s, e, _, _, _ = cam.do_3a(get_results=True, do_af=False)
   logging.debug('3A ISO: %d, exp: %.3fms', s, e/_MSEC_TO_NSEC)

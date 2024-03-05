@@ -1732,6 +1732,16 @@ public class MockImeSession implements AutoCloseable {
     }
 
     /**
+     * Requests hiding the current soft input window, with the request origin on the server side.
+     *
+     * @see InputMethodManager#hideSoftInputFromServerForTest()
+     */
+    public void hideSoftInputFromServerForTest() {
+        final var imm = mContext.getSystemService(InputMethodManager.class);
+        runWithShellPermissionIdentity(imm::hideSoftInputFromServerForTest);
+    }
+
+    /**
      * Lets {@link MockIme} call
      * {@link android.inputmethodservice.InputMethodService#sendDownUpKeyEvents(int)} with the given
      * {@code keyEventCode}.

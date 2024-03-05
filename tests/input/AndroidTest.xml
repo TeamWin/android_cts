@@ -48,4 +48,10 @@
         <!-- Take screenshot upon test failure -->
         <option name="screenshot-on-failure" value="true" />
     </object>
+    <metrics_collector class="com.android.tradefed.device.metric.FilePullerLogCollector">
+        <option name="pull-pattern-keys" value=".*_actual\.png" />
+        <option name="directory-keys" value="/data/user/0/android.input.cts/files" />
+        <option name="collect-on-run-ended-only" value="false" />
+        <option name="clean-up" value="false" />
+    </metrics_collector>
 </configuration>

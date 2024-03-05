@@ -24,12 +24,14 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.credentials.cts.testcore.CtsCredentialManagerUtils;
 import android.credentials.cts.testcore.DeviceConfigStateRequiredRule;
 import android.net.Uri;
 import android.os.StrictMode;
@@ -51,6 +53,7 @@ import androidx.test.uiautomator.UiDevice;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -94,6 +97,11 @@ public class CtsSettingsIntentTest {
     public void killSettings() {
         // Make sure there's no Settings activity left, as it could fail future tests.
         runShellCommand("am force-stop com.android.settings");
+    }
+    @Before
+    public void setUp() {
+        assumeFalse("Skipping test: Auto does not support CredentialManager yet",
+                CtsCredentialManagerUtils.isAuto(mContext));
     }
 
     @Test
