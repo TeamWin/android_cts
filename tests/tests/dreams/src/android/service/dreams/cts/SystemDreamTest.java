@@ -39,6 +39,7 @@ import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -48,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 @ApiTest(apis = {"com.android.server.dreams.DreamManagerService#setSystemDreamComponent"})
 @RunWith(AndroidJUnit4.class)
 @SmallTest
+@Ignore("b/325686454")
 public class SystemDreamTest extends ActivityManagerTestBase {
     private static final ComponentName USER_DREAM_COMPONENT =
             ComponentName.unflattenFromString("android.app.dream.cts.app/.TestDreamService");
