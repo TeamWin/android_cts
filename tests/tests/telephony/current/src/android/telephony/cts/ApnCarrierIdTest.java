@@ -119,7 +119,7 @@ public class ApnCarrierIdTest {
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
-            assumeFalse(mContext.getPackageManager().hasSystemFeature(
+            assumeTrue(mContext.getPackageManager().hasSystemFeature(
                     PackageManager.FEATURE_TELEPHONY_DATA));
         } else {
             assumeTrue(mContext.getPackageManager().hasSystemFeature(
@@ -153,11 +153,15 @@ public class ApnCarrierIdTest {
     @After
     public void tearDown() {
         if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
-            assumeTrue(mContext.getPackageManager().hasSystemFeature(
-                    PackageManager.FEATURE_TELEPHONY_DATA));
+            if (!mContext.getPackageManager().hasSystemFeature(
+                    PackageManager.FEATURE_TELEPHONY_DATA)) {
+                return;
+            }
         } else {
-            assumeTrue(mContext.getPackageManager().hasSystemFeature(
-                    PackageManager.FEATURE_TELEPHONY));
+            if (!mContext.getPackageManager().hasSystemFeature(
+                    PackageManager.FEATURE_TELEPHONY)) {
+                return;
+            }
         }
 
         if (mInsertedApnSelectionArgs != null) {
