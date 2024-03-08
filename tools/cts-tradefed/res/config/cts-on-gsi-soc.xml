@@ -13,15 +13,12 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Runs a subset of CTS on AOSP tests for gsi_$arch">
+<configuration description="Runs a subset of CTS includeing the DEQP module on AOSP tests for gsi_$arch">
 
     <include name="cts-on-aosp" />
     <include name="cts-on-gsi-exclude" />
     <include name="cts-on-gsi-exclude-non-hal" />
 
-    <!-- b/326998687 No deqp -->
-    <option name="compatibility:exclude-filter" value="CtsDeqpTestCases" />
-
-    <option name="plan" value="cts-on-gsi" />
+    <option name="plan" value="cts-on-gsi-soc" />
 
 </configuration>
