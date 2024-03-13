@@ -1735,12 +1735,14 @@ public class WallpaperManagerTest {
     private void ensureCleanState(int flags) {
         Bitmap bmp = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
         try {
-            if (flags == (FLAG_SYSTEM | FLAG_LOCK)) {
-                mWallpaperManager.setBitmap(bmp);
-            } else {
-                mWallpaperManager.setBitmap(bmp, /* visibleCropHint= */
-                        null, /* allowBackup= */true, flags);
-            }
+            runAndAwaitColorChanges(5, TimeUnit.SECONDS, flags, mWallpaperManager, mHandler, () -> {
+                if (flags == (FLAG_SYSTEM | FLAG_LOCK)) {
+                    mWallpaperManager.setBitmap(bmp);
+                } else {
+                    mWallpaperManager.setBitmap(bmp, /* visibleCropHint= */
+                            null, /* allowBackup= */true, flags);
+                }
+            });
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
@@ -1783,6 +1785,7 @@ public class WallpaperManagerTest {
     public static class TestableColorListener implements WallpaperManager.OnColorsChangedListener {
         @Override
         public void onColorsChanged(WallpaperColors colors, int which) {
+            Log.d(TAG, "TestableColorListener received colors: " + colors + ", which: " + which);
         }
     }
 }
