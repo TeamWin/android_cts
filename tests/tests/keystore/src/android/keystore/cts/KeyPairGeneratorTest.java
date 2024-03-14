@@ -178,8 +178,6 @@ public class KeyPairGeneratorTest {
         // XDH is also a supported algorithm, but not available for other tests as the keys
         // generated with it have more limited set of uses.
         expectedAlgsLowerCase.add("xdh");
-        // AndroidKeyStore supports key generation of curve 25519
-        expectedAlgsLowerCase.add("ed25519");
 
         for (Service service : services) {
             if ("KeyPairGenerator".equalsIgnoreCase(service.getType())) {
