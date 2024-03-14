@@ -32,7 +32,6 @@
   <!-- Load additional APKs onto device -->
   <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
     <option name="push" value="TestAutofillServiceApp.apk->/data/local/tmp/cts/autofill/TestAutofillServiceApp.apk" />
-    <option name="push" value="TestAutofillServiceWithoutIntentFilter.apk->/data/local/tmp/cts/autofill/TestAutofillServiceWithoutIntentFilter.apk" />
   </target_preparer>
 
   <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">

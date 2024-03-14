@@ -23,6 +23,9 @@ import android.hardware.display.DisplayManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemProperties;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.support.test.uiautomator.UiDevice;
 import android.sysprop.SurfaceFlingerProperties;
 import android.util.Log;
@@ -33,7 +36,6 @@ import android.view.WindowManager;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
-
 
 import org.junit.After;
 import org.junit.Before;
@@ -56,6 +58,10 @@ public final class GameFrameRateTest {
     private static final long DISPLAY_MODE_RETURNS_PHYSICAL_REFRESH_RATE_CHANGEID = 170503758;
 
     private static final String TEST_PKG = "android.gameframerate.cts";
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     // The tolerance within which we consider refresh rates are equal
     private static final float REFRESH_RATE_TOLERANCE = 0.01f;
@@ -182,6 +188,8 @@ public final class GameFrameRateTest {
     }
 
     @Test
+    @RequiresFlagsEnabled({android.server.app.Flags.FLAG_GAME_DEFAULT_FRAME_RATE,
+            com.android.graphics.surfaceflinger.flags.Flags.FLAG_GAME_DEFAULT_FRAME_RATE})
     public void testGameModeBackpressure() throws InterruptedException, IOException {
         if (isTvEmulator()) {
             Log.i(TAG, "**** Skipping Backpressure ****");
@@ -194,6 +202,8 @@ public final class GameFrameRateTest {
     }
 
     @Test
+    @RequiresFlagsEnabled({android.server.app.Flags.FLAG_GAME_DEFAULT_FRAME_RATE,
+            com.android.graphics.surfaceflinger.flags.Flags.FLAG_GAME_DEFAULT_FRAME_RATE})
     public void testGameModeChoreographer() throws InterruptedException, IOException {
         Log.i(TAG, "**** Starting Game Mode Choreographer Test ****");
         GameFrameRateCtsActivity activity = mActivityRule.getActivity();
@@ -201,6 +211,8 @@ public final class GameFrameRateTest {
     }
 
     @Test
+    @RequiresFlagsEnabled({android.server.app.Flags.FLAG_GAME_DEFAULT_FRAME_RATE,
+            com.android.graphics.surfaceflinger.flags.Flags.FLAG_GAME_DEFAULT_FRAME_RATE})
     public void testGameModeDisplayGetRefreshRate() throws InterruptedException, IOException {
         Log.i(TAG, "**** Starting Game Mode Display#getRefreshRate Test ****");
         GameFrameRateCtsActivity activity = mActivityRule.getActivity();
@@ -208,6 +220,8 @@ public final class GameFrameRateTest {
     }
 
     @Test
+    @RequiresFlagsEnabled({android.server.app.Flags.FLAG_GAME_DEFAULT_FRAME_RATE,
+            com.android.graphics.surfaceflinger.flags.Flags.FLAG_GAME_DEFAULT_FRAME_RATE})
     public void testGameModeDisplayModeGetRefreshRateDisplayModeReturnsPhysicalRefreshRate()
             throws InterruptedException, IOException {
         Log.i(TAG, "**** Starting Game Mode Display.Mode#getRefreshRate Test ****");
