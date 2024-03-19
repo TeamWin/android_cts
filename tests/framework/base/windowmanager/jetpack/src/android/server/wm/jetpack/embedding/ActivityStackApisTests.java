@@ -72,7 +72,7 @@ public class ActivityStackApisTests extends ActivityEmbeddingTestBase {
         final SplitInfo splitInfo = getSplitInfo(primaryActivity, secondaryActivity);
 
         mActivityEmbeddingComponent.finishActivityStacksWithTokens(Collections.singleton(
-                splitInfo.getPrimaryActivityStack().getToken()));
+                splitInfo.getPrimaryActivityStack().getActivityStackToken()));
 
         waitAndAssertFinishing(primaryActivity);
         waitAndAssertResumedAndFillsTask(secondaryActivity);
@@ -96,7 +96,7 @@ public class ActivityStackApisTests extends ActivityEmbeddingTestBase {
         final SplitInfo splitInfo = getSplitInfo(primaryActivity, secondaryActivity);
 
         mActivityEmbeddingComponent.finishActivityStacksWithTokens(Collections.singleton(
-                splitInfo.getSecondaryActivityStack().getToken()));
+                splitInfo.getSecondaryActivityStack().getActivityStackToken()));
 
         waitAndAssertFinishing(secondaryActivity);
         waitAndAssertResumedAndFillsTask(primaryActivity);
@@ -163,7 +163,7 @@ public class ActivityStackApisTests extends ActivityEmbeddingTestBase {
                 .stream()
                 .filter(splitInfo ->
                         splitInfo.getPrimaryActivityStack().getActivities().contains(activityA))
-                .map(splitInfo -> splitInfo.getSecondaryActivityStack().getToken())
+                .map(splitInfo -> splitInfo.getSecondaryActivityStack().getActivityStackToken())
                 .collect(Collectors.toSet());
         assertEquals(2, secondaryActivityStacks.size());
 
