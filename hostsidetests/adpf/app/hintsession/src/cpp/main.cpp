@@ -36,6 +36,7 @@
 #include "Utility.h"
 
 using namespace std::chrono_literals;
+const constexpr auto kDrawingTimeout = 3s;
 const constexpr int kSamples = 500;
 
 Renderer *getRenderer(android_app *pApp) {
@@ -63,11 +64,16 @@ FrameStats drawFrames(int count, android_app *pApp, int &events, android_poll_so
     bool namedTest = testName.size() > 0;
     std::vector<int64_t> durations{};
     std::vector<int64_t> intervals{};
-    int dropCount = 0;
 
+    auto drawStart = std::chrono::steady_clock::now();
     // Iter is -1 so we have a buffer frame before it starts, to eat any delay from time spent
     // between tests
     for (int iter = -1; iter < count && !pApp->destroyRequested;) {
+        if (std::chrono::steady_clock::now() - drawStart > kDrawingTimeout) {
+            aout << "Stops drawing on " << kDrawingTimeout.count() << "s timeout for test "
+                 << (namedTest ? testName : "unnamed") << std::endl;
+            break;
+        }
         int retval = ALooper_pollOnce(0, nullptr, &events, (void **)&pSource);
         while (retval == ALOOPER_POLL_CALLBACK) {
             retval = ALooper_pollOnce(0, nullptr, &events, (void **)&pSource);
