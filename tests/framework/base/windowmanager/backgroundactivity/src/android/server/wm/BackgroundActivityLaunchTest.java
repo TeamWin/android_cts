@@ -572,6 +572,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_BAL_REQUIRE_OPT_IN_BY_PENDING_INTENT_CREATOR)
     public void testPI_onlyCreatorAllowsBALwithoutOptInForResult_isBlocked() throws Exception {
         // creator (appb) is privileged, and grants
         grantSystemAlertWindow(APP_B);
