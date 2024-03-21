@@ -42,6 +42,7 @@ java_test_host {
         "cts-statsd-atom-host-test-utils",
         "CtsMediaHostTestCommon",
         "flag-junit-host",
+        "modules-utils-build-testing",
     ],
     data: [
         ":CtsAudioHostTestApp",

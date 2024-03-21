@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.compat.cts.CompatChangeGatingTestCase;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.modules.utils.build.testing.DeviceSdkLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil;
 
@@ -92,6 +93,14 @@ public class MediaSessionHostTest extends CompatChangeGatingTestCase {
     }
 
     public void testSetMediaButtonReceiverChangeEnabled() throws Exception {
+        // TargetSDK threshold is set to V+, so trying to enable the compat change would fail on
+        // some device configurations.
+        DeviceSdkLevel sdkLevel = new DeviceSdkLevel(getDevice());
+        if (!sdkLevel.isDeviceAtLeastV()) {
+            LogUtil.CLog.w("SDK level is not V+. Ignoring test.");
+            return;
+        }
+
         runDeviceCompatTest(
                 DEVICE_SIDE_TEST_PKG,
                 DEVICE_SIDE_TEST_CLASS,

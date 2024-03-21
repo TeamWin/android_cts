@@ -285,7 +285,7 @@ public class SplitAttributesCalculatorTest extends ActivityEmbeddingTestBase {
                 + " activity A enter PIP.");
 
         // launch Activity A again to leave the activity from PIP.
-        mContext.startActivity(new Intent(activityA.getIntent()));
+        activityA.startActivity(new Intent(activityA.getIntent()));
 
         verifier.waitAndAssertFunctionApplied("The calculator function must be called because"
                 + " activity A leaves PIP.");

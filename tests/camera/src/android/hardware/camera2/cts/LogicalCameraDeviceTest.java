@@ -348,6 +348,10 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                     mSession.close();
                 }
 
+                // Image readers need to be referenced so that they aren't garbage collected
+                // before the function exit.
+                CameraTestUtils.closeImageReader(yuvTargetPhysical);
+                CameraTestUtils.closeImageReader(yuvTargetLogical);
             } finally {
                 closeDevice();
             }
@@ -485,6 +489,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                 if (mSession != null) {
                     mSession.close();
                 }
+                physicalTargets.clear();
 
             } finally {
                 closeDevice();
@@ -589,6 +594,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                 if (mSession != null) {
                     mSession.close();
                 }
+                imageReaders.clear();
             } finally {
                 closeDevice();
             }
@@ -733,6 +739,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                 if (mSession != null) {
                     mSession.close();
                 }
+                CameraTestUtils.closeImageReader(imageReader);
 
             } finally {
                 closeDevice();
@@ -1330,6 +1337,10 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
         if (mSession != null) {
             mSession.close();
         }
+        // Image readers need to be referenced so that they aren't garbage collected
+        // before the function exit.
+        CameraTestUtils.closeImageReader(logicalTarget);
+        physicalTargets.clear();
     }
 
     /**
