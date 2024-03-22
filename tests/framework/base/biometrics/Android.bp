@@ -46,8 +46,6 @@ android_test {
         "androidx.test.uiautomator_uiautomator",
         "android.hardware.biometrics.flags-aconfig-java",
         "flag-junit",
-        "Harrier",
-        "truth",
     ],
     srcs: ["src/**/*.java"],
     data: [
