@@ -27,6 +27,7 @@ import static android.adpf.common.ADPFHintSessionConstants.MINIMUM_VALID_SDK;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import com.android.ddmlib.Log;
 import com.android.ddmlib.testrunner.TestResult.TestStatus;
@@ -39,7 +40,6 @@ import com.android.tradefed.testtype.DeviceJUnit4ClassRunner.TestMetrics;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -63,8 +63,17 @@ public class ADPFHintSessionHostJUnit4Test extends BaseHostJUnit4Test {
     private ITestDevice mDevice;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         mDevice = getDevice();
+        final String[] abis = getProperty("ro.product.cpu.abilist").split(",");
+        boolean supported = false;
+        for (String abi : abis) {
+            if (abi.toLowerCase().startsWith("arm")) {
+                supported = true;
+                break;
+            }
+        }
+        assumeTrue("Test skipped as no ARM based ABI is supported", supported);
     }
 
     private String getProperty(String prop) throws Exception {
@@ -74,7 +83,7 @@ public class ADPFHintSessionHostJUnit4Test extends BaseHostJUnit4Test {
     private void checkMinSdkVersion() throws Exception {
         String sdkAsString = getProperty("ro.build.version.sdk");
         int sdk = Integer.parseInt(sdkAsString);
-        Assume.assumeTrue("Test requires sdk >= " + MINIMUM_VALID_SDK
+        assumeTrue("Test requires sdk >= " + MINIMUM_VALID_SDK
                         + " while test device has sdk = " + sdk,
                 sdk >= MINIMUM_VALID_SDK);
     }
