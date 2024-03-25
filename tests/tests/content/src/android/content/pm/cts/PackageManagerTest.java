@@ -31,6 +31,7 @@ import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.content.pm.Flags.FLAG_ARCHIVING;
 import static android.content.pm.Flags.FLAG_GET_PACKAGE_INFO;
 import static android.content.pm.Flags.FLAG_PROVIDE_INFO_OF_APK_IN_APEX;
+import static android.content.pm.Flags.FLAG_RESTRICT_NONPRELOADS_SYSTEM_SHAREDUIDS;
 import static android.content.pm.Flags.FLAG_QUARANTINED_ENABLED;
 import static android.content.pm.PackageInstaller.STATUS_FAILURE;
 import static android.content.pm.PackageInstaller.STATUS_SUCCESS;
@@ -300,7 +301,12 @@ public class PackageManagerTest {
     private static final String HELLO_WORLD_SETTINGS = SAMPLE_APK_BASE
             + "HelloWorldSettings.apk";
 
-    private static final String HELLO_WORLD_SETTINGS_PACKAGE_NAME = "com.android.settings.app";
+    private static final String HELLO_WORLD_SETTINGS2 = SAMPLE_APK_BASE
+            + "HelloWorldSettings2.apk";
+
+    private static final String HELLO_WORLD_SETTINGS_PACKAGE_NAME = "android.test.settings";
+
+    private static final String HELLO_WORLD_SETTINGS2_PACKAGE_NAME = "android.test.settings2";
 
     private static final String MOCK_LAUNCHER_PACKAGE_NAME = "android.content.cts.mocklauncherapp";
     private static final String MOCK_LAUNCHER_APK = SAMPLE_APK_BASE
@@ -2189,7 +2195,8 @@ public class PackageManagerTest {
     }
 
     @Test
-    public void testInstallAppSharedSystemUid() {
+    @RequiresFlagsEnabled(FLAG_RESTRICT_NONPRELOADS_SYSTEM_SHAREDUIDS)
+    public void testInstallAppSharedSystemUidAllowlisted() {
         var result = SystemUtil.runShellCommand("pm install -t -g " + HELLO_WORLD_SETTINGS);
         if (result.contains("no signatures that match those in shared user android.uid.system")) {
             // This is a <unit> test, not a proper CTS.
@@ -2198,11 +2205,27 @@ public class PackageManagerTest {
             // Otherwise the install will still fail, but for a different reason.
             return;
         }
+        assertThat(result).isEqualTo("Success\n");
+        uninstallPackage(HELLO_WORLD_SETTINGS_PACKAGE_NAME);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_RESTRICT_NONPRELOADS_SYSTEM_SHAREDUIDS)
+    public void testInstallAppSharedSystemUid() {
+        var result = SystemUtil.runShellCommand("pm install -t -g " + HELLO_WORLD_SETTINGS2);
+        if (result.contains("no signatures that match those in shared user android.uid.system")) {
+            // This is a <unit> test, not a proper CTS.
+            // While certificate for HelloWorldSettings is "platform", it might not be THE platform.
+            // This test works correctly if platform and cts are built using the same certificate.
+            // Otherwise the install will still fail, but for a different reason.
+            return;
+        }
         if (!Build.IS_DEBUGGABLE) {
-            assertThat(result).contains("Non-preload app associated with system signature");
+            assertThat(result).contains("Non-preload app " + HELLO_WORLD_SETTINGS2_PACKAGE_NAME
+                    + " signed with platform signature and joining shared uid");
         } else {
             assertThat(result).isEqualTo("Success\n");
-            uninstallPackage(HELLO_WORLD_SETTINGS_PACKAGE_NAME);
+            uninstallPackage(HELLO_WORLD_SETTINGS2_PACKAGE_NAME);
         }
     }
 
@@ -3926,6 +3949,7 @@ victim $UID 1 /data/user/0 default:targetSdkVersion=28 none 0 0 1 @null
     }
 
     @Test
+    @RequiresFlagsEnabled(FLAG_RESTRICT_NONPRELOADS_SYSTEM_SHAREDUIDS)
     public void testUidRemovedBroadcastNotReceivedForSharedUid() throws Exception {
         // Installing a test app that shares SYSTEM_UID
         var result = SystemUtil.runShellCommand("pm install -t -g " + HELLO_WORLD_SETTINGS);

@@ -180,6 +180,19 @@ android_test {
 
 //-----------------------------------------------------------
 android_test {
+    name: "HelloWorldSettings2",
+    defaults: ["hello_world_defaults"],
+    srcs: ["src_shell/**/*.java"],
+    manifest: "AndroidManifestSettings2.xml",
+    test_suites: [
+        "general-tests",
+    ],
+    v4_signature: true,
+    certificate: "platform",
+}
+
+//-----------------------------------------------------------
+android_test {
     name: "HelloWorldSdk1",
     defaults: ["hello_world_defaults"],
     srcs: ["sdk1/**/*.java"],
