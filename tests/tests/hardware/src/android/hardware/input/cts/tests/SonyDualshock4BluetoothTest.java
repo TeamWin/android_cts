@@ -25,6 +25,7 @@ import androidx.test.filters.SmallTest;
 
 import com.android.cts.kernelinfo.KernelInfo;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -58,6 +59,7 @@ public class SonyDualshock4BluetoothTest extends InputHidTestCase {
         testInputBatteryEvents(R.raw.sony_dualshock4_bluetooth_batteryeventtests);
     }
 
+    @Ignore("b/329585708: Disabled on Android 14 due to changes in touchpad processing")
     @Test
     public void testAllTouch() throws Throwable {
         try (PointerCaptureSession session = new PointerCaptureSession()) {
