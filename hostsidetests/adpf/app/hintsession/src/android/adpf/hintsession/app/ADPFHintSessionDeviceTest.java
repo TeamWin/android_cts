@@ -27,11 +27,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.device.collectors.util.SendToInstrumentation;
 import android.os.Bundle;
+import android.os.SystemProperties;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
-
-import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -60,8 +59,21 @@ public class ADPFHintSessionDeviceTest {
                 pm.hasSystemFeature(PackageManager.FEATURE_WATCH));
         assumeFalse("Skipping test for embedded",
                 pm.hasSystemFeature(PackageManager.FEATURE_EMBEDDED));
-        assumeFalse("Skipping test for Cuttlefish",
-                MediaUtils.onCuttlefish());
+        assumeFalse("Skipping test for virtual devices",
+                onVirtualDevice());
+    }
+
+    protected static boolean onVirtualDevice() {
+        String device = SystemProperties.get("ro.product.device", "");
+        String model = SystemProperties.get("ro.product.model", "");
+        String name = SystemProperties.get("ro.product.name", "");
+        String qemu = SystemProperties.get("ro.boot.qemu", "0");
+        String hardware = SystemProperties.get("ro.hardware", "");
+        return device.startsWith("vsoc_") || model.startsWith("Cuttlefish ")
+                || name.startsWith("cf_") || name.startsWith("aosp_cf_")
+                || qemu.equals("1") || hardware.contains("goldfish")
+                || hardware.contains("ranchu")
+                || hardware.contains("cutf_cvm") || hardware.contains("starfish");
     }
 
     @Test

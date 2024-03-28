@@ -52,8 +52,7 @@ android_test_helper_app {
         "androidx.test.rules",
         "collector-device-lib",
         "com.google.android.material_material",
-        "compatibility-device-util-axt",
     ],
-    sdk_version: "current",
+    sdk_version: "test_current",
     jni_libs: ["libadpfhintsession_test_helper_jni"],
 }
