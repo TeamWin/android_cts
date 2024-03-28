@@ -879,8 +879,8 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     @Test
     @AppModeFull(reason = "PropertyUtil methods don't work for instant apps")
     public void testZoomTimestampIncrease() throws Exception {
-        if (PropertyUtil.getVendorApiLevel() <= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            // Only run test for Vendor API level V or higher
+        if (PropertyUtil.getFirstApiLevel() <= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            // Only run test for first API level V or higher
             return;
         }
 

@@ -36,7 +36,10 @@
 #include "Utility.h"
 
 using namespace std::chrono_literals;
-const constexpr int kSamples = 500;
+
+const constexpr auto kDrawingTimeout = 3s;
+const constexpr int kSamples = 800;
+const constexpr int kCalibrationSamples = 800;
 
 Renderer *getRenderer(android_app *pApp) {
     return (pApp->userData) ? reinterpret_cast<Renderer *>(pApp->userData) : nullptr;
@@ -63,11 +66,16 @@ FrameStats drawFrames(int count, android_app *pApp, int &events, android_poll_so
     bool namedTest = testName.size() > 0;
     std::vector<int64_t> durations{};
     std::vector<int64_t> intervals{};
-    int dropCount = 0;
 
+    auto drawStart = std::chrono::steady_clock::now();
     // Iter is -1 so we have a buffer frame before it starts, to eat any delay from time spent
     // between tests
     for (int iter = -1; iter < count && !pApp->destroyRequested;) {
+        if (std::chrono::steady_clock::now() - drawStart > kDrawingTimeout) {
+            aout << "Stops drawing on " << kDrawingTimeout.count() << "s timeout for test "
+                 << (namedTest ? testName : "unnamed") << std::endl;
+            break;
+        }
         int retval = ALooper_pollOnce(0, nullptr, &events, (void **)&pSource);
         while (retval == ALOOPER_POLL_CALLBACK) {
             retval = ALooper_pollOnce(0, nullptr, &events, (void **)&pSource);
@@ -109,15 +117,8 @@ FrameStats drawFramesWithTarget(int64_t targetDuration, int &events, android_app
 // Finds the test settings that best match this device, and returns the
 // duration of the frame's work
 double calibrate(int &events, android_app *pApp, android_poll_source *&pSource) {
-    static constexpr int64_t kCalibrationSamples = 500;
-
-    getRenderer(pApp)->setNumHeads(100);
-    // Run an initial load to get the CPU active and stable
-    drawFrames(kCalibrationSamples, pApp, events, pSource);
-
     FrameStats calibration[2];
     getRenderer(pApp)->setNumHeads(1);
-    // Ensure the system is running stable before we start calibration
 
     // Find a number of heads that gives a work duration approximately equal
     // to 1/4 the vsync period. This gives enough time for the frame to finish
@@ -127,7 +128,7 @@ double calibrate(int &events, android_app *pApp, android_poll_source *&pSource) 
     getRenderer(pApp)->setNumHeads(200);
     calibration[1] = drawFrames(kCalibrationSamples, pApp, events, pSource);
 
-    double target = calibration[1].medianFrameInterval / 4.0;
+    double target = calibration[1].medianFrameInterval / 6.0;
     aout << "Goal duration: " << (int)target << std::endl;
     double perHeadDuration =
             (calibration[1].medianWorkDuration - calibration[0].medianWorkDuration) / 200.0;
@@ -189,6 +190,21 @@ void android_main(struct android_app *pApp) {
     }
 
     std::this_thread::sleep_for(10s);
+    getRenderer(pApp)->setNumHeads(100);
+    // Run an initial load to get the CPU active and stable
+    drawFrames(kCalibrationSamples, pApp, events, pSource);
+
+    FrameStats initialStats = drawFrames(kSamples, pApp, events, pSource);
+
+    std::vector<pid_t> tids;
+    tids.push_back(gettid());
+    getRenderer(pApp)->startHintSession(tids, 6 * initialStats.medianWorkDuration);
+    if (!getRenderer(pApp)->isHintSessionRunning()) {
+        Utility::setFailure("Session failed to start!", getRenderer(pApp));
+    }
+
+    // Do an initial load with the session to let CPU settle
+    drawFrames(kCalibrationSamples / 2, pApp, events, pSource);
 
     double calibratedTarget = calibrate(events, pApp, pSource);
 
@@ -203,25 +219,13 @@ void android_main(struct android_app *pApp) {
              calibratedTarget);
     getRenderer(pApp)->addResult("calibration_accuracy", std::to_string(calibrationAccuracy));
 
-    std::vector<pid_t> tids;
-    tids.push_back(gettid());
-    getRenderer(pApp)->startHintSession(tids, baselineStats.medianWorkDuration);
-    if (!getRenderer(pApp)->isHintSessionRunning()) {
-        Utility::setFailure("Session failed to start!", getRenderer(pApp));
-    }
-    // Do an initial load with the session to let CPU settle
-    drawFramesWithTarget(2 * baselineStats.medianWorkDuration, events, pApp, pSource);
+    const int64_t lightTarget = 6 * baselineStats.medianWorkDuration;
 
-    const int64_t lightTarget = 2 * baselineStats.medianWorkDuration;
+    // Used to figure out efficiency score on actual runs
+    getRenderer(pApp)->setBaselineMedian(baselineStats.medianWorkDuration);
 
-    // Get a light load baseline
-    FrameStats lightBaselineStats =
-            drawFramesWithTarget(lightTarget, events, pApp, pSource, "light_base");
-    // Used to figure out efficiency score on actual runs, based on the slowest config seen
-    getRenderer(pApp)->setBaselineMedian(
-            std::max(baselineStats.medianWorkDuration, baselineStats.medianWorkDuration));
-
-    const int64_t heavyTarget = (3 * lightBaselineStats.medianWorkDuration) / 4;
+    // Set heavy target to be slightly smaller than the baseline to ensure a boost is necessary
+    const int64_t heavyTarget = (3 * baselineStats.medianWorkDuration) / 4;
 
     if (testSet.count("heavy_load") > 0) {
         tests.push_back(

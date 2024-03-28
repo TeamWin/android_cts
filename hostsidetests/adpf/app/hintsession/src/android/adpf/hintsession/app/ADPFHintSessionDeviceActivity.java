@@ -76,7 +76,7 @@ public class ADPFHintSessionDeviceActivity
             setFailure("Test starts without name");
             return;
         }
-        Log.e(TAG, "created");
+        Log.i(TAG, "Device activity created");
         sendConfigToNative(TESTS_ENABLED);
     }
 
