@@ -2516,16 +2516,8 @@ public class BitmapTest {
             }
 
             int nativeFormat = nGetFormat(bm);
-            if (pair.config == Bitmap.Config.RGBA_F16) {
-                // It is possible the system does not support RGBA_F16 in HARDWARE.
-                // In that case, it will fall back to ARGB_8888.
-                assertTrue(nativeFormat == ANDROID_BITMAP_FORMAT_RGBA_8888
-                        || nativeFormat == ANDROID_BITMAP_FORMAT_RGBA_F16);
-            } else if (pair.config == Bitmap.Config.RGBA_1010102) {
-                // Devices not supporting RGBA_1010102 in hardware should fallback to ARGB_8888
-                assertTrue(nativeFormat == ANDROID_BITMAP_FORMAT_RGBA_8888
-                        || nativeFormat == ANDROID_BITMAP_FORMAT_RGBA_1010102);
-            } else {
+            // We allow everything to fall back to 8888
+            if (nativeFormat != ANDROID_BITMAP_FORMAT_RGBA_8888) {
                 assertEquals("Config: " + pair.config, pair.format, nativeFormat);
             }
         }
