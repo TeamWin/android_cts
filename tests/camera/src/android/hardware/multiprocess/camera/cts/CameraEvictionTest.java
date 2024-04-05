@@ -520,9 +520,6 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
             assertFalse(eventTagCountMap.containsKey(
                     TestConstants.EVENT_ACTIVITY_TOP_RESUMED_TRUE));
         }
-
-        mTaskOrganizer.unregisterOrganizerIfNeeded();
-        Thread.sleep(WAIT_TIME);
     }
 
     /**
