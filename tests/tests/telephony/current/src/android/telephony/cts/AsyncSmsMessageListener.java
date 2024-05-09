@@ -34,6 +34,15 @@ public class AsyncSmsMessageListener {
             new LinkedBlockingQueue<>(1);
 
     /**
+     * Clear internal cache data.
+     */
+    public void clear() {
+        mMessages.clear();
+        mSentMessageResults.clear();
+        mDeliveredMessageResults.clear();
+    }
+
+    /**
      * Offer a SMS message to the queue of SMS messages waiting to be processed.
      */
     public void offerSmsMessage(String smsMessage) {

@@ -993,6 +993,9 @@ public class ImsServiceTest {
             SmsManager.getSmsManagerForSubscriptionId(sTestSub)
                         .setStorageMonitorMemoryStatusOverride(false);
 
+            // Clear cached data before starting test.
+            AsyncSmsMessageListener.getInstance().clear();
+
             //Message received
             sServiceConnector.getCarrierService().getMmTelFeature().getSmsImplementation()
                     .receiveSmsWaitForAcknowledgeMemoryFull(123456789, SmsMessage.FORMAT_3GPP,
@@ -1021,6 +1024,9 @@ public class ImsServiceTest {
         }
         setupImsServiceForSms();
 
+        // Clear cached data before starting test.
+        AsyncSmsMessageListener.getInstance().clear();
+
         // Message received
         sServiceConnector.getCarrierService().getMmTelFeature().getSmsImplementation()
                 .receiveSmsWaitForAcknowledge(123456789, SmsMessage.FORMAT_3GPP,
@@ -1046,6 +1052,9 @@ public class ImsServiceTest {
         }
 
         setupImsServiceForSms();
+
+        // Clear cached data before starting test.
+        AsyncSmsMessageListener.getInstance().clear();
 
         // Message received
         sServiceConnector.getCarrierService().getMmTelFeature().getSmsImplementation()
